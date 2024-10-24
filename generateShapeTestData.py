@@ -1,14 +1,14 @@
 from PIL import Image, ImageDraw
-import os
+from math import cos, sin, pi, sqrt, tan
 import random
-from math import cos, sin, pi, atan2
+from dataclasses import dataclass
 
-MIN_SIZE_RATIO = 0.3
-MAX_SIZE_RATIO = 0.4
+HEXAGON_FILL_COLOR = (0, 0, 0)
+HEXAGON_OUTLINE_COLOR = (40, 40, 40)
+SHAPE_COLOR = (255, 255, 255)
 
 
 def create_hexagon_points(center_x, center_y, radius):
-    """Create points for a regular hexagon"""
     points = []
     for i in range(6):
         angle = i * pi / 3
@@ -18,103 +18,88 @@ def create_hexagon_points(center_x, center_y, radius):
     return points
 
 
-def create_rotated_ellipse(draw, width, height, center_x, center_y, angle, color):
-    num_points = 100
-    points = []
-    for i in range(num_points):
-        t = 2 * pi * i / num_points
-        # Generate ellipse points
-        x = width / 2 * cos(t)
-        y = height / 2 * sin(t)
-        # Rotate points
-        x_rot = x * cos(angle) - y * sin(angle)
-        y_rot = x * sin(angle) + y * cos(angle)
-        # Translate to center
-        points.append((x_rot + center_x, y_rot + center_y))
+def point_in_hexagon(px, py, center_x, center_y, radius):
+    # Check if point is inside a regular hexagon
+    # Convert to local coordinates
+    x = px - center_x
+    y = py - center_y
 
-    draw.polygon(points, fill=color, outline=color)
+    # Check against hexagon boundaries
+    x_abs = abs(x)
+    y_abs = abs(y)
+
+    # Hexagon boundary conditions
+    return (x_abs <= radius * cos(pi / 6)) and (y_abs <= radius * sin(pi / 6) + (radius / 2 - x_abs * tan(pi / 6)))
 
 
-def create_training_image(width=512):
-    """Create a single training image with either a square or ellipse inside a hexagon"""
+def count_and_draw_hexagon_grid(draw, center_x, center_y, hex_radius, outer_radius, do_draw=True):
+    hex_width = hex_radius * 2
+    hex_height = hex_width * sqrt(3) / 2
 
-    border_color = (50, 50, 50)
-    background_color = (0, 0, 0)
-    shape_color = (255, 0, 0)
+    # Calculate grid size to cover the outer hexagon
+    cols = int(outer_radius * 2 / (hex_width * 0.75)) + 2
+    rows = int(outer_radius * 2 / hex_height) + 2
 
-    height = int(width * 0.866)  # Hexagon width != Height, but should fill the entire image
-    center_x = width // 2
-    center_y = height // 2
+    count = 0
+    for row in range(-rows // 2, rows // 2 + 1):
+        for col in range(-cols // 2, cols // 2 + 1):
+            x = center_x + col * hex_width * 0.75
+            y = center_y + row * hex_height
+            if col % 2:
+                y += hex_height / 2
 
-    hex_radius = width * 0.5
+            # Check if center point is within the outer hexagon boundary
+            if point_in_hexagon(x, y, center_x, center_y, outer_radius):
+                count += 1
+                if do_draw:
+                    points = create_hexagon_points(x, y, hex_radius)
+                    draw.polygon(points, fill=HEXAGON_FILL_COLOR, outline=HEXAGON_OUTLINE_COLOR)
 
-    # Calculate Size Range for shapes
-    min_size = int(hex_radius * MIN_SIZE_RATIO)
-    max_size = int(hex_radius * MAX_SIZE_RATIO)
+    return count
 
-    image = Image.new('RGB', (width, height), background_color)
+
+def calculate_background_ratios(size=512, target_count=1039):
+    image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
 
-    is_square = random.choice([True, False])
-    if is_square:
-        square_width = random.randint(min_size, max_size)
+    center_x = size // 2
+    center_y = size // 2
+    outer_radius = size * 0.45
 
-        left = random.randint(center_x - width // 5 - square_width, center_x + width // 5)
-        top = random.randint(0, height - square_width)
+    # Find The Right Hexagon Size (in percent of background hexagon) to get as close to target count as possible
+    min_ratio = 0.01
+    max_ratio = 0.2
+    best_ratio = None
+    best_count = 0
 
-        right = left + square_width
-        bottom = top + square_width
+    # Break the search after the difference is getting irrelevant
+    while max_ratio - min_ratio > 0.0001:
+        mid_ratio = (min_ratio + max_ratio) / 2
+        hex_radius = outer_radius * mid_ratio
+        count = count_and_draw_hexagon_grid(draw, center_x, center_y, hex_radius, outer_radius, do_draw=False)
 
-        square_points = [
-            (left, top),
-            (right, top),
-            (right, bottom),
-            (left, bottom)
-        ]
-        draw.polygon(square_points, fill=shape_color, outline=shape_color, width=2)
-        shape_type = 'square'
-    else:
-        ellipse_width = random.randint(min_size, max_size)
-        ellipse_height = random.randint(min_size, max_size) * 0.5
+        # If there are fewer hexagons than we want we decrease size else we increase it
+        if count == target_count:
+            best_ratio = mid_ratio
+            break
+        elif count < target_count:
+            max_ratio = mid_ratio
+        else:
+            min_ratio = mid_ratio
 
-        left = random.randint(center_x - width // 5 - ellipse_width, center_x + width // 5)
-        top = random.randint(0, int(height - ellipse_height))
+        # Save the Best Ratio/ Count
+        if abs(count - target_count) < abs(best_count - target_count):
+            best_ratio = mid_ratio
+            best_count = count
 
-        right = (left + ellipse_width)
-        bottom = (top + ellipse_height)
+    final_hex_radius = outer_radius * best_ratio
+    final_count = count_and_draw_hexagon_grid(draw, center_x, center_y, final_hex_radius, outer_radius, do_draw=True)
+    print(f"Created pattern with {final_count} hexagons")
 
-        shape_center_x = (left + right) / 2
-        shape_center_y = (top + bottom) / 2
-
-        angle = atan2(center_y - shape_center_y, center_x - shape_center_x)
-
-        create_rotated_ellipse(draw, ellipse_width, ellipse_height, shape_center_x, shape_center_y, angle, shape_color)
-        shape_type = 'ellipse'
-
-    # Draw Outside of Hexagon, to overlap border shapes
-    mask = Image.new('L', (width, height), 255)
-    mask_draw = ImageDraw.Draw(mask)
-    hex_points = create_hexagon_points(center_x, center_y, hex_radius)
-    mask_draw.polygon(hex_points, fill=0)
-    border = Image.new('RGB', (width, height), border_color)
-    image.paste(border, mask=mask)
-
-    return image, shape_type
+    return image
 
 
-def generate_dataset(num_images, output_dir='training_data'):
-    """Generate a dataset of images with labels"""
-    os.makedirs(output_dir, exist_ok=True)
-
-    with open(os.path.join(output_dir, 'labels.txt'), 'w') as f:
-        for i in range(num_images):
-            image, shape_type = create_training_image()
-
-            filename = f'image_{i:04d}.png'
-            image.save(os.path.join(output_dir, filename))
-
-            f.write(f'{filename},{shape_type}\n')
-
-
-if __name__ == "__main__":
-    generate_dataset(100)
+if __name__ == '__main__':
+    background = calculate_background_ratios(size=640, target_count=1039)
+    background.save('hexagon_pattern_hexagonal.png', 'PNG')
+    background.copy()
