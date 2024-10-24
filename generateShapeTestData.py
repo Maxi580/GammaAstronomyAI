@@ -55,7 +55,7 @@ def count_and_draw_hexagon_grid(draw, center_x, center_y, hex_radius, outer_radi
                 count += 1
                 if do_draw:
                     points = create_hexagon_points(x, y, hex_radius)
-                    hexagons.append([x, y, hex_radius])
+                    hexagons.append([row, col, x, y, hex_radius])
                     draw.polygon(points, fill=HEXAGON_FILL_COLOR, outline=HEXAGON_OUTLINE_COLOR)
 
     return count, hexagons
@@ -96,22 +96,46 @@ def calculate_background_ratios(size=512, target_count=1039):
             best_count = count
 
     final_hex_radius = outer_radius * best_ratio
-    final_count, hexagons = count_and_draw_hexagon_grid(draw, center_x, center_y, final_hex_radius, outer_radius, do_draw=True)
+    final_count, hexagons = count_and_draw_hexagon_grid(draw, center_x, center_y, final_hex_radius, outer_radius,
+                                                        do_draw=True)
     print(f"Created pattern with {final_count} hexagons")
 
     return image, hexagons
+
+
+def find_hexagon_by_position(hexagons, row, col):
+    for hexagon in hexagons:
+        if hexagon[0] == row and hexagon[1] == col:
+            return hexagon
+    return None
+
+
+def draw_random_square(draw, hexagons):
+    start_hexagon = random.choice(hexagons)
+    start_row, start_col, x, y, radius = start_hexagon
+
+    size = random.randint(1, 3)
+
+    points = create_hexagon_points(x, y, radius)
+    draw.polygon(points, fill=SHAPE_COLOR, outline=HEXAGON_OUTLINE_COLOR)
+
+    for i in range(-size, size + 1):
+        for j in range(-size, size + 1):
+            if i == 0 and j == 0:
+                continue
+
+            new_hexagon = find_hexagon_by_position(hexagons, start_row + i, start_col + j)
+            if new_hexagon:
+                _, _, x, y, radius = new_hexagon
+                points = create_hexagon_points(x, y, radius)
+                draw.polygon(points, fill=SHAPE_COLOR, outline=HEXAGON_OUTLINE_COLOR)
 
 
 if __name__ == '__main__':
     background, hexagons = calculate_background_ratios(size=640, target_count=1039)
     draw = ImageDraw.Draw(background)
 
-    num_white_hexagons = 5  # or however many you want
-    for _ in range(num_white_hexagons):
-        random_hexagon = random.choice(hexagons)
-        x, y, radius = random_hexagon
-        points = create_hexagon_points(x, y, radius)
-        draw.polygon(points, fill=SHAPE_COLOR, outline=HEXAGON_OUTLINE_COLOR)
+    draw_random_square(draw, hexagons)
 
     background.save('hexagon_pattern_hexagonal.png', 'PNG')
     background.copy()
