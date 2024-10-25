@@ -11,6 +11,7 @@ SHAPE_COLOR = (255, 255, 255)
 ELLIPSE = 'ellipse'
 SQUARE = 'square'
 
+
 def create_hexagon_points(center_x, center_y, radius):
     """Get the 6 defining Points of hexagons of position and radius"""
     points = []
@@ -23,13 +24,14 @@ def create_hexagon_points(center_x, center_y, radius):
 
 
 def point_in_circle(px, py, center_x, center_y, radius):
-    # Check if point is inside a circle using distance formula
+    """Check if point is inside a circle using distance formula"""
     dx = px - center_x
     dy = py - center_y
     return (dx * dx + dy * dy) <= radius * radius
 
 
 def count_and_draw_hexagon_grid(draw, center_x, center_y, hex_radius, outer_radius, do_draw=True):
+    """Draw as many hexagons in the circles as fit, with the given size"""
     hex_width = hex_radius * 2
     hex_height = hex_width * sqrt(3) / 2
 
@@ -59,6 +61,7 @@ def count_and_draw_hexagon_grid(draw, center_x, center_y, hex_radius, outer_radi
 
 
 def calculate_background_ratios(size=512, target_count=1039):
+    """Calculate the optimal size of hexagons to fit target count into size, return image and relevant data"""
     image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
 
@@ -159,6 +162,7 @@ def get_random_ellipse_poly(center_x, center_y, outer_radius):
 
 
 def draw_random_shape(draw, hexagons, circle_info, shape):
+    """Get the polygon of a shape, lay it over background, calculate area overlap and color background"""
     center_x, center_y, hex_radius, outer_radius = circle_info
 
     if shape == ELLIPSE:
@@ -171,18 +175,18 @@ def draw_random_shape(draw, hexagons, circle_info, shape):
         hex_polygon = Polygon(hex_points)
 
         if shape_polygon.intersects(hex_polygon):
-            # Calculate overlap percentage
             intersection_area = shape_polygon.intersection(hex_polygon).area
             hex_area = hex_polygon.area
             overlap_ratio = intersection_area / hex_area
 
-            # Color the hexagon based on overlap
             color_value = int(255 * overlap_ratio)
             draw.polygon(hex_points,
                          fill=(color_value, color_value, color_value),
                          outline=HEXAGON_OUTLINE_COLOR)
 
+
 def main(num_pictures):
+    """Create Circle shaped hexagons as background and draw a Square/ellipse on the hexagons (n times)"""
     background, hexagons, circle_info = calculate_background_ratios(size=640, target_count=1039)
 
     image_directory = 'simulated_data/images'
@@ -206,5 +210,6 @@ def main(num_pictures):
         with open(annotations_file, 'w') as f:
             f.write(shape)
 
+
 if __name__ == '__main__':
-   main(10)
+    main(10)
