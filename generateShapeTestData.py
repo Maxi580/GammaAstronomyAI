@@ -96,7 +96,7 @@ def calculate_background_ratios(size=512, target_count=1039):
     return image, hexagons, circle_info
 
 
-def draw_random_square(draw, hexagons, circle_info):
+def draw_random_square(draw, hexagons, circle_info, equal_sides):
     start_hexagon = random.choice(hexagons)
     start_x, start_y = start_hexagon
     center_x, center_y, hex_radius, outer_circle_radius = circle_info
@@ -107,10 +107,19 @@ def draw_random_square(draw, hexagons, circle_info):
     top_factor = random.choice([-1, 1])
     diagonal_factor = random.choice([-1, 1])
 
-    size = random.randint(1, 5)
+    size = random.randint(3, 8)
+    if equal_sides:
+        size1 = size2 = size
+    else:
+        if 0.5 <= random.randint(0, 1):
+            size1 = round(size * 1/3)
+            size2 = size
+        else:
+            size1 = size
+            size2 = round(size * 1 / 3)
 
     # Draw each vertical column
-    for col in range(0, size + 1):
+    for col in range(0, size1 + 1):
         col_x = start_x
         col_y = start_y + hex_height * top_factor * col
 
@@ -119,7 +128,7 @@ def draw_random_square(draw, hexagons, circle_info):
             draw.polygon(points, fill=SHAPE_COLOR, outline=HEXAGON_OUTLINE_COLOR)
 
         # Draw the diagonal row from this column
-        for row in range(1, size + 1):
+        for row in range(1, size2 + 1):
             # Offset calculation adjusted to maintain alignment
             diagonal_x = col_x + (hex_width * 0.75 * row)
             diagonal_y = col_y + (hex_height * 0.5 * row * diagonal_factor)
@@ -129,10 +138,11 @@ def draw_random_square(draw, hexagons, circle_info):
                 draw.polygon(points, fill=SHAPE_COLOR, outline=HEXAGON_OUTLINE_COLOR)
 
 
+
 if __name__ == '__main__':
     background, hexagons, circle_info = calculate_background_ratios(size=640, target_count=1039)
     draw = ImageDraw.Draw(background)
 
-    draw_random_square(draw, hexagons, circle_info)
+    draw_random_square(draw, hexagons, circle_info, False)
 
     background.save('hexagon_background.png', 'PNG')
