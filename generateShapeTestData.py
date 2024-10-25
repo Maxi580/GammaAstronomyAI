@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw
-from math import cos, sin, pi, sqrt, tan
+from math import cos, sin, pi, sqrt, atan2
 import random
-from shapely.geometry import Polygon, box
+from shapely.geometry import Polygon
 import os
 
 HEXAGON_FILL_COLOR = (0, 0, 0)
@@ -103,12 +103,7 @@ def calculate_background_ratios(size=512, target_count=1039):
     return image, hexagons, circle_info
 
 
-def get_random_square_poly(center_x, center_y, outer_radius):
-    angle = random.uniform(0, 2 * pi)
-    distance = random.uniform(0, outer_radius * 0.3)
-    shape_center_x = center_x + cos(angle) * distance
-    shape_center_y = center_y + sin(angle) * distance
-
+def get_random_square_poly(shape_center_x, shape_center_y, center_x, center_y, outer_radius):
     width = height = random.uniform(outer_radius * 0.2, outer_radius * 0.4)
 
     rotation = random.uniform(0, pi / 2)
@@ -130,16 +125,13 @@ def get_random_square_poly(center_x, center_y, outer_radius):
     return shape_polygon
 
 
-def get_random_ellipse_poly(center_x, center_y, outer_radius):
-    angle = random.uniform(0, 2 * pi)
-    distance = random.uniform(0, outer_radius * 0.3)
-    ellipse_center_x = center_x + cos(angle) * distance
-    ellipse_center_y = center_y + sin(angle) * distance
-
+def get_random_ellipse_poly(ellipse_center_x, ellipse_center_y, center_x, center_y, outer_radius):
     width = random.uniform(outer_radius * 0.3, outer_radius * 0.4)
     height = random.uniform(outer_radius * 0.1, outer_radius * 0.2)
 
-    rotation = random.uniform(0, pi / 2)
+    dx = center_x - ellipse_center_x
+    dy = center_y - ellipse_center_y
+    rotation = atan2(dy, dx)
 
     points = []
     num_points = 64
@@ -165,10 +157,15 @@ def draw_random_shape(draw, hexagons, circle_info, shape):
     """Get the polygon of a shape, lay it over background, calculate area overlap and color background"""
     center_x, center_y, hex_radius, outer_radius = circle_info
 
+    angle = random.uniform(0, 2 * pi)
+    distance = random.uniform(0, outer_radius * 0.8)
+    shape_center_x = center_x + cos(angle) * distance
+    shape_center_y = center_y + sin(angle) * distance
+
     if shape == ELLIPSE:
-        shape_polygon = get_random_ellipse_poly(center_x, center_y, outer_radius)
+        shape_polygon = get_random_ellipse_poly(shape_center_x, shape_center_y, center_x, center_y, outer_radius)
     else:
-        shape_polygon = get_random_square_poly(center_x, center_y, outer_radius)
+        shape_polygon = get_random_square_poly(shape_center_x, shape_center_y, center_x, center_y, outer_radius)
 
     for hex_center_x, hex_center_y in hexagons:
         hex_points = create_hexagon_points(hex_center_x, hex_center_y, hex_radius)
