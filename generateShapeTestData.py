@@ -1,11 +1,15 @@
 from PIL import Image, ImageDraw
 from math import cos, sin, pi, sqrt, tan
 import random
+from shapely.geometry import Polygon, box
+import os
 
 HEXAGON_FILL_COLOR = (0, 0, 0)
 HEXAGON_OUTLINE_COLOR = (40, 40, 40)
 SHAPE_COLOR = (255, 255, 255)
 
+ELLIPSE = 'ellipse'
+SQUARE = 'square'
 
 def create_hexagon_points(center_x, center_y, radius):
     """Get the 6 defining Points of hexagons of position and radius"""
@@ -96,53 +100,111 @@ def calculate_background_ratios(size=512, target_count=1039):
     return image, hexagons, circle_info
 
 
-def draw_random_square(draw, hexagons, circle_info, equal_sides):
-    start_hexagon = random.choice(hexagons)
-    start_x, start_y = start_hexagon
-    center_x, center_y, hex_radius, outer_circle_radius = circle_info
+def get_random_square_poly(center_x, center_y, outer_radius):
+    angle = random.uniform(0, 2 * pi)
+    distance = random.uniform(0, outer_radius * 0.3)
+    shape_center_x = center_x + cos(angle) * distance
+    shape_center_y = center_y + sin(angle) * distance
 
-    hex_width = hex_radius * 2
-    hex_height = hex_width * sqrt(3) / 2
+    width = height = random.uniform(outer_radius * 0.1, outer_radius * 0.4)
 
-    top_factor = random.choice([-1, 1])
-    diagonal_factor = random.choice([-1, 1])
+    rotation = random.uniform(0, pi / 2)
 
-    size = random.randint(3, 8)
-    if equal_sides:
-        size1 = size2 = size
+    shape_points = [
+        (
+            shape_center_x + (cos(rotation) * x - sin(rotation) * y),
+            shape_center_y + (sin(rotation) * x + cos(rotation) * y)
+        )
+        for x, y in [
+            (-width / 2, -height / 2),
+            (width / 2, -height / 2),
+            (width / 2, height / 2),
+            (-width / 2, height / 2)
+        ]
+    ]
+
+    shape_polygon = Polygon(shape_points)
+    return shape_polygon
+
+
+def get_random_ellipse_poly(center_x, center_y, outer_radius):
+    angle = random.uniform(0, 2 * pi)
+    distance = random.uniform(0, outer_radius * 0.3)
+    ellipse_center_x = center_x + cos(angle) * distance
+    ellipse_center_y = center_y + sin(angle) * distance
+
+    width = random.uniform(outer_radius * 0.3, outer_radius * 0.4)
+    height = random.uniform(outer_radius * 0.1, outer_radius * 0.2)
+
+    rotation = random.uniform(0, pi / 2)
+
+    points = []
+    num_points = 64
+
+    for i in range(num_points):
+        t = i * 2 * pi / num_points
+
+        x = width / 2 * cos(t)
+        y = height / 2 * sin(t)
+
+        rotated_x = x * cos(rotation) - y * sin(rotation)
+        rotated_y = x * sin(rotation) + y * cos(rotation)
+
+        final_x = ellipse_center_x + rotated_x
+        final_y = ellipse_center_y + rotated_y
+
+        points.append((final_x, final_y))
+
+    return Polygon(points)
+
+
+def draw_random_shape(draw, hexagons, circle_info, shape):
+    center_x, center_y, hex_radius, outer_radius = circle_info
+
+    if shape == ELLIPSE:
+        shape_polygon = get_random_ellipse_poly(center_x, center_y, outer_radius)
     else:
-        if 0.5 <= random.randint(0, 1):
-            size1 = round(size * 1/3)
-            size2 = size
-        else:
-            size1 = size
-            size2 = round(size * 1 / 3)
+        shape_polygon = get_random_square_poly(center_x, center_y, outer_radius)
 
-    # Draw each vertical column
-    for col in range(0, size1 + 1):
-        col_x = start_x
-        col_y = start_y + hex_height * top_factor * col
+    for hex_center_x, hex_center_y in hexagons:
+        hex_points = create_hexagon_points(hex_center_x, hex_center_y, hex_radius)
+        hex_polygon = Polygon(hex_points)
 
-        if point_in_circle(col_x, col_y, center_x, center_y, outer_circle_radius):
-            points = create_hexagon_points(col_x, col_y, hex_radius)
-            draw.polygon(points, fill=SHAPE_COLOR, outline=HEXAGON_OUTLINE_COLOR)
+        if shape_polygon.intersects(hex_polygon):
+            # Calculate overlap percentage
+            intersection_area = shape_polygon.intersection(hex_polygon).area
+            hex_area = hex_polygon.area
+            overlap_ratio = intersection_area / hex_area
 
-        # Draw the diagonal row from this column
-        for row in range(1, size2 + 1):
-            # Offset calculation adjusted to maintain alignment
-            diagonal_x = col_x + (hex_width * 0.75 * row)
-            diagonal_y = col_y + (hex_height * 0.5 * row * diagonal_factor)
+            # Color the hexagon based on overlap
+            color_value = int(255 * overlap_ratio)
+            draw.polygon(hex_points,
+                         fill=(color_value, color_value, color_value),
+                         outline=HEXAGON_OUTLINE_COLOR)
 
-            if point_in_circle(diagonal_x, diagonal_y, center_x, center_y, outer_circle_radius):
-                points = create_hexagon_points(diagonal_x, diagonal_y, hex_radius)
-                draw.polygon(points, fill=SHAPE_COLOR, outline=HEXAGON_OUTLINE_COLOR)
+def main(num_pictures):
+    background, hexagons, circle_info = calculate_background_ratios(size=640, target_count=1039)
 
+    image_directory = 'simulated_data/images'
+    annotation_directory = 'simulated_data/annotations'
 
+    for directory in [image_directory, annotation_directory]:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+    for i in range(num_pictures):
+        background_copy = background.copy()
+        draw = ImageDraw.Draw(background_copy)
+        shape = random.choice([ELLIPSE, SQUARE])
+
+        draw_random_shape(draw, hexagons, circle_info, shape)
+
+        image_path = os.path.join(image_directory, f'image_{i:04d}.png')
+        background_copy.save(image_path, 'PNG')
+
+        annotations_file = os.path.join(annotation_directory, f'image_{i:04d}.txt')
+        with open(annotations_file, 'w') as f:
+            f.write(shape)
 
 if __name__ == '__main__':
-    background, hexagons, circle_info = calculate_background_ratios(size=640, target_count=1039)
-    draw = ImageDraw.Draw(background)
-
-    draw_random_square(draw, hexagons, circle_info, False)
-
-    background.save('hexagon_background.png', 'PNG')
+   main(10)
