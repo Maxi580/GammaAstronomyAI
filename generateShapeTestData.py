@@ -90,7 +90,7 @@ def calculate_background_ratios(size=512, target_count=1039):
     final_hex_radius = outer_radius * best_ratio
     final_count, hexagons = count_and_draw_hexagon_grid(draw, center_x, center_y, final_hex_radius, outer_radius,
                                                         do_draw=True)
-    circle_info = (center_x, center_y, final_hex_radius)
+    circle_info = (center_x, center_y, final_hex_radius, outer_radius)
     print(f"Created pattern with {final_count} hexagons")
 
     return image, hexagons, circle_info
@@ -99,7 +99,7 @@ def calculate_background_ratios(size=512, target_count=1039):
 def draw_random_square(draw, hexagons, circle_info):
     start_hexagon = random.choice(hexagons)
     start_x, start_y = start_hexagon
-    center_x, center_y, hex_radius = circle_info
+    center_x, center_y, hex_radius, outer_circle_radius = circle_info
 
     hex_width = hex_radius * 2
     hex_height = hex_width * sqrt(3) / 2
@@ -107,15 +107,16 @@ def draw_random_square(draw, hexagons, circle_info):
     top_factor = random.choice([-1, 1])
     diagonal_factor = random.choice([-1, 1])
 
-    size = random.randint(1, 4)
+    size = random.randint(1, 5)
 
     # Draw each vertical column
     for col in range(0, size + 1):
         col_x = start_x
         col_y = start_y + hex_height * top_factor * col
 
-        points = create_hexagon_points(col_x, col_y, hex_radius)
-        draw.polygon(points, fill=SHAPE_COLOR, outline=HEXAGON_OUTLINE_COLOR)
+        if point_in_circle(col_x, col_y, center_x, center_y, outer_circle_radius):
+            points = create_hexagon_points(col_x, col_y, hex_radius)
+            draw.polygon(points, fill=SHAPE_COLOR, outline=HEXAGON_OUTLINE_COLOR)
 
         # Draw the diagonal row from this column
         for row in range(1, size + 1):
@@ -123,8 +124,9 @@ def draw_random_square(draw, hexagons, circle_info):
             diagonal_x = col_x + (hex_width * 0.75 * row)
             diagonal_y = col_y + (hex_height * 0.5 * row * diagonal_factor)
 
-            points = create_hexagon_points(diagonal_x, diagonal_y, hex_radius)
-            draw.polygon(points, fill=SHAPE_COLOR, outline=HEXAGON_OUTLINE_COLOR)
+            if point_in_circle(diagonal_x, diagonal_y, center_x, center_y, outer_circle_radius):
+                points = create_hexagon_points(diagonal_x, diagonal_y, hex_radius)
+                draw.polygon(points, fill=SHAPE_COLOR, outline=HEXAGON_OUTLINE_COLOR)
 
 
 if __name__ == '__main__':
