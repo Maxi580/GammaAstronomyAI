@@ -109,7 +109,7 @@ def get_random_square_poly(center_x, center_y, outer_radius):
     shape_center_x = center_x + cos(angle) * distance
     shape_center_y = center_y + sin(angle) * distance
 
-    width = height = random.uniform(outer_radius * 0.1, outer_radius * 0.4)
+    width = height = random.uniform(outer_radius * 0.2, outer_radius * 0.4)
 
     rotation = random.uniform(0, pi / 2)
 
