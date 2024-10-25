@@ -98,7 +98,7 @@ def calculate_background_ratios(size=512, target_count=1039):
     final_count, hexagons = count_and_draw_hexagon_grid(draw, center_x, center_y, final_hex_radius, outer_radius,
                                                         do_draw=True)
     circle_info = (center_x, center_y, final_hex_radius, outer_radius)
-    print(f"Created pattern with {final_count} hexagons")
+    print(f"Created hexagon pattern with {final_count} hexagons")
 
     return image, hexagons, circle_info
 
@@ -126,7 +126,7 @@ def get_random_square_poly(shape_center_x, shape_center_y, center_x, center_y, o
 
 
 def get_random_ellipse_poly(ellipse_center_x, ellipse_center_y, center_x, center_y, outer_radius):
-    width = random.uniform(outer_radius * 0.3, outer_radius * 0.4)
+    width = random.uniform(outer_radius * 0.2, outer_radius * 0.4)
     height = random.uniform(outer_radius * 0.1, outer_radius * 0.2)
 
     dx = center_x - ellipse_center_x
@@ -209,4 +209,4 @@ def main(num_pictures):
 
 
 if __name__ == '__main__':
-    main(10)
+    main(1000)

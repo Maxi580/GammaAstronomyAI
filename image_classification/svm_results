@@ -1,0 +1,11 @@
+Classification Report:
+              precision    recall  f1-score   support
+
+     ellipse       0.88      0.92      0.90       105
+      square       0.91      0.86      0.89        95
+
+    accuracy                           0.90       200
+   macro avg       0.90      0.89      0.89       200
+weighted avg       0.90      0.90      0.89       200
+
+
