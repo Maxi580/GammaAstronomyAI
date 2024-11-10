@@ -12,5 +12,7 @@ weighted avg       0.90      0.90      0.89       200
 
 TORCH CNN
 
-Train Loss: 0.2487, Train Acc: 88.62%
-Val Loss: 0.2136, Val Acc: 90.50%
+
+Epoch 30/30:
+Train Loss: 0.1544, Train Acc: 93.75%
+Val Loss: 0.1632, Val Acc: 94.00%

@@ -141,6 +141,7 @@ def train_model(model, train_loader, val_loader, num_epochs=10):
             best_val_acc = val_acc
             torch.save(model.state_dict(), 'best_model.pth')
 
+
 def main():
     transform = transforms.Compose([
         transforms.Resize(IMAGE_SIZE),
@@ -159,12 +160,12 @@ def main():
         full_dataset, [train_size, val_size]
     )
 
-    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=True)
 
     model = SimpleShapeCNN()
 
-    train_model(model, train_loader, val_loader, num_epochs=15)
+    train_model(model, train_loader, val_loader, num_epochs=30)
 
 
 if __name__ == '__main__':
