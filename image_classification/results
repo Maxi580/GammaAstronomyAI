@@ -1,17 +1,20 @@
-SVM
+Ensemble:
+Training accuracy: 0.975
+Testing accuracy: 0.910
 
-Classification Report:
+Ensemble Detailed Classification Report:
               precision    recall  f1-score   support
 
-     ellipse       0.88      0.92      0.90       105
-      square       0.91      0.86      0.89        95
+     ellipse       0.88      0.95      0.91        98
+      square       0.95      0.87      0.91       102
 
-    accuracy                           0.90       200
-   macro avg       0.90      0.89      0.89       200
-weighted avg       0.90      0.90      0.89       200
+    accuracy                           0.91       200
+   macro avg       0.91      0.91      0.91       200
+weighted avg       0.91      0.91      0.91       200
+
+
 
 TORCH CNN
-
 
 Epoch 30/30:
 Train Loss: 0.1544, Train Acc: 93.75%

@@ -1,11 +1,8 @@
 import os
 import numpy as np
 from PIL import Image
-from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report
 import glob
+from image_classification.EnsembleML import EnsembleShapeClassifier
 
 
 def load_data(image_dir, annotation_dir):
@@ -85,46 +82,11 @@ def extract_features(image_array):
     return features
 
 
-def train_svm_classifier(X, y):
-    """
-    Train an SVM classifier
-    """
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-
-    svm = SVC(kernel='poly', degree=3,  C=2.0, random_state=42)
-    svm.fit(X_train_scaled, y_train)
-
-    train_score = svm.score(X_train_scaled, y_train)
-    test_score = svm.score(X_test_scaled, y_test)
-    print(f"Training accuracy: {train_score:.3f}")
-    print(f"Testing accuracy: {test_score:.3f}")
-
-    y_pred = svm.predict(X_test_scaled)
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
-
-    return svm, scaler
-
-
-def predict_shape(svm, scaler, image_path):
-    img = Image.open(image_path)
-    img_array = np.array(img)
-    features = extract_features(img_array)
-    features_scaled = scaler.transform([features])
-    prediction = svm.predict(features_scaled)[0]
-    return prediction
-
-
 if __name__ == "__main__":
     image_dir = "../simulated_data/images"
     annotation_dir = "../simulated_data/annotations"
 
     X, y = load_data(image_dir, annotation_dir)
 
-    svm_model, scaler = train_svm_classifier(X, y)
+    model = EnsembleShapeClassifier()
+    model.train(X, y)
