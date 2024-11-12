@@ -1,3 +1,4 @@
+from helper import load_and_preprocess_data, extract_features
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
@@ -9,7 +10,7 @@ from sklearn.ensemble import VotingClassifier
 import xgboost as xgb
 
 
-class EnsembleShapeClassifier:
+class EnsembleArrayClassifier:
     def __init__(self):
         self.scaler = StandardScaler()
         self.label_encoder = LabelEncoder()
@@ -21,7 +22,6 @@ class EnsembleShapeClassifier:
         self.xgb = xgb.XGBClassifier(
             n_estimators=100,
             random_state=42,
-            use_label_encoder=False,
             eval_metric='mlogloss'
         )
 
@@ -33,16 +33,21 @@ class EnsembleShapeClassifier:
             'XGBoost': self.xgb
         }
 
-    def train(self, X, y):
+    def train(self, arrays, labels):
+        # Process arrays and extract features
+        X, y = load_and_preprocess_data(arrays, labels)
         y_encoded = self.label_encoder.fit_transform(y)
 
+        # Split the data
         X_train, X_test, y_train, y_test = train_test_split(
             X, y_encoded, test_size=0.2, random_state=42
         )
 
+        # Scale the features
         X_train_scaled = self.scaler.fit_transform(X_train)
         X_test_scaled = self.scaler.transform(X_test)
 
+        # Create and train ensemble
         self.ensemble = VotingClassifier(
             estimators=[
                 ('svm', self.svm),
@@ -57,6 +62,7 @@ class EnsembleShapeClassifier:
         print("Training individual classifiers:")
         print("-" * 50)
 
+        # Train and evaluate individual classifiers
         for name, clf in self.classifiers.items():
             print(f"\nTraining {name}...")
             clf.fit(X_train_scaled, y_train)
@@ -65,6 +71,7 @@ class EnsembleShapeClassifier:
             print(f"Training accuracy: {train_score:.3f}")
             print(f"Testing accuracy: {test_score:.3f}")
 
+        # Train and evaluate ensemble
         print("\nTraining ensemble...")
         self.ensemble.fit(X_train_scaled, y_train)
 
@@ -74,6 +81,7 @@ class EnsembleShapeClassifier:
         print(f"Training accuracy: {ensemble_train_score:.3f}")
         print(f"Testing accuracy: {ensemble_test_score:.3f}")
 
+        # Generate detailed classification report
         print("\nEnsemble Detailed Classification Report:")
         y_pred = self.ensemble.predict(X_test_scaled)
         y_test_original = self.label_encoder.inverse_transform(y_test)
@@ -82,16 +90,20 @@ class EnsembleShapeClassifier:
 
         return X_test_scaled, y_test_original
 
-    def predict(self, features):
+    def predict(self, array):
+        features = extract_features(array)
         features_scaled = self.scaler.transform([features])
 
         predictions = {}
+
+        # Get predictions from each classifier
         for name, clf in self.classifiers.items():
             pred = clf.predict(features_scaled)[0]
             prob = clf.predict_proba(features_scaled)[0]
             pred_original = self.label_encoder.inverse_transform([pred])[0]
             predictions[name] = {'prediction': pred_original, 'confidence': np.max(prob)}
 
+        # Get ensemble prediction
         ensemble_pred = self.ensemble.predict(features_scaled)[0]
         ensemble_prob = self.ensemble.predict_proba(features_scaled)[0]
         ensemble_pred_original = self.label_encoder.inverse_transform([ensemble_pred])[0]
@@ -101,3 +113,5 @@ class EnsembleShapeClassifier:
         }
 
         return predictions
+
+
