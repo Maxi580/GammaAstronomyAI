@@ -3,6 +3,7 @@ import glob
 import numpy as np
 import json
 
+
 def load_data_from_json(data_dir, annotation_dir):
     arrays = []
     labels = []
@@ -52,7 +53,6 @@ def load_and_preprocess_data(array_list, labels):
 
 
 def extract_features(array):
-    # Basic statistical features
     features = [
         np.mean(array),  # Mean value
         np.std(array),  # Standard deviation
@@ -63,10 +63,8 @@ def extract_features(array):
         np.percentile(array, 25),  # First quartile
         np.percentile(array, 75),  # Third quartile
         np.count_nonzero(array),  # Number of non-zero elements
-        len(array),  # Length of array
     ]
 
-    # Add shape-based features
     non_zero_indices = np.nonzero(array)[0]
     if len(non_zero_indices) > 0:
         features.extend([
