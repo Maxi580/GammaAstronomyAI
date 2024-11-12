@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw
 from math import cos, sin, pi, sqrt, atan2
 import random
 from shapely.geometry import Polygon
-import os
+import os, json
 
 HEXAGON_FILL_COLOR = (0, 0, 0)
 HEXAGON_OUTLINE_COLOR = (40, 40, 40)
@@ -30,32 +30,62 @@ def point_in_circle(px, py, center_x, center_y, radius):
     return (dx * dx + dy * dy) <= radius * radius
 
 
-def count_and_draw_hexagon_grid(draw, center_x, center_y, hex_radius, outer_radius, do_draw=True):
-    """Draw as many hexagons in the circles as fit, with the given size"""
+def count_and_draw_hexagon_grid(draw: ImageDraw, center_x, center_y, hex_radius, outer_radius, do_draw=True):
+    """Draw hexagons starting from the center and expanding in rings."""
+    from collections import deque
+
     hex_width = hex_radius * 2
     hex_height = hex_width * sqrt(3) / 2
 
-    # Calculate grid size to cover the circle
-    cols = int(outer_radius * 2 / (hex_width * 0.75)) + 2
-    rows = int(outer_radius * 2 / hex_height) + 2
-
     hexagons = []
-
     count = 0
-    for row in range(-rows // 2, rows // 2 + 1):
-        for col in range(-cols // 2, cols // 2 + 1):
-            x = center_x + col * hex_width * 0.75
-            y = center_y + row * hex_height
-            if col % 2:
-                y += hex_height / 2
 
-            # Check if center point is within the circle boundary
-            if point_in_circle(x, y, center_x, center_y, outer_radius):
-                count += 1
-                if do_draw:
-                    points = create_hexagon_points(x, y, hex_radius)
-                    hexagons.append([x, y])
-                    draw.polygon(points, fill=HEXAGON_FILL_COLOR, outline=HEXAGON_OUTLINE_COLOR)
+    # Define axial directions for hex grid
+    directions = [
+        (1, 0),    # East
+        (1, -1),   # Northeast
+        (0, -1),   # Northwest
+        (-1, 0),   # West
+        (-1, 1),   # Southwest
+        (0, 1)     # Southeast
+    ]
+
+    # Mapping from axial coordinates to pixel positions
+    def axial_to_pixel(q, r):
+        x = center_x + (3/2) * hex_radius * q
+        y = center_y + sqrt(3) * hex_radius * (r + q / 2)
+        return x, y
+
+    # Start with the center hexagon
+    q, r = 0, 0
+    x, y = axial_to_pixel(q, r)
+    if point_in_circle(x, y, center_x, center_y, outer_radius):
+        count += 1
+        if do_draw:
+            points = create_hexagon_points(x, y, hex_radius)
+            hexagons.append([x, y])
+            draw.polygon(points, fill=HEXAGON_FILL_COLOR, outline=HEXAGON_OUTLINE_COLOR)
+
+    visited = set()
+    visited.add((q, r))
+    queue = deque()
+    queue.append((q, r))
+
+    while queue:
+        current_q, current_r = queue.popleft()
+        for dq, dr in directions:
+            neighbor_q = current_q + dq
+            neighbor_r = current_r + dr
+            if (neighbor_q, neighbor_r) not in visited:
+                x, y = axial_to_pixel(neighbor_q, neighbor_r)
+                if point_in_circle(x, y, center_x, center_y, outer_radius):
+                    visited.add((neighbor_q, neighbor_r))
+                    queue.append((neighbor_q, neighbor_r))
+                    count += 1
+                    if do_draw:
+                        points = create_hexagon_points(x, y, hex_radius)
+                        hexagons.append([x, y])
+                        draw.polygon(points, fill=HEXAGON_FILL_COLOR, outline=HEXAGON_OUTLINE_COLOR)
 
     return count, hexagons
 
@@ -166,8 +196,10 @@ def draw_random_shape(draw, hexagons, circle_info, shape):
         shape_polygon = get_random_ellipse_poly(shape_center_x, shape_center_y, center_x, center_y, outer_radius)
     else:
         shape_polygon = get_random_square_poly(shape_center_x, shape_center_y, center_x, center_y, outer_radius)
+        
+    pixel_array = [0]*len(hexagons) # Create a new array for the pixels
 
-    for hex_center_x, hex_center_y in hexagons:
+    for idx, [hex_center_x, hex_center_y] in enumerate(hexagons):
         hex_points = create_hexagon_points(hex_center_x, hex_center_y, hex_radius)
         hex_polygon = Polygon(hex_points)
 
@@ -175,11 +207,15 @@ def draw_random_shape(draw, hexagons, circle_info, shape):
             intersection_area = shape_polygon.intersection(hex_polygon).area
             hex_area = hex_polygon.area
             overlap_ratio = intersection_area / hex_area
+            
+            pixel_array[idx] = min(1, overlap_ratio) # Make sure no values are above 1
 
             color_value = int(255 * overlap_ratio)
             draw.polygon(hex_points,
                          fill=(color_value, color_value, color_value),
                          outline=HEXAGON_OUTLINE_COLOR)
+            
+    return pixel_array
 
 
 def main(num_pictures):
@@ -188,8 +224,9 @@ def main(num_pictures):
 
     image_directory = 'simulated_data/images'
     annotation_directory = 'simulated_data/annotations'
+    array_directory = 'simulated_data/arrays'
 
-    for directory in [image_directory, annotation_directory]:
+    for directory in [image_directory, annotation_directory, array_directory]:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -198,7 +235,7 @@ def main(num_pictures):
         draw = ImageDraw.Draw(background_copy)
         shape = random.choice([ELLIPSE, SQUARE])
 
-        draw_random_shape(draw, hexagons, circle_info, shape)
+        pixel_array = draw_random_shape(draw, hexagons, circle_info, shape)
 
         image_path = os.path.join(image_directory, f'image_{i:04d}.png')
         background_copy.save(image_path, 'PNG')
@@ -206,6 +243,10 @@ def main(num_pictures):
         annotations_file = os.path.join(annotation_directory, f'image_{i:04d}.txt')
         with open(annotations_file, 'w') as f:
             f.write(shape)
+            
+        arrays_file = os.path.join(array_directory, f'image_{i:04d}.json')
+        with open(arrays_file, 'w') as f:
+            f.write(json.dumps(pixel_array, indent=4))
 
 
 if __name__ == '__main__':
