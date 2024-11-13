@@ -29,25 +29,46 @@ def point_in_circle(px, py, center_x, center_y, radius):
     dy = py - center_y
     return (dx * dx + dy * dy) <= radius * radius
 
+def count_hexagon_grid(center_x, center_y, hex_radius, outer_radius):
+    """Draw as many hexagons in the circles as fit, with the given size"""
+    hex_width = hex_radius * 2
+    hex_height = hex_width * sqrt(3) / 2
+
+    # Calculate grid size to cover the circle
+    cols = int(outer_radius * 2 / (hex_width * 0.75)) + 2
+    rows = int(outer_radius * 2 / hex_height) + 2
+
+    hexagons = []
+
+    count = 0
+    for row in range(-rows // 2, rows // 2 + 1):
+        for col in range(-cols // 2, cols // 2 + 1):
+            x = center_x + col * hex_width * 0.75
+            y = center_y + row * hex_height
+            if col % 2:
+                y += hex_height / 2
+
+            # Check if center point is within the circle boundary
+            if point_in_circle(x, y, center_x, center_y, outer_radius):
+                count += 1
+
+    return count, hexagons
+
 
 def count_and_draw_hexagon_grid(draw: ImageDraw, center_x, center_y, hex_radius, outer_radius, do_draw=True):
     """Draw hexagons starting from the center and expanding in rings."""
-    from collections import deque
-
-    hex_width = hex_radius * 2
-    hex_height = hex_width * sqrt(3) / 2
 
     hexagons = []
     count = 0
 
     # Define axial directions for hex grid
     directions = [
-        (1, 0),    # East
-        (1, -1),   # Northeast
-        (0, -1),   # Northwest
-        (-1, 0),   # West
-        (-1, 1),   # Southwest
-        (0, 1)     # Southeast
+        (1, 0),    # Southeast
+        (0, 1),     # East
+        (-1, 1),    # Southwest
+        (-1, 0),   # Northwest
+        (0, -1),    # North
+        (1, -1),    # Northeast
     ]
 
     # Mapping from axial coordinates to pixel positions
@@ -57,8 +78,8 @@ def count_and_draw_hexagon_grid(draw: ImageDraw, center_x, center_y, hex_radius,
         return x, y
 
     # Start with the center hexagon
-    q, r = 0, 0
-    x, y = axial_to_pixel(q, r)
+    X, R = 0, 0
+    x, y = axial_to_pixel(X, R)
     if point_in_circle(x, y, center_x, center_y, outer_radius):
         count += 1
         if do_draw:
@@ -66,26 +87,44 @@ def count_and_draw_hexagon_grid(draw: ImageDraw, center_x, center_y, hex_radius,
             hexagons.append([x, y])
             draw.polygon(points, fill=HEXAGON_FILL_COLOR, outline=HEXAGON_OUTLINE_COLOR)
 
-    visited = set()
-    visited.add((q, r))
-    queue = deque()
-    queue.append((q, r))
+    #
+    ring_count = 1
+    while True:
+        countBefore = count
+        
+        current_X = 0
+        current_Y = -ring_count
 
-    while queue:
-        current_q, current_r = queue.popleft()
-        for dq, dr in directions:
-            neighbor_q = current_q + dq
-            neighbor_r = current_r + dr
-            if (neighbor_q, neighbor_r) not in visited:
-                x, y = axial_to_pixel(neighbor_q, neighbor_r)
+        # First make one move up / "North"
+        x, y = axial_to_pixel(current_X, current_Y)
+        if point_in_circle(x, y, center_x, center_y, outer_radius):
+            count += 1
+            if do_draw:
+                points = create_hexagon_points(x, y, hex_radius)
+                hexagons.append([x, y])
+                draw.polygon(points, fill=HEXAGON_FILL_COLOR, outline=HEXAGON_OUTLINE_COLOR)
+                        
+        # Make moves to specified directions in ring format
+        for idx, (dx, dy) in enumerate(directions):
+            # Calculate number of moves
+            moves = ring_count - (1 if idx+1 == len(directions) else 0)
+            for _ in range(moves):
+                current_X += dx
+                current_Y += dy
+
+                x, y = axial_to_pixel(current_X, current_Y)
                 if point_in_circle(x, y, center_x, center_y, outer_radius):
-                    visited.add((neighbor_q, neighbor_r))
-                    queue.append((neighbor_q, neighbor_r))
                     count += 1
                     if do_draw:
                         points = create_hexagon_points(x, y, hex_radius)
                         hexagons.append([x, y])
                         draw.polygon(points, fill=HEXAGON_FILL_COLOR, outline=HEXAGON_OUTLINE_COLOR)
+
+        # If no hexagons were added, break loop as this means that no more hexagons fit in the circle
+        if count == countBefore:
+            break
+                        
+        ring_count += 1
 
     return count, hexagons
 
@@ -109,7 +148,7 @@ def calculate_background_ratios(size=512, target_count=1039):
     while max_ratio - min_ratio > 0.0001:
         mid_ratio = (min_ratio + max_ratio) / 2
         hex_radius = outer_radius * mid_ratio
-        count, _ = count_and_draw_hexagon_grid(draw, center_x, center_y, hex_radius, outer_radius, do_draw=False)
+        count, _ = count_hexagon_grid(center_x, center_y, hex_radius, outer_radius)
 
         if count == target_count:
             best_ratio = mid_ratio
