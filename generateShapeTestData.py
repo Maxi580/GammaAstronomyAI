@@ -267,9 +267,9 @@ def main(num_pictures, save_imgs = True):
         hex_polygon = Polygon(hex_points)
         hexagons_new.append((hex_points, hex_polygon))
 
-    image_directory = 'simulated_data1/images'
-    annotation_directory = 'simulated_data1/annotations'
-    array_directory = 'simulated_data1/arrays'
+    image_directory = 'simulated_data/images'
+    annotation_directory = 'simulated_data/annotations'
+    array_directory = 'simulated_data/arrays'
 
     for directory in [image_directory, annotation_directory, array_directory]:
         if not os.path.exists(directory):
