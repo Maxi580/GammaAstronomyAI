@@ -238,10 +238,7 @@ def draw_random_shape(draw, hexagons, circle_info, shape):
         
     pixel_array = [0]*len(hexagons) # Create a new array for the pixels
 
-    for idx, [hex_center_x, hex_center_y] in enumerate(hexagons):
-        hex_points = create_hexagon_points(hex_center_x, hex_center_y, hex_radius)
-        hex_polygon = Polygon(hex_points)
-
+    for idx, (hex_points, hex_polygon) in enumerate(hexagons):
         if shape_polygon.intersects(hex_polygon):
             intersection_area = shape_polygon.intersection(hex_polygon).area
             hex_area = hex_polygon.area
@@ -249,21 +246,30 @@ def draw_random_shape(draw, hexagons, circle_info, shape):
             
             pixel_array[idx] = min(1, overlap_ratio) # Make sure no values are above 1
 
-            color_value = int(255 * overlap_ratio)
-            draw.polygon(hex_points,
-                         fill=(color_value, color_value, color_value),
-                         outline=HEXAGON_OUTLINE_COLOR)
+            if draw:
+                color_value = int(255 * overlap_ratio)
+                draw.polygon(hex_points,
+                            fill=(color_value, color_value, color_value),
+                            outline=HEXAGON_OUTLINE_COLOR)
             
     return pixel_array
 
 
-def main(num_pictures):
+def main(num_pictures, save_imgs = True):
     """Create Circle shaped hexagons as background and draw a Square/ellipse on the hexagons (n times)"""
     background, hexagons, circle_info = calculate_background_ratios(size=640, target_count=1039)
+    center_x, center_y, hex_radius, outer_radius = circle_info
+    
+    # Convert Hexagons from points to save time
+    hexagons_new = []
+    for [hex_center_x, hex_center_y] in hexagons:
+        hex_points = create_hexagon_points(hex_center_x, hex_center_y, hex_radius)
+        hex_polygon = Polygon(hex_points)
+        hexagons_new.append((hex_points, hex_polygon))
 
-    image_directory = 'simulated_data/images'
-    annotation_directory = 'simulated_data/annotations'
-    array_directory = 'simulated_data/arrays'
+    image_directory = 'simulated_data1/images'
+    annotation_directory = 'simulated_data1/annotations'
+    array_directory = 'simulated_data1/arrays'
 
     for directory in [image_directory, annotation_directory, array_directory]:
         if not os.path.exists(directory):
@@ -271,13 +277,17 @@ def main(num_pictures):
 
     for i in range(num_pictures):
         background_copy = background.copy()
-        draw = ImageDraw.Draw(background_copy)
         shape = random.choice([ELLIPSE, SQUARE])
+        
+        draw = None
+        if save_imgs:
+            draw = ImageDraw.Draw(background_copy)
 
-        pixel_array = draw_random_shape(draw, hexagons, circle_info, shape)
+        pixel_array = draw_random_shape(draw, hexagons_new, circle_info, shape)
 
-        image_path = os.path.join(image_directory, f'image_{i:04d}.png')
-        background_copy.save(image_path, 'PNG')
+        if save_imgs:
+            image_path = os.path.join(image_directory, f'image_{i:04d}.png')
+            background_copy.save(image_path, 'PNG')
 
         annotations_file = os.path.join(annotation_directory, f'image_{i:04d}.txt')
         with open(annotations_file, 'w') as f:
@@ -289,4 +299,5 @@ def main(num_pictures):
 
 
 if __name__ == '__main__':
+    # Note: add param save_imgs=False to not save the images, but only arrays
     main(1000)
