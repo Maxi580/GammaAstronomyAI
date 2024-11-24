@@ -1,0 +1,19 @@
+Ensemble Detailed Classification Report:
+              precision    recall  f1-score   support
+
+     ellipse       0.92      0.96      0.94       107
+      square       0.95      0.90      0.93        93
+
+    accuracy                           0.94       200
+   macro avg       0.94      0.93      0.93       200
+weighted avg       0.94      0.94      0.93       200
+
+ML Classification Report:
+              precision    recall  f1-score   support
+
+     ellipse       0.90      0.94      0.92       107
+      square       0.93      0.88      0.91        93
+
+    accuracy                           0.92       200
+   macro avg       0.92      0.91      0.91       200
+weighted avg       0.92      0.92      0.91       200

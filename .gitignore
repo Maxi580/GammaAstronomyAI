@@ -1,6 +1,12 @@
 #Image Files
 *.png
 
+# Test data
+simulated_data/
+
+# AI/ML Models
+*.pth
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
