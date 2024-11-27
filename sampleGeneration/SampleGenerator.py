@@ -11,12 +11,15 @@ import json
 
 from sampleGeneration.PlaneGeneratorUtils import PlaneGeneratorUtils
 from sampleGeneration.PlaneGenerators import HexagonPlaneGenerator
+from sampleGeneration.INoiseGenerator import INoiseGenerator  # New import
+from sampleGeneration.NoiseGenerators import SimpleNoiseGenerator  # New import
 
 
 class SampleGenerator:
     def __init__(self,
                  plane_generator: IPlaneGenerator,
                  shapes: List[IShape],
+                 noise_generator: INoiseGenerator,  # New parameter
                  shape_probabilities: List[float] = None,
                  output_size: int = 640,
                  target_count: int = 1039,
@@ -25,6 +28,7 @@ class SampleGenerator:
                  array_dir: str = 'simulated_data/arrays'):
         self.plane_generator = plane_generator
         self.shapes = shapes
+        self.noise_generator = noise_generator  # Store the noise generator
         self.shape_probabilities = shape_probabilities or [1.0 / len(shapes)] * len(shapes)
         self.output_size = output_size
         self.target_count = target_count
@@ -70,9 +74,34 @@ class SampleGenerator:
                     overlap_ratio = intersection_area / hex_area
                     pixel_array[idx] = min(1.0, overlap_ratio)  # Ensure ratio doesn't exceed 1
 
-                    # Update image if drawing is enabled
+                    # Update image based on overlap ratio
                     color_value = int(255 * overlap_ratio)
                     draw.polygon(hex_points, fill=(color_value, color_value, color_value), outline=HexagonPlaneGenerator.HEXAGON_OUTLINE_COLOR)
+
+            # Generate unique noise for this sample
+            noise_values = self.noise_generator.generate_noise(len(hexagons))
+
+            # Apply noise to the image
+            # We'll overlay semi-transparent noise based on the noise_values
+            # Create a noise overlay
+            noise_overlay = Image.new('RGBA', (self.output_size, self.output_size), (0, 0, 0, 0))
+            noise_draw = ImageDraw.Draw(noise_overlay)
+
+            for idx, (hex_center_x, hex_center_y) in enumerate(hexagons):
+                noise_intensity = int(255 * noise_values[idx])
+                # Define the noise color, e.g., red noise
+                noise_color = (noise_intensity, noise_intensity, noise_intensity, noise_intensity)  # Semi-transparent red
+                hex_points = PlaneGeneratorUtils.create_hexagon_points_static(hex_center_x, hex_center_y, plane_info[2])
+                noise_draw.polygon(hex_points, fill=noise_color)
+
+            # Composite the noise overlay onto the background image
+            background_copy = Image.alpha_composite(background_copy.convert('RGBA'), noise_overlay)
+
+            # Combine pixel_array and noise_values into a single data structure
+            data = {
+                "pixel_array": pixel_array,
+                "noise": noise_values
+            }
 
             # Save the image
             image_path = os.path.join(self.image_dir, f'image_{i:04d}.png')
@@ -83,10 +112,10 @@ class SampleGenerator:
             with open(annotation_path, 'w') as f:
                 f.write(shape.get_name())
 
-            # Save the array
+            # Save the combined array and noise data
             array_path = os.path.join(self.array_dir, f'image_{i:04d}.json')
             with open(array_path, 'w') as f:
-                json.dump(pixel_array, f)
+                json.dump(data, f)
 
             if i % 100 == 0 or i == num_samples:
                 print(f"Generated {i} / {num_samples} samples")
