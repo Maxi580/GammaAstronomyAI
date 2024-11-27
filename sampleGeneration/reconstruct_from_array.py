@@ -1,10 +1,8 @@
-# File: reconstruct_from_array.py
-
 import os
 import json
 from typing import Tuple, List
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from PlaneGenerators import HexagonPlaneGenerator
 from shapely.geometry import Polygon
 from math import cos, sin, pi
@@ -19,9 +17,17 @@ def create_hexagon_points(center_x, center_y, radius):
         points.append((x, y))
     return points
 
+def get_contrasting_text_color(background_color: Tuple[int, int, int, int]) -> Tuple[int, int, int]:
+    """
+    Determine a contrasting text color (black or white) based on the brightness of the background color.
+    """
+    r, g, b, _ = background_color
+    brightness = (0.299 * r + 0.587 * g + 0.114 * b)
+    return (0, 0, 0) if brightness > 186 else (255, 255, 255)
+
 def reconstruct_image(array_path: str, hexagons: List[Tuple[float, float]], hex_radius: float, outline_color=(40, 40, 40)):
     """
-    Reconstructs an image from the combined array and noise data.
+    Reconstructs an image from the combined array and noise data, with each hexagon labeled by its index.
     """
     # Initialize a transparent image
     # Assuming the size is known or stored; alternatively, store it as part of the array data
@@ -39,6 +45,16 @@ def reconstruct_image(array_path: str, hexagons: List[Tuple[float, float]], hex_
     if not pixel_array or not noise_array:
         print(f"Missing data in {array_path}, skipping.")
         return
+
+    # Load a font. Adjust the path to a TTF font file as needed.
+    try:
+        # Attempt to load a TrueType font (you can specify the path to a .ttf file)
+        font_size = int(hex_radius)  # Adjust font size based on hex radius
+        font = ImageFont.truetype("arial.ttf", font_size)
+    except IOError:
+        # If the TrueType font is not found, load the default PIL font
+        font = ImageFont.load_default()
+        print("TrueType font not found. Using default font.")
 
     # Iterate over hexagons and their corresponding array values
     for idx, (hex_center_x, hex_center_y) in enumerate(hexagons):
@@ -68,6 +84,20 @@ def reconstruct_image(array_path: str, hexagons: List[Tuple[float, float]], hex_
 
         points = create_hexagon_points(hex_center_x, hex_center_y, hex_radius)
         draw.polygon(points, fill=blended_color, outline=outline_color)
+
+        # Determine text color for contrast
+        text_color = get_contrasting_text_color(blended_color)
+
+        # Prepare the index text
+        text = str(idx)
+
+        # Calculate text size to center it
+        text_width, text_height = 11, 11
+        text_x = hex_center_x - text_width / 2
+        text_y = hex_center_y - text_height / 2
+
+        # Draw the text
+        draw.text((text_x, text_y), text, fill=text_color, font=font)
 
     return image
 

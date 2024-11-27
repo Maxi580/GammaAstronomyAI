@@ -1,5 +1,3 @@
-# File: ShapeGenerator.py
-
 from typing import List, Tuple
 from shapely.geometry import Polygon
 from PIL import ImageDraw

@@ -1,9 +1,7 @@
-# File: SampleGenerator.py
-
 import os
 import random
 from typing import List, Tuple
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageChops
 from IPlaneGenerator import IPlaneGenerator
 from IShape import IShape
 from ShapeGenerator import ShapeGenerator

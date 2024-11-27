@@ -1,5 +1,3 @@
-# File: PlaneGenerators.py
-
 from PIL import Image, ImageDraw
 from math import cos, sin, pi, sqrt
 import random

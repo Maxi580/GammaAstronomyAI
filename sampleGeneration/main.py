@@ -3,7 +3,7 @@
 from PlaneGenerators import HexagonPlaneGenerator
 from Shapes import Ellipse, Square, Triangle
 from SampleGenerator import SampleGenerator
-from NoiseGenerators import SimpleNoiseGenerator  # New import
+from NoiseGenerators import SimpleNoiseGenerator, SpikyNoiseGenerator  # New import
 
 def main():
     # Instantiate shapes
@@ -13,7 +13,8 @@ def main():
     hex_plane_gen = HexagonPlaneGenerator()
 
     # Instantiate a noise generator
-    noise_gen = SimpleNoiseGenerator(0.1, 0.7)  # You can pass a seed for reproducibility
+    #noise_gen = SimpleNoiseGenerator(0.1, 0.7)  # You can pass a seed for reproducibility
+    noise_gen = SpikyNoiseGenerator(0.1, 0.5)  # You can pass a seed for reproducibility
 
     # Create a sample generator with specified probabilities for each shape
     sample_gen = SampleGenerator(

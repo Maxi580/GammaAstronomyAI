@@ -1,5 +1,3 @@
-# File: PlaneGeneratorUtils.py
-
 from math import pi, cos, sin
 
 class PlaneGeneratorUtils:
