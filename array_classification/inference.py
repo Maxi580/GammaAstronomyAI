@@ -1,5 +1,5 @@
 import torch
-from torch_cnn_arrays import SimpleShapeCNN
+from HexCNN import HexCNN
 import glob
 import os
 import json
@@ -8,7 +8,7 @@ LABELS = {'square': 0, 'ellipse': 1}
 
 
 def predict(model_path, array_dir, annotation_dir):
-    model = SimpleShapeCNN()
+    model = HexCNN()
     model.load_state_dict(torch.load(model_path, weights_only=True))
     model.eval()
     

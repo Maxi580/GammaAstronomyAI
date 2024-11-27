@@ -7,6 +7,8 @@ import numpy as np
 import os
 import json
 
+from array_classification.HexConv.HexConv import ConvHex
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'simulated_data')
 ARRAY_DIR = os.path.join(DATA_DIR, 'arrays')
@@ -60,39 +62,38 @@ class ShapeDataset(Dataset):
         }
 
 
-class SimpleShapeCNN(nn.Module):
+class HexCNN(nn.Module):
     def __init__(self):
-        super(SimpleShapeCNN, self).__init__()
+        super(HexCNN, self).__init__()
 
         self.features = nn.Sequential(
-            nn.Conv1d(1, 16, kernel_size=7, padding=0),
+            # Capture hexagonal structure !!!
+            ConvHex(in_channels=1, out_channels=16),
             nn.BatchNorm1d(16),
+            nn.ReLU(),
+
+            nn.Conv1d(16, 32, kernel_size=3, padding=1),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
             nn.MaxPool1d(2),
             nn.Dropout1d(0.1),
 
-            nn.Conv1d(16, 32, kernel_size=5, padding=0),
-            nn.BatchNorm1d(32),
-            nn.ReLU(),
-            nn.MaxPool1d(2),
-            nn.Dropout1d(0.15),
-
-            nn.Conv1d(32, 64, kernel_size=3, padding=0),
+            nn.Conv1d(32, 64, kernel_size=3, padding=1),
             nn.BatchNorm1d(64),
             nn.ReLU(),
             nn.MaxPool1d(2),
-            nn.Dropout1d(0.2),
+            nn.Dropout1d(0.15),
         )
 
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(8128, 128), # 64*129 because of pooling
+            nn.Linear(16576, 32),  # 64*129 (1039 / 2 / 2 = 129)
             nn.ReLU(),
             nn.Dropout(0.3),
-            nn.Linear(128, 32),
+            nn.Linear(32, 16),
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear(32, 2)
+            nn.Linear(16, 2)
         )
 
     def forward(self, x):
@@ -208,7 +209,7 @@ def main():
     
     print("Starting Training...")
 
-    model = SimpleShapeCNN()
+    model = HexCNN()
 
     train_model(model, train_loader, val_loader, num_epochs=10)
 
