@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Tuple
 from shapely.geometry import Polygon
 
 class IShape(ABC):
@@ -15,7 +16,7 @@ class IShape(ABC):
         self.max_size = max_size
 
     @abstractmethod
-    def generate_polygon(self, center_x: float, center_y: float, outer_radius: float) -> Polygon:
+    def generate_polygon(self, center_x: float, center_y: float, plane_info: Tuple[int, int, float, float]) -> Polygon:
         """Generates the polygon representing the shape."""
         pass
 

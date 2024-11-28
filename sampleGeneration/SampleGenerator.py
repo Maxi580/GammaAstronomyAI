@@ -58,7 +58,7 @@ class SampleGenerator:
 
             # Select random position for the shape
             shape_center_x, shape_center_y = shape_generator.get_random_position()
-            shape_polygon = shape.generate_polygon(shape_center_x, shape_center_y, plane_info[3])
+            shape_polygon = shape.generate_polygon(shape_center_x, shape_center_y, plane_info)
 
             # Initialize the pixel array
             pixel_array = [0.0] * len(hexagons)
