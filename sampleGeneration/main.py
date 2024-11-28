@@ -1,9 +1,7 @@
-# File: main.py
-
-from PlaneGenerators import HexagonPlaneGenerator
-from Shapes import Ellipse, Square, Triangle
-from SampleGenerator import SampleGenerator
-from NoiseGenerators import SimpleNoiseGenerator, SpikyNoiseGenerator  # New import
+from .PlaneGenerators import HexagonPlaneGenerator
+from .Shapes import Ellipse, Square, Triangle
+from .SampleGenerator import SampleGenerator
+from .NoiseGenerators import SimpleNoiseGenerator, SpikyNoiseGenerator
 
 def main():
     # Instantiate shapes

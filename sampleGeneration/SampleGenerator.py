@@ -1,16 +1,15 @@
 import os
 import random
-from typing import List, Tuple
-from PIL import Image, ImageDraw, ImageChops
-from IPlaneGenerator import IPlaneGenerator
-from IShape import IShape
-from ShapeGenerator import ShapeGenerator
+from typing import List
+from PIL import Image, ImageDraw
+from .IPlaneGenerator import IPlaneGenerator
+from .IShape import IShape
+from .ShapeGenerator import ShapeGenerator
 import json
 
-from sampleGeneration.PlaneGeneratorUtils import PlaneGeneratorUtils
-from sampleGeneration.PlaneGenerators import HexagonPlaneGenerator
-from sampleGeneration.INoiseGenerator import INoiseGenerator  # New import
-from sampleGeneration.NoiseGenerators import SimpleNoiseGenerator  # New import
+from .PlaneGeneratorUtils import PlaneGeneratorUtils
+from .PlaneGenerators import HexagonPlaneGenerator
+from .INoiseGenerator import INoiseGenerator
 
 
 class SampleGenerator:

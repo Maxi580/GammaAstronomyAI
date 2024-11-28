@@ -1,6 +1,6 @@
 import random
 from typing import List
-from INoiseGenerator import INoiseGenerator
+from .INoiseGenerator import INoiseGenerator
 
 
 class SimpleNoiseGenerator(INoiseGenerator):

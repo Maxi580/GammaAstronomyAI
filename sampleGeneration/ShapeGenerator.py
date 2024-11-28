@@ -1,10 +1,7 @@
 from typing import List, Tuple
-from shapely.geometry import Polygon
-from PIL import ImageDraw
 import random
 from math import pi, cos, sin
-from PlaneGeneratorUtils import PlaneGeneratorUtils
-from IShape import IShape
+from .IShape import IShape
 
 class ShapeGenerator:
     def __init__(self, shapes: List[IShape], plane_info: Tuple[int, int, float, float]):

@@ -3,8 +3,7 @@ import json
 from typing import Tuple, List
 
 from PIL import Image, ImageDraw, ImageFont
-from PlaneGenerators import HexagonPlaneGenerator
-from shapely.geometry import Polygon
+from .PlaneGenerators import HexagonPlaneGenerator
 from math import cos, sin, pi
 
 def create_hexagon_points(center_x, center_y, radius):

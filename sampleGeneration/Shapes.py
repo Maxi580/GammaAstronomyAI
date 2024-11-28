@@ -1,7 +1,7 @@
 import random
-from math import pi, cos, sin, atan2
+from math import pi, cos, sin
 from shapely.geometry import Polygon
-from IShape import IShape  # Relative import
+from .IShape import IShape
 
 
 class Ellipse(IShape):

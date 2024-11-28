@@ -1,9 +1,7 @@
 from PIL import Image, ImageDraw
 from math import cos, sin, pi, sqrt
-import random
 from typing import List, Tuple
-from IPlaneGenerator import IPlaneGenerator
-from PlaneGeneratorUtils import PlaneGeneratorUtils
+from .IPlaneGenerator import IPlaneGenerator
 
 class HexagonPlaneGenerator(IPlaneGenerator):
     HEXAGON_FILL_COLOR = (0, 0, 0)
