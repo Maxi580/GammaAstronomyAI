@@ -30,12 +30,21 @@ class HexagonPlaneGenerator(IPlaneGenerator):
 
         # Define axial directions for hex grid
         directions = [
-            (1, 0),    # Southeast
-            (0, 1),    # East
+            # Anti-clockwise
             (-1, 1),    # Southwest
-            (-1, 0),    # Northwest
-            (0, -1),    # North
+            (0, 1),     # South
+            (1, 0),     # Southeast
             (1, -1),    # Northeast
+            (0, -1),    # North
+            (-1, 0),    # Northwest
+            
+            # OLD: clockwise directions
+            # (1, 0),    # Southeast
+            # (0, 1),    # South
+            # (-1, 1),    # Southwest
+            # (-1, 0),    # Northwest
+            # (0, -1),    # North
+            # (1, -1),    # Northeast
         ]
 
         # Mapping from axial coordinates to pixel positions
