@@ -47,6 +47,6 @@ def predict(model_path, array_dir, annotation_dir):
     
 if __name__ == "__main__":
     MODEL_PATH = 'best_model_arrays.pth'
-    ARRAYS_DIR = "../simulated_data1/arrays"
-    ANNOTATIONS_DIR = "../simulated_data1/annotations"
+    ARRAYS_DIR = "../simulated_data/arrays"
+    ANNOTATIONS_DIR = "../simulated_data/annotations"
     predict(MODEL_PATH, ARRAYS_DIR, ANNOTATIONS_DIR)
