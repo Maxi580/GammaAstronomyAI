@@ -1,9 +1,8 @@
-from helper import load_and_preprocess_data, load_data_from_json
-from EnsembleML import EnsembleArrayClassifier
-from MLP import MLP
+from helper import load_data_from_json
+from array_classification.ML_Models.EnsembleML import EnsembleArrayClassifier
 
-ARRAYS_DIR = "../simulated_data/arrays"
-ANNOTATIONS_DIR = "../simulated_data/annotations"
+ARRAYS_DIR = "../../simulated_data/arrays"
+ANNOTATIONS_DIR = "../../simulated_data/annotations"
 
 
 def main():

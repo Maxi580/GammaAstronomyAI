@@ -2,8 +2,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
+from sklearn.metrics import precision_score, recall_score, f1_score
+import numpy as np
 import os
 import json
+
+from array_classification.HexConv.HexConv import ConvHex
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'simulated_data')
@@ -34,40 +38,62 @@ class ShapeDataset(Dataset):
 
         return torch.tensor([array]), self.labels[label]
 
+    def get_distribution(self):
+        all_labels = []
+        for array_file in self.arrays:
+            label_path = os.path.join(self.annotation_dir, array_file.replace('.json', '.txt'))
+            with open(label_path, 'r') as f:
+                label = f.read().strip()
+            all_labels.append(self.labels[label])
 
-class SimpleShapeCNN(nn.Module):
+        total_samples = len(all_labels)
+        label_counts = {}
+        for label_name, label_idx in self.labels.items():
+            count = all_labels.count(label_idx)
+            percentage = (count / total_samples) * 100
+            label_counts[label_name] = {
+                'count': count,
+                'percentage': percentage
+            }
+
+        return {
+            'total_samples': total_samples,
+            'distribution': label_counts
+        }
+
+
+class HexCNN(nn.Module):
     def __init__(self):
-        super(SimpleShapeCNN, self).__init__()
+        super(HexCNN, self).__init__()
 
         self.features = nn.Sequential(
-            nn.Conv1d(1, 16, kernel_size=7, padding=0),
+            # Capture hexagonal structure !!!
+            ConvHex(in_channels=1, out_channels=16),
             nn.BatchNorm1d(16),
+            nn.ReLU(),
+
+            nn.Conv1d(16, 32, kernel_size=3, padding=1),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
             nn.MaxPool1d(2),
             nn.Dropout1d(0.1),
 
-            nn.Conv1d(16, 32, kernel_size=5, padding=0),
-            nn.BatchNorm1d(32),
-            nn.ReLU(),
-            nn.MaxPool1d(2),
-            nn.Dropout1d(0.15),
-
-            nn.Conv1d(32, 64, kernel_size=3, padding=0),
+            nn.Conv1d(32, 64, kernel_size=3, padding=1),
             nn.BatchNorm1d(64),
             nn.ReLU(),
             nn.MaxPool1d(2),
-            nn.Dropout1d(0.2),
+            nn.Dropout1d(0.15),
         )
 
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(8128, 128), # 64*129 because of pooling
+            nn.Linear(16576, 32),  # 64*129 (1039 / 2 / 2 = 129)
             nn.ReLU(),
             nn.Dropout(0.3),
-            nn.Linear(128, 32),
+            nn.Linear(32, 16),
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear(32, 2)
+            nn.Linear(16, 2)
         )
 
     def forward(self, x):
@@ -89,10 +115,10 @@ def train_model(model, train_loader, val_loader, num_epochs=10):
 
     for epoch in range(num_epochs):
         model.train()
-        train_loss = 0
-        train_correct = 0
-        train_total = 0
 
+        train_preds = []
+        train_labels = []
+        train_loss = 0
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(device), labels.to(device)
 
@@ -103,17 +129,19 @@ def train_model(model, train_loader, val_loader, num_epochs=10):
             optimizer.step()
 
             _, predicted = outputs.max(1)
-            train_total += labels.size(0)
-            train_correct += predicted.eq(labels).sum().item()
+            train_preds.extend(predicted.cpu().numpy())
+            train_labels.extend(labels.cpu().numpy())
             train_loss += loss.item()
 
-        train_acc = 100. * train_correct / train_total
+        train_acc = 100. * np.mean(np.array(train_labels) == np.array(train_preds))
+        train_precision = 100. * precision_score(train_labels, train_preds, average='weighted', zero_division=0)
+        train_recall = 100. * recall_score(train_labels, train_preds, average='weighted')
+        train_f1 = 100. * f1_score(train_labels, train_preds, average='weighted')
 
         model.eval()
         val_loss = 0
-        val_correct = 0
-        val_total = 0
-
+        val_preds = []
+        val_labels = []
         with torch.no_grad():
             for inputs, labels in val_loader:
                 inputs, labels = inputs.to(device), labels.to(device)
@@ -121,18 +149,31 @@ def train_model(model, train_loader, val_loader, num_epochs=10):
                 loss = criterion(outputs, labels)
 
                 _, predicted = outputs.max(1)
-                val_total += labels.size(0)
-                val_correct += predicted.eq(labels).sum().item()
+                val_preds.extend(predicted.cpu().numpy())
+                val_labels.extend(labels.cpu().numpy())
                 val_loss += loss.item()
-
-        val_acc = 100. * val_correct / val_total
-
         scheduler.step(val_loss)
 
+        val_acc = 100. * np.mean(np.array(val_labels) == np.array(val_preds))
+        val_precision = 100. * precision_score(val_labels, val_preds, average='weighted', zero_division=0)
+        val_recall = 100. * recall_score(val_labels, val_preds, average='weighted')
+        val_f1 = 100. * f1_score(val_labels, val_preds, average='weighted')
+
         print(f'Epoch {epoch + 1}/{num_epochs}:')
-        print(f'Train Loss: {train_loss / len(train_loader):.4f}, Train Acc: {train_acc:.2f}%')
-        print(f'Val Loss: {val_loss / len(val_loader):.4f}, Val Acc: {val_acc:.2f}%')
-        print('--------------------')
+        print('Training Metrics:')
+        print(f'Loss: {train_loss / len(train_loader):.4f}')
+        print(f'Accuracy: {train_acc:.2f}%')
+        print(f'Precision: {train_precision:.2f}%')
+        print(f'Recall: {train_recall:.2f}%')
+        print(f'F1-Score: {train_f1:.2f}%')
+
+        print('\nValidation Metrics:')
+        print(f'Loss: {val_loss / len(val_loader):.4f}')
+        print(f'Accuracy: {val_acc:.2f}%')
+        print(f'Precision: {val_precision:.2f}%')
+        print(f'Recall: {val_recall:.2f}%')
+        print(f'F1-Score: {val_f1:.2f}%')
+        print('-' * 50)
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
@@ -147,8 +188,15 @@ def main():
         ANNOTATION_DIR
     )
 
-    # Use 80% of data for training and 20% for validation
-    train_size = int(0.8 * len(full_dataset))
+    dist_info = full_dataset.get_distribution()
+    print("\nDataset Overview:")
+    print(f"Total number of samples: {dist_info['total_samples']}")
+    print("\nClass Distribution:")
+    for label, info in dist_info['distribution'].items():
+        print(f"{label}: {info['count']} samples ({info['percentage']:.2f}%)")
+
+    # Use 70% of data for training and 30% for validation
+    train_size = int(0.7 * len(full_dataset))
     val_size = len(full_dataset) - train_size
     train_dataset, val_dataset = torch.utils.data.random_split(
         full_dataset, [train_size, val_size]
@@ -161,9 +209,9 @@ def main():
     
     print("Starting Training...")
 
-    model = SimpleShapeCNN()
+    model = HexCNN()
 
-    train_model(model, train_loader, val_loader, num_epochs=30)
+    train_model(model, train_loader, val_loader, num_epochs=10)
 
 
 if __name__ == '__main__':
