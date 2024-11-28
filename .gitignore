@@ -1,6 +1,3 @@
-#Image Files
-*.png
-
 # Test data
 simulated_data/
 
