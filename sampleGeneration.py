@@ -1,15 +1,20 @@
+import argparse
+import os
+import sys
+
 from sampleGeneration.PlaneGenerators import HexagonPlaneGenerator
 from sampleGeneration.Shapes import Ellipse, Square, Triangle
 from sampleGeneration.SampleGenerator import SampleGenerator
 from sampleGeneration.NoiseGenerators import SimpleNoiseGenerator, SpikyNoiseGenerator
 
-def main():
-    """
-    1.  Add the wanted shapes and their probability here.
-    """
-    shapes = [Ellipse(), Ellipse(centered=True)]
-    probabilities = [0.5, 0.5]
-
+def main(count: int, dir: str, shapes, probabilities):
+    print("Starting Sample Generator with settings:")
+    print(f"\t- Sample Count = {count}")
+    print(f"\t- Output Dir = {dir}")
+    print(f"\t- Shapes = {[s.get_name() for s in shapes]}")
+    print(f"\t- Probabilities = {[round(p, 2) for p in probabilities]}")
+    print("\n")
+    
     # Instantiate a hexagon plane generator
     hex_plane_gen = HexagonPlaneGenerator()
 
@@ -30,15 +35,51 @@ def main():
         shape_probabilities=probabilities,
         output_size=640,
         target_count=1039,
-        image_dir='simulated_data/images',
-        annotation_dir='simulated_data/annotations',
-        array_dir='simulated_data/arrays'
+        image_dir=dir + '/images',
+        annotation_dir=dir + '/annotations',
+        array_dir=dir + '/arrays'
     )
 
-    """
-    4.  Enter number of wanted samples here.
-    """
-    sample_gen.generate_samples(20)
+    sample_gen.generate_samples(count)
+    
+def parse_shapes(input_str: str):
+    shapes = []
+    probabilities = []
+    
+    for shape in input_str.lower().split(','):
+        s, p = shape.split(':')
+        
+        try:
+            probabilities.append(int(p))
+        except:
+            raise ValueError(f"Invalid probability for Shape '{s}': '{p}'")
+        
+        match s:
+            case 'ellipse':
+                shapes.append(Ellipse())
+            case 'ellipse-centered':
+                shapes.append(Ellipse(centered=True))
+            case 'square':
+                shapes.append(Square())
+            case 'triangle':
+                shapes.append(Triangle())
+            case _:
+                raise ValueError(f"Invalid Shape: '{s}'")
+            
+    probs_sum = sum(probabilities)
+    probabilities = [p / probs_sum for p in probabilities]
+    
+    return shapes, probabilities
 
 if __name__ == '__main__':
-    main()
+    # Parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", metavar="sample_count", type=int, default="1000", help="Specified count of samples to generate.")
+    parser.add_argument("-o", "--output", metavar="output_dir", default="simulated_data/default", help="Specify the output directory (Relative path).")
+    parser.add_argument("-s", "--shapes", metavar="shapes", default="ellipse:1,square:1", help="Specify what shapes to generate and their probabilities.")
+    args = parser.parse_args(sys.argv[1:])
+
+    shapes, probabilities = parse_shapes(args.shapes)
+
+    # Start generation
+    main(args.n, os.getcwd() + '/' + args.output, shapes, probabilities)
