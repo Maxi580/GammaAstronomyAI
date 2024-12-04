@@ -65,7 +65,7 @@ class TrainingSupervisor:
         labels = torch.tensor(
             [self.full_dataset[i][1] for i in range(len(self.full_dataset))]
         )
-        train_indices, test_indices = train_test_split(
+        train_indices, val_indices = train_test_split(
             np.arange(len(self.full_dataset)),
             test_size=0.3,
             stratify=labels.numpy(),  # Use the labels for stratification
@@ -74,7 +74,7 @@ class TrainingSupervisor:
 
         # Create subsets for training and testing
         self.train_dataset = Subset(self.full_dataset, train_indices)
-        self.val_dataset = Subset(self.full_dataset, test_indices)
+        self.val_dataset = Subset(self.full_dataset, val_indices)
 
         print("Loading Data Loaders...\n")
 
