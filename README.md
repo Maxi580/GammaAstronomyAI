@@ -23,7 +23,6 @@ Valid Shapes are:
 - `ellipse` for Ellipses
 - `ellipse-centered` for Ellipses that point to the center
 - `square` for Squares
-- `triangle` for triangle
 
 Shapes must be provided in the following format: `<shape1>:<probability1>,<shape2>:<probability2>,...`.
 Example: `ellipse:1,square:3`. This will produce a dataset containing roughly 25% ellipses and 75% squares.

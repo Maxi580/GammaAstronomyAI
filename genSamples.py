@@ -5,7 +5,7 @@ import sys
 from sampleGeneration.NoiseGenerators import SimpleNoiseGenerator, SpikyNoiseGenerator
 from sampleGeneration.PlaneGenerators import HexagonPlaneGenerator
 from sampleGeneration.SampleGenerator import SampleGenerator
-from sampleGeneration.Shapes import Ellipse, Square, Triangle
+from sampleGeneration.Shapes import Ellipse, Square
 
 
 def main(count: int, name: str, shapes, probabilities):
@@ -29,7 +29,7 @@ def main(count: int, name: str, shapes, probabilities):
     """
     noise_gen = None
     # noise_gen = SimpleNoiseGenerator(0.1, 0.7)
-    noise_gen = SpikyNoiseGenerator(0.1, 0.35)
+    # noise_gen = SpikyNoiseGenerator(0.1, 0.35)
 
     """
     Adapt generator specifications here.
@@ -68,8 +68,6 @@ def parse_shapes(input_str: str):
                 shapes.append(Ellipse(centered=True))
             case "square":
                 shapes.append(Square())
-            case "triangle":
-                shapes.append(Triangle())
             case _:
                 raise ValueError(f"Invalid Shape: '{s}'")
 
