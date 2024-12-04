@@ -126,9 +126,11 @@ class SampleGenerator:
                 background_copy = Image.alpha_composite(
                     background_copy.convert("RGBA"), noise_overlay
                 )
+                # Same for the pixel array
+                pixel_array = [p + n for p, n in zip(pixel_array, noise_values)]
 
             # Combine pixel_array and noise_values into a single data structure
-            data = {"pixel_array": pixel_array, "noise": noise_values}
+            data = {"pixel_array": pixel_array, "noise_only": noise_values}
 
             # Save the image
             image_path = os.path.join(self.image_dir, f"image_{i:04d}.png")
