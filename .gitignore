@@ -1,5 +1,9 @@
 # Test data
-simulated_data/
+datasets/
+reconstructed_images/
+
+# Trained models
+trained_models/
 
 # AI/ML Models
 *.pth

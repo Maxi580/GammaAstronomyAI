@@ -10,7 +10,7 @@ from sampleGeneration.Shapes import Ellipse, Square, Triangle
 
 def main(count: int, name: str, shapes, probabilities):
     output_dir = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "simulated_data", name
+        os.path.dirname(os.path.realpath(__file__)), "datasets", name
     )
 
     print("Starting Sample Generator with settings:")
