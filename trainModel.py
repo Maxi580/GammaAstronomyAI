@@ -7,7 +7,7 @@ from arrayClassification.trainingSupervisor import TrainingSupervisor
 
 
 def main(modelname: str, dataset: str, epochs: int, info_prints: bool):
-    nametag = f"{modelname}_{time.strftime("%Y-%m-%d_%H.%M.%S")}"
+    nametag = f"{modelname}_{dataset}_{time.strftime("%Y-%m-%d_%H-%M-%S")}"
     dataset_dir = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "datasets", dataset
     )
