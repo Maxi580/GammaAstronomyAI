@@ -7,8 +7,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.metrics import f1_score, precision_score, recall_score
-from torch.utils.data import DataLoader
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, Subset
 
 from arrayClassification.CNN.HexCNN import HexCNN
 from arrayClassification.CNN.shapeDataset import ShapeDataset
@@ -58,13 +59,22 @@ class TrainingSupervisor:
             print(f"{label}: {info["count"]} samples ({info["percentage"]:.2f}%)")
         print("\n")
 
+        # Stratified splitting using sklearn
         # Use 70% of data for training and 30% for validation
-        # TODO: Split distributions equally
-        train_size = int(0.7 * len(self.full_dataset))
-        val_size = len(self.full_dataset) - train_size
-        self.train_dataset, self.val_dataset = torch.utils.data.random_split(
-            self.full_dataset, [train_size, val_size]
+        print("Splitting Dataset equally...\n")
+        labels = torch.tensor(
+            [self.full_dataset[i][1] for i in range(len(self.full_dataset))]
         )
+        train_indices, test_indices = train_test_split(
+            np.arange(len(self.full_dataset)),
+            test_size=0.3,
+            stratify=labels.numpy(),  # Use the labels for stratification
+            random_state=42,
+        )
+
+        # Create subsets for training and testing
+        self.train_dataset = Subset(self.full_dataset, train_indices)
+        self.val_dataset = Subset(self.full_dataset, test_indices)
 
         print("Loading Data Loaders...\n")
 
@@ -145,21 +155,11 @@ class TrainingSupervisor:
             train_loss += loss.item()
 
         # Calculate metrics on training data for current epoch
-        accuracy = 100.0 * np.mean(np.array(train_labels) == np.array(train_preds))
-        precision = 100.0 * precision_score(
-            train_labels, train_preds, average="weighted", zero_division=0
-        )
-        recall = 100.0 * recall_score(train_labels, train_preds, average="weighted")
-        f1 = 100.0 * f1_score(train_labels, train_preds, average="weighted")
-
-        self.training_metrics.append(
-            {
-                "loss": train_loss / len(self.training_data_loader),
-                "accuracy": accuracy,
-                "precision": precision,
-                "recall": recall,
-                "f1": f1,
-            }
+        self._calc_metrics(
+            self.training_metrics,
+            train_labels,
+            train_preds,
+            train_loss / len(self.training_data_loader),
         )
 
     def _validation_step(self, scheduler, criterion) -> float:
@@ -180,16 +180,25 @@ class TrainingSupervisor:
         scheduler.step(val_loss)
 
         # Calculate metrics on validation data for current epoch
-        accuracy = 100.0 * np.mean(np.array(val_labels) == np.array(val_preds))
-        precision = 100.0 * precision_score(
-            val_labels, val_preds, average="weighted", zero_division=0
+        accuracy = self._calc_metrics(
+            self.validation_metrics,
+            val_labels,
+            val_preds,
+            val_loss / len(self.validation_data_loader),
         )
-        recall = 100.0 * recall_score(val_labels, val_preds, average="weighted")
-        f1 = 100.0 * f1_score(val_labels, val_preds, average="weighted")
 
-        self.validation_metrics.append(
+        return accuracy
+
+    def _calc_metrics(self, metrics: List[MetricsDict], y_pred, y_true, loss):
+        # Calculate metrics on training data for current epoch
+        accuracy = 100.0 * accuracy_score(y_true, y_pred)
+        precision = 100.0 * precision_score(y_true, y_pred, zero_division=0)
+        recall = 100.0 * recall_score(y_true, y_pred)
+        f1 = 100.0 * f1_score(y_true, y_pred)
+
+        metrics.append(
             {
-                "loss": val_loss / len(self.validation_data_loader),
+                "loss": loss,
                 "accuracy": accuracy,
                 "precision": precision,
                 "recall": recall,
@@ -263,7 +272,7 @@ class TrainingSupervisor:
         self._create_diagram(
             filename="training_metrics.png",
             title="Training Metrics",
-            x_axis=((1, self.epochs), np.arange(0, self.epochs + 1), "Epochs"),
+            x_axis=((1, self.epochs), np.arange(1, self.epochs + 1), "Epochs"),
             y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
             graphs=graphs,
         )
@@ -278,7 +287,7 @@ class TrainingSupervisor:
         self._create_diagram(
             filename="validation_metrics.png",
             title="Validation Metrics",
-            x_axis=((1, self.epochs), np.arange(0, self.epochs + 1), "Epochs"),
+            x_axis=((1, self.epochs), np.arange(1, self.epochs + 1), "Epochs"),
             y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
             graphs=graphs,
         )
@@ -299,7 +308,7 @@ class TrainingSupervisor:
         self._create_diagram(
             filename="accuracy_comparison.png",
             title="Accuracy Comparison",
-            x_axis=((1, self.epochs), np.arange(0, self.epochs + 1), "Epochs"),
+            x_axis=((1, self.epochs), np.arange(1, self.epochs + 1), "Epochs"),
             y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
             graphs=graphs,
         )
