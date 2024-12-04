@@ -8,10 +8,14 @@ from sampleGeneration.SampleGenerator import SampleGenerator
 from sampleGeneration.Shapes import Ellipse, Square, Triangle
 
 
-def main(count: int, dir: str, shapes, probabilities):
+def main(count: int, name: str, shapes, probabilities):
+    output_dir = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "simulated_data", name
+    )
+
     print("Starting Sample Generator with settings:")
     print(f"\t- Sample Count = {count}")
-    print(f"\t- Output Dir = {dir}")
+    print(f"\t- Output Dir = {output_dir}")
     print(f"\t- Shapes = {[s.get_name() for s in shapes]}")
     print(f"\t- Probabilities = {[round(p, 2) for p in probabilities]}")
     print("\n")
@@ -85,11 +89,10 @@ if __name__ == "__main__":
         help="Specified count of samples to generate.",
     )
     parser.add_argument(
-        "-o",
-        "--output",
-        metavar="output_dir",
-        default="simulated_data/default",
-        help="Specify the output directory (Relative path).",
+        "--name",
+        metavar="dataset_name",
+        required=True,
+        help="Specify the name of the generated dataset.",
     )
     parser.add_argument(
         "-s",
@@ -103,4 +106,4 @@ if __name__ == "__main__":
     shapes, probabilities = parse_shapes(args.shapes)
 
     # Start generation
-    main(args.n, os.getcwd() + "/" + args.output, shapes, probabilities)
+    main(args.n, args.name, shapes, probabilities)
