@@ -7,13 +7,12 @@ import numpy as np
 import os
 import json
 
-from array_classification.HexConv.HexConv import ConvHex
+from arrayClassification.HexConv.HexConv import ConvHex
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'simulated_data')
 ARRAY_DIR = os.path.join(DATA_DIR, 'arrays')
 ANNOTATION_DIR = os.path.join(DATA_DIR, 'annotations')
-IMAGE_SIZE = (128, 128)
 
 
 class ShapeDataset(Dataset):

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from array_classification.HexConv.neighbor_list import get_neighbor_list
+from arrayClassification.HexConv.neighbor_list import get_neighbor_list
 
 
 class ConvHex(nn.Module):

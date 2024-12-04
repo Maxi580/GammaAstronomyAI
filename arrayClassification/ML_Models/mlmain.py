@@ -1,5 +1,5 @@
 from helper import load_data_from_json
-from array_classification.ML_Models.EnsembleML import EnsembleArrayClassifier
+from arrayClassification.ML_Models.EnsembleML import EnsembleArrayClassifier
 
 ARRAYS_DIR = "../../simulated_data/arrays"
 ANNOTATIONS_DIR = "../../simulated_data/annotations"
