@@ -4,7 +4,7 @@ import os
 import torch
 from torch.utils.data import Dataset
 
-from arrayClassification.CNN.constants import LABELS
+from arrayClassification.CNN.constants import LABELS, LABELS_SQUARE
 
 
 class ShapeDataset(Dataset):
@@ -23,6 +23,9 @@ class ShapeDataset(Dataset):
 
         self.arrays = sorted(os.listdir(self.array_dir))
 
+        # TODO: make this selection automatic
+        self.labels = LABELS_SQUARE  # Or LABELS for centered and normal ellipses
+
     def __len__(self):
         return len(self.arrays)
 
@@ -38,7 +41,7 @@ class ShapeDataset(Dataset):
         with open(label_path, "r") as f:
             label = f.read().strip()
 
-        return torch.tensor([array]), LABELS[label]
+        return torch.tensor([array]), self.labels[label]
 
     def get_distribution(self):
         all_labels = []
@@ -48,7 +51,7 @@ class ShapeDataset(Dataset):
             )
             with open(label_path, "r") as f:
                 label = f.read().strip()
-            all_labels.append(LABELS[label])
+            all_labels.append(self.labels[label])
 
         total_samples = len(all_labels)
         label_counts = {}

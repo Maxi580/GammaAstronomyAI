@@ -257,7 +257,7 @@ class TrainingSupervisor:
         self._create_diagram(
             filename="loss_diagram.png",
             title="Loss Diagram",
-            x_axis=((1, self.epochs), np.arange(1, self.epochs + 1), "Epochs"),
+            x_axis=((1, self.epochs), None, "Epochs"),
             y_axis=((0, 1), np.arange(0, 1.1, 0.1), "Loss Value"),
             graphs=graphs,
         )
@@ -272,7 +272,7 @@ class TrainingSupervisor:
         self._create_diagram(
             filename="training_metrics.png",
             title="Training Metrics",
-            x_axis=((1, self.epochs), np.arange(1, self.epochs + 1), "Epochs"),
+            x_axis=((1, self.epochs), None, "Epochs"),
             y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
             graphs=graphs,
         )
@@ -287,7 +287,7 @@ class TrainingSupervisor:
         self._create_diagram(
             filename="validation_metrics.png",
             title="Validation Metrics",
-            x_axis=((1, self.epochs), np.arange(1, self.epochs + 1), "Epochs"),
+            x_axis=((1, self.epochs), None, "Epochs"),
             y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
             graphs=graphs,
         )
@@ -308,7 +308,7 @@ class TrainingSupervisor:
         self._create_diagram(
             filename="accuracy_comparison.png",
             title="Accuracy Comparison",
-            x_axis=((1, self.epochs), np.arange(1, self.epochs + 1), "Epochs"),
+            x_axis=((1, self.epochs), None, "Epochs"),
             y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
             graphs=graphs,
         )
@@ -334,10 +334,13 @@ class TrainingSupervisor:
 
         ax.set(
             xlim=xlim,
-            xticks=xticks,
             ylim=ylim,
-            yticks=yticks,
         )
+
+        if xticks is not None:
+            ax.set_xticks(xticks)
+        if yticks is not None:
+            ax.set_yticks(yticks)
 
         ax.set_title(title)
         ax.legend()
