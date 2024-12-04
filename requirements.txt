@@ -9,3 +9,4 @@ torch~=2.5.1
 torchvision~=0.20.1
 ctapipe-io-magic~=0.5.5 
 ctapipe~=0.22.0
+matplotlib~=3.9.2

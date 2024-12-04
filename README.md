@@ -27,6 +27,8 @@ Valid Shapes are:
 Shapes must be provided in the following format: `<shape1>:<probability1>,<shape2>:<probability2>,...`.
 Example: `ellipse:1,square:3`. This will produce a dataset containing roughly 25% ellipses and 75% squares.
 
+!WARNING!: Currently you can only generate datasets containing ellipses and centered ellipses or ellipses and squares!
+
 All generated Datasets will be saved in `./datasets`.
 
 
@@ -54,4 +56,4 @@ Valid Models are:
 - `HexCNN`
 - `SimpleShapeCNN`
 
-The trained models and other information about the training process, like metrics will be saved in `./trained_models`.
+The trained models, diagrams and other information about the training process, like metrics will be saved in `./trained_models`.

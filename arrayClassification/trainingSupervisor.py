@@ -1,8 +1,8 @@
 import json
 import os
-import time
 from typing import List, TypedDict
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
@@ -45,19 +45,21 @@ class TrainingSupervisor:
 
     def load_training_data(self, training_dir):
         print("Loading Training Data into Datasets...\n")
+        self.training_dir = training_dir
 
         self.full_dataset = ShapeDataset(training_dir)
 
         # Print info about the training data
-        self.dist_info = self.full_dataset.get_distribution()
+        self.data_distribution = self.full_dataset.get_distribution()
         print("Full Dataset Overview:")
-        print(f"Total number of samples: {self.dist_info["total_samples"]}\n")
+        print(f"Total number of samples: {self.data_distribution["total_samples"]}\n")
         print("Class Distribution:")
-        for label, info in self.dist_info["distribution"].items():
+        for label, info in self.data_distribution["distribution"].items():
             print(f"{label}: {info["count"]} samples ({info["percentage"]:.2f}%)")
         print("\n")
 
         # Use 70% of data for training and 30% for validation
+        # TODO: Split distributions equally
         train_size = int(0.7 * len(self.full_dataset))
         val_size = len(self.full_dataset) - train_size
         self.train_dataset, self.val_dataset = torch.utils.data.random_split(
@@ -74,8 +76,8 @@ class TrainingSupervisor:
         )
 
     def start_training(self, epochs: int, info_prints: bool = False):
-
         print("Starting Training...")
+        self.epochs = epochs
 
         match self.modelname.lower():
             case "hexcnn":
@@ -105,11 +107,11 @@ class TrainingSupervisor:
             print(f"Training Epoch {epoch + 1}/{num_epochs}...")
             self.model.train()
 
-            self._calc_train_metrics(optimizer, criterion)
+            self._training_step(optimizer, criterion)
 
             self.model.eval()
 
-            validation_accuracy = self._calc_validation_metrics(scheduler, criterion)
+            validation_accuracy = self._validation_step(scheduler, criterion)
 
             if info_prints:
                 self._print_metrics_last_epoch()
@@ -123,7 +125,7 @@ class TrainingSupervisor:
                     os.path.join(self.output_dir, "trained_model.pth"),
                 )
 
-    def _calc_train_metrics(self, optimizer: optim.Optimizer, criterion):
+    def _training_step(self, optimizer: optim.Optimizer, criterion):
         # Test accuracy on training data for current epoch
         train_preds = []
         train_labels = []
@@ -160,7 +162,7 @@ class TrainingSupervisor:
             }
         )
 
-    def _calc_validation_metrics(self, scheduler, criterion) -> float:
+    def _validation_step(self, scheduler, criterion) -> float:
         # Test accuracy on validation data for current epoch
         val_loss = 0
         val_preds = []
@@ -214,3 +216,124 @@ class TrainingSupervisor:
         print(f"Precision: {val_metrics["precision"]:.2f}%")
         print(f"Recall: {val_metrics["recall"]:.2f}%")
         print(f"F1-Score: {val_metrics["f1"]:.2f}%")
+
+    def write_results(self):
+        print("Writing Training Results...")
+
+        data = {
+            "dataset": {
+                "directory": self.training_dir,
+                "distribution": self.data_distribution,
+            },
+            "epochs": self.epochs,
+            "model": {
+                "name": self.modelname,
+                "structure": self._get_model_structure(),
+                "trainable_weights": self._count_trainable_weights(),
+            },
+            "training_metrics": self.training_metrics,
+            "validation_metrics": self.validation_metrics,
+        }
+
+        with open(os.path.join(self.output_dir, "info.json"), "w") as file:
+            file.write(json.dumps(data, indent=4))
+
+        epochs = np.arange(1, self.epochs + 1)
+
+        # Create a diagram with loss values
+        graphs = [
+            (epochs, [m["loss"] for m in self.training_metrics], "Training"),
+            (epochs, [m["loss"] for m in self.validation_metrics], "Validation"),
+        ]
+        self._create_diagram(
+            filename="loss_diagram.png",
+            title="Loss Diagram",
+            x_axis=((1, self.epochs), np.arange(1, self.epochs + 1), "Epochs"),
+            y_axis=((0, 1), np.arange(0, 1.1, 0.1), "Loss Value"),
+            graphs=graphs,
+        )
+
+        # Create Diagram for training metrics
+        graphs = [
+            (epochs, [m["accuracy"] for m in self.training_metrics], "Accuracy"),
+            (epochs, [m["precision"] for m in self.training_metrics], "Precision"),
+            (epochs, [m["recall"] for m in self.training_metrics], "Recall"),
+            (epochs, [m["f1"] for m in self.training_metrics], "F1"),
+        ]
+        self._create_diagram(
+            filename="training_metrics.png",
+            title="Training Metrics",
+            x_axis=((1, self.epochs), np.arange(0, self.epochs + 1), "Epochs"),
+            y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
+            graphs=graphs,
+        )
+
+        # Create Diagram for validation metrics
+        graphs = [
+            (epochs, [m["accuracy"] for m in self.validation_metrics], "Accuracy"),
+            (epochs, [m["precision"] for m in self.validation_metrics], "Precision"),
+            (epochs, [m["recall"] for m in self.validation_metrics], "Recall"),
+            (epochs, [m["f1"] for m in self.validation_metrics], "F1"),
+        ]
+        self._create_diagram(
+            filename="validation_metrics.png",
+            title="Validation Metrics",
+            x_axis=((1, self.epochs), np.arange(0, self.epochs + 1), "Epochs"),
+            y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
+            graphs=graphs,
+        )
+
+        # Create Diagram for Accuracy Comparison
+        graphs = [
+            (
+                epochs,
+                [m["accuracy"] for m in self.training_metrics],
+                "Accuracy Training",
+            ),
+            (
+                epochs,
+                [m["accuracy"] for m in self.validation_metrics],
+                "Accuracy Validation",
+            ),
+        ]
+        self._create_diagram(
+            filename="accuracy_comparison.png",
+            title="Accuracy Comparison",
+            x_axis=((1, self.epochs), np.arange(0, self.epochs + 1), "Epochs"),
+            y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
+            graphs=graphs,
+        )
+
+    def _get_model_structure(self):
+        model_structure = {}
+        for name, module in self.model.named_modules():
+            if name:
+                model_structure[name] = str(module)
+        return model_structure
+
+    def _count_trainable_weights(self):
+        return sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+
+    def _create_diagram(self, filename: str, title: str, x_axis, y_axis, graphs):
+        ax = plt.subplot()
+
+        for x, y, label in graphs:
+            ax.plot(x, y, label=label)
+
+        xlim, xticks, xlabel = x_axis
+        ylim, yticks, ylabel = y_axis
+
+        ax.set(
+            xlim=xlim,
+            xticks=xticks,
+            ylim=ylim,
+            yticks=yticks,
+        )
+
+        ax.set_title(title)
+        ax.legend()
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+
+        ax.figure.savefig(os.path.join(self.output_dir, filename))
+        ax.clear()

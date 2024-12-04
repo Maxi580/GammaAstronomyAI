@@ -28,6 +28,8 @@ def main(modelname: str, dataset: str, epochs: int, info_prints: bool):
 
     supervisor.start_training(epochs, info_prints)
 
+    supervisor.write_results()
+
 
 if __name__ == "__main__":
     # Parse arguments

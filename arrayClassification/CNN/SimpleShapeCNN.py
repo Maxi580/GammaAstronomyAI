@@ -31,6 +31,7 @@ class SimpleShapeCNN(nn.Module):
             nn.Linear(128, 32),
             nn.ReLU(),
             nn.Dropout(0.2),
+            # TODO: the out features need to be adapted according to number of labels
             nn.Linear(32, 2),
         )
 

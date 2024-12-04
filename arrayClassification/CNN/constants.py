@@ -1,5 +1,5 @@
 LABELS = {
     "ellipse": 0,
     "ellipse-centered": 1,
-    "square": 2,
+    "square": 1,
 }
