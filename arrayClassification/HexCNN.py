@@ -7,7 +7,7 @@ import numpy as np
 import os
 import json
 
-from arrayClassification.HexConv.HexConv import ConvHex
+from arrayClassification.HexLayers.ConvHex import ConvHex
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'simulated_data')
