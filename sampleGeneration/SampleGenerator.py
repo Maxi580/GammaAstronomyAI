@@ -96,34 +96,36 @@ class SampleGenerator:
                     )
 
             # Generate unique noise for this sample
-            noise_values = self.noise_generator.generate_noise(len(hexagons))
+            noise_values = None
+            if self.noise_generator:
+                noise_values = self.noise_generator.generate_noise(len(hexagons))
 
-            # Apply noise to the image
-            # We'll overlay semi-transparent noise based on the noise_values
-            # Create a noise overlay
-            noise_overlay = Image.new(
-                "RGBA", (self.output_size, self.output_size), (0, 0, 0, 0)
-            )
-            noise_draw = ImageDraw.Draw(noise_overlay)
-
-            for idx, (hex_center_x, hex_center_y) in enumerate(hexagons):
-                noise_intensity = int(255 * noise_values[idx])
-                # Define the noise color, e.g., red noise
-                noise_color = (
-                    noise_intensity,
-                    noise_intensity,
-                    noise_intensity,
-                    noise_intensity,
-                )  # Semi-transparent red
-                hex_points = PlaneGeneratorUtils.create_hexagon_points_static(
-                    hex_center_x, hex_center_y, plane_info[2]
+                # Apply noise to the image
+                # We'll overlay semi-transparent noise based on the noise_values
+                # Create a noise overlay
+                noise_overlay = Image.new(
+                    "RGBA", (self.output_size, self.output_size), (0, 0, 0, 0)
                 )
-                noise_draw.polygon(hex_points, fill=noise_color)
+                noise_draw = ImageDraw.Draw(noise_overlay)
 
-            # Composite the noise overlay onto the background image
-            background_copy = Image.alpha_composite(
-                background_copy.convert("RGBA"), noise_overlay
-            )
+                for idx, (hex_center_x, hex_center_y) in enumerate(hexagons):
+                    noise_intensity = int(255 * noise_values[idx])
+                    # Define the noise color, e.g., red noise
+                    noise_color = (
+                        noise_intensity,
+                        noise_intensity,
+                        noise_intensity,
+                        noise_intensity,
+                    )  # Semi-transparent red
+                    hex_points = PlaneGeneratorUtils.create_hexagon_points_static(
+                        hex_center_x, hex_center_y, plane_info[2]
+                    )
+                    noise_draw.polygon(hex_points, fill=noise_color)
+
+                # Composite the noise overlay onto the background image
+                background_copy = Image.alpha_composite(
+                    background_copy.convert("RGBA"), noise_overlay
+                )
 
             # Combine pixel_array and noise_values into a single data structure
             data = {"pixel_array": pixel_array, "noise": noise_values}

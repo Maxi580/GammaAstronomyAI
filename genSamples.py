@@ -24,14 +24,15 @@ def main(count: int, name: str, shapes, probabilities):
     hex_plane_gen = HexagonPlaneGenerator()
 
     """
-    2.  Select Noise generator here.
-        You can pass a seed for reproducibility.
+    Select Noise generator here.
+    You can pass a seed for reproducibility.
     """
+    noise_gen = None
     # noise_gen = SimpleNoiseGenerator(0.1, 0.7)
     noise_gen = SpikyNoiseGenerator(0.1, 0.35)
 
     """
-    3.  Adapt generator specifications here.
+    Adapt generator specifications here.
     """
     sample_gen = SampleGenerator(
         plane_generator=hex_plane_gen,
@@ -40,9 +41,9 @@ def main(count: int, name: str, shapes, probabilities):
         shape_probabilities=probabilities,
         output_size=640,
         target_count=1039,
-        image_dir=dir + "/images",
-        annotation_dir=dir + "/annotations",
-        array_dir=dir + "/arrays",
+        image_dir=output_dir + "/images",
+        annotation_dir=output_dir + "/annotations",
+        array_dir=output_dir + "/arrays",
     )
 
     sample_gen.generate_samples(count)
