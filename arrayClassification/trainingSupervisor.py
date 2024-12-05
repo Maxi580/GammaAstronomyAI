@@ -7,9 +7,15 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score,confusion_matrix
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 from sklearn.model_selection import train_test_split
-
 from torch.utils.data import DataLoader, Subset
 
 from arrayClassification.CNN.HexCNN import HexCNN
@@ -56,7 +62,7 @@ class TrainingSupervisor:
         self.full_dataset = ShapeDataset(training_dir)
 
         # Print info about the training data
-        self.data_distribution = self.full_dataset.data_set_distribution()
+        self.data_distribution = self.full_dataset.get_distribution()
         print("Full Dataset Overview:")
         print(f"Total number of samples: {self.data_distribution["total_samples"]}\n")
         print("Class Distribution:")
@@ -106,6 +112,9 @@ class TrainingSupervisor:
 
         self.training_metrics = []
         self.validation_metrics = []
+
+        self.training_confusion_matrices = []
+        self.validation_confusion_matrices = []
 
         self._train_model(epochs, info_prints)
 
@@ -165,6 +174,7 @@ class TrainingSupervisor:
             train_labels,
             train_preds,
             train_loss / len(self.training_data_loader),
+            self.training_confusion_matrices,
         )
 
     def _validation_step(self, scheduler, criterion) -> float:
@@ -190,19 +200,21 @@ class TrainingSupervisor:
             val_labels,
             val_preds,
             val_loss / len(self.validation_data_loader),
+            self.validation_confusion_matrices,
         )
 
         return accuracy
 
-    def _calc_metrics(self, metrics: List[MetricsDict], y_pred, y_true, loss, distribution):
+    def _calc_metrics(self, metrics: List[MetricsDict], y_pred, y_true, loss, cm_list):
         # Calculate metrics on training data for current epoch
         accuracy = 100.0 * accuracy_score(y_true, y_pred)
         precision = 100.0 * precision_score(y_true, y_pred, zero_division=0)
         recall = 100.0 * recall_score(y_true, y_pred)
         f1 = 100.0 * f1_score(y_true, y_pred)
 
-        cm = confusion_matrix(y_true, y_pred)
+        cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
         tn, fp, fn, tp = cm.ravel()
+        cm_list.append(cm)
 
         metrics.append(
             {
@@ -211,10 +223,10 @@ class TrainingSupervisor:
                 "precision": precision,
                 "recall": recall,
                 "f1": f1,
-                "tn": tn,
-                "fp": fp,
-                "fn": fn,
-                "tp": tp,
+                "tn": float(tn),
+                "fp": float(fp),
+                "fn": float(fn),
+                "tp": float(tp),
             }
         )
 
@@ -323,6 +335,18 @@ class TrainingSupervisor:
             x_axis=((1, self.epochs), None, "Epochs"),
             y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
             graphs=graphs,
+        )
+
+        # Plot Confusion matrices
+        # TODO: add correct labels
+        training_cm = ConfusionMatrixDisplay(self.training_confusion_matrices[-1])
+        training_cm.plot().figure_.savefig(
+            os.path.join(self.output_dir, "training_confusion_matrix.png")
+        )
+
+        validation_cm = ConfusionMatrixDisplay(self.validation_confusion_matrices[-1])
+        validation_cm.plot().figure_.savefig(
+            os.path.join(self.output_dir, "validation_confusion_matrix.png")
         )
 
     def _get_model_structure(self):
