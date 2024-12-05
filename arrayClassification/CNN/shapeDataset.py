@@ -26,6 +26,7 @@ class ShapeDataset(Dataset):
         # TODO: make this selection automatic
         self.labels = LABELS_SQUARE  # Or LABELS for centered and normal ellipses
 
+        self.data_set_distribution = self._get_distribution()
     def __len__(self):
         return len(self.arrays)
 
@@ -43,7 +44,7 @@ class ShapeDataset(Dataset):
 
         return torch.tensor([array]), self.labels[label]
 
-    def get_distribution(self):
+    def _get_distribution(self):
         all_labels = []
         for array_file in self.arrays:
             label_path = os.path.join(

@@ -56,18 +56,18 @@ class ConvHex(nn.Module):
             # Get neighbor indices for current hexagon
             neighbor_indices = self.neighbors[hex_idx]  # [3, 4, -1 , -1]
             valid_neighbors = neighbor_indices >= 0  # [True, True, False, False]
-            valid_indices = neighbor_indices[valid_neighbors]  # [3, 4]
+            valid_neighbor_indices = neighbor_indices[valid_neighbors]  # [3, 4]
 
             neighbor_contrib = torch.zeros_like(center_contrib)
 
-            for n_idx, neighbor_idx in enumerate(valid_indices):
+            for n_idx, neighbor_idx in enumerate(valid_neighbor_indices):
                 neighbor = x[:, :, neighbor_idx]  # [batch_size, in_channels]
 
                 n_contrib = torch.matmul(neighbor, self.weight_neighbors[:, :, n_idx].t())
                 neighbor_contrib += n_contrib
 
             # Combine contributions and add bias
-            total_valid = len(valid_indices) + 1  # number of valid neighbors plus center
+            total_valid = len(valid_neighbor_indices) + 1  # number of valid neighbors plus center
             out[:, :, hex_idx] = (center_contrib + neighbor_contrib) / total_valid + self.bias
 
         return out

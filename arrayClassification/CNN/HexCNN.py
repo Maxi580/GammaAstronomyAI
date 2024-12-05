@@ -8,7 +8,6 @@ class HexCNN(nn.Module):
         super(HexCNN, self).__init__()
 
         self.features = nn.Sequential(
-            # Capture hexagonal structure !!!
             ConvHex(in_channels=1, out_channels=16),
             nn.BatchNorm1d(16),
             nn.ReLU(),

@@ -7,8 +7,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score,confusion_matrix
 from sklearn.model_selection import train_test_split
+
 from torch.utils.data import DataLoader, Subset
 
 from arrayClassification.CNN.HexCNN import HexCNN
@@ -23,6 +24,10 @@ MetricsDict = TypedDict(
         "precision": float,
         "recall": float,
         "f1": float,
+        "tn": float,
+        "fp": float,
+        "fn": float,
+        "tp": float,
     },
 )
 
@@ -51,7 +56,7 @@ class TrainingSupervisor:
         self.full_dataset = ShapeDataset(training_dir)
 
         # Print info about the training data
-        self.data_distribution = self.full_dataset.get_distribution()
+        self.data_distribution = self.full_dataset.data_set_distribution()
         print("Full Dataset Overview:")
         print(f"Total number of samples: {self.data_distribution["total_samples"]}\n")
         print("Class Distribution:")
@@ -189,12 +194,15 @@ class TrainingSupervisor:
 
         return accuracy
 
-    def _calc_metrics(self, metrics: List[MetricsDict], y_pred, y_true, loss):
+    def _calc_metrics(self, metrics: List[MetricsDict], y_pred, y_true, loss, distribution):
         # Calculate metrics on training data for current epoch
         accuracy = 100.0 * accuracy_score(y_true, y_pred)
         precision = 100.0 * precision_score(y_true, y_pred, zero_division=0)
         recall = 100.0 * recall_score(y_true, y_pred)
         f1 = 100.0 * f1_score(y_true, y_pred)
+
+        cm = confusion_matrix(y_true, y_pred)
+        tn, fp, fn, tp = cm.ravel()
 
         metrics.append(
             {
@@ -203,6 +211,10 @@ class TrainingSupervisor:
                 "precision": precision,
                 "recall": recall,
                 "f1": f1,
+                "tn": tn,
+                "fp": fp,
+                "fn": fn,
+                "tp": tp,
             }
         )
 
