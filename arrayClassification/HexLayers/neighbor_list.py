@@ -1,11 +1,11 @@
 from ctapipe.core import Provenance
 from ctapipe.instrument import CameraGeometry
-from pkg_resources import resource_filename
+from importlib.resources import files
 
 
 def get_neighbor_indices() -> list[list[int]]:
     """Returns a list of 1039 lists, that has the index of neighbours of each idx"""
-    f = resource_filename("ctapipe_io_magic", "resources/MAGICCam.camgeom.fits.gz")
+    f = str(files("ctapipe_io_magic").joinpath("resources/MAGICCam.camgeom.fits.gz"))
     Provenance().add_input_file(f, role="CameraGeometry")
     return CameraGeometry.from_table(f).neighbors
 
@@ -43,3 +43,5 @@ def get_neighbor_list_by_kernel(kernel_size: int) -> list[list[int]]:
         expanded_neighbors[hex_idx] = list(current_ring)
 
     return expanded_neighbors
+
+print(get_neighbor_list_by_kernel(1))
