@@ -121,7 +121,7 @@ class TrainingSupervisor:
     def _train_model(self, num_epochs: int, info_prints: bool = False):
 
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        optimizer = optim.Adam(self.model.parameters(), lr=0.001, weight_decay=0.01)
 
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", patience=3)
 
