@@ -54,6 +54,7 @@ class TrainingSupervisor:
         os.makedirs(output_dir, exist_ok=True)
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Training on Device: {self.device}")
 
     def load_training_data(self, training_dir):
         print("Loading Training Data into Datasets...\n")
