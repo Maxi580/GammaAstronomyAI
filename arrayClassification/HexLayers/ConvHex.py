@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from arrayClassification.HexLayers.neighbor_list import get_neighbor_list_by_kernel
+from arrayClassification.HexLayers.neighbor import get_neighbor_tensor
 
 
 class ConvHex(nn.Module):
@@ -13,19 +13,8 @@ class ConvHex(nn.Module):
         self.in_channels = in_channels
         self.out_channels = out_channels
 
-        # Register the neighbors list as a buffer so it moves to GPU with the model
-        # Convert to tensor and store as buffer (non-trainable)
-        neighbors_list = get_neighbor_list_by_kernel(kernel_size)
-        max_neighbors = max(len(neighbors) for neighbors in neighbors_list)
-
-        # We need to move the list to gpu, for efficiency. So we convert it to tensor which is why every element must
-        # have The same length, which is why we pad and then disregard values that are -1 (padding value)
-        padded_neighbors = []
-        for neighbors in neighbors_list:
-            padded = neighbors + [-1] * (max_neighbors - len(neighbors))
-            padded_neighbors.append(padded)
-        neighbors_tensor = torch.tensor(padded_neighbors, dtype=torch.long)
-        self.register_buffer('neighbors', neighbors_tensor)  # (Makes it accessible under self.neighbors)
+        neighbor_info = get_neighbor_tensor(kernel_size)
+        self.register_buffer('neighbors', neighbor_info.tensor)  # (Makes it accessible under self.neighbors)
 
         # Create weight matrix for central hexagons
         self.weight_center = nn.Parameter(
@@ -35,8 +24,8 @@ class ConvHex(nn.Module):
         # Create weight matrix for neighbor hexagons
         # Shape will be [out_channels, in_channels, max_neighbors]
         self.weight_neighbors = nn.Parameter(
-            torch.randn(out_channels, in_channels, max_neighbors) /
-            torch.sqrt(torch.tensor(in_channels * max_neighbors))
+            torch.randn(out_channels, in_channels, neighbor_info.max_neighbors) /
+            torch.sqrt(torch.tensor(in_channels * neighbor_info.max_neighbors))
         )
 
         self.bias = nn.Parameter(torch.zeros(out_channels))
