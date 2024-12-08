@@ -1,30 +1,21 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from tables.utils import idx2long
-
-from arrayClassification.HexLayers.neighbor_list import get_neighbor_indices
+from arrayClassification.HexLayers.neighbor_list import get_neighbor_list_by_kernel
 
 
 class ConvHex(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, kernel_size=1):
         super().__init__()
+
+        assert kernel_size >= 1, "Kernel size must be greater than 0"
+        self.kernel_size = kernel_size
 
         self.in_channels = in_channels
         self.out_channels = out_channels
 
         # Register the neighbors list as a buffer so it moves to GPU with the model
         # Convert to tensor and store as buffer (non-trainable)
-        kernel_size = 2
-        neighbors_indices = get_neighbor_indices()
-        neighbor_list = neighbors_indices.copy()
-        for i in range(1, kernel_size):
-            for hex in neighbors_indices:
-                for idx in range(len(neighbor_list)):
-                    neighbors_indices[idx] = neighbors_indices[neighbors_indices[idx]]
-
-
-
+        neighbors_list = get_neighbor_list_by_kernel(kernel_size)
         max_neighbors = max(len(neighbors) for neighbors in neighbors_list)
 
         # We need to move the list to gpu, for efficiency. So we convert it to tensor which is why every element must
@@ -68,8 +59,8 @@ class ConvHex(nn.Module):
             valid_neighbors = neighbor_indices >= 0  # [True, True, False, False]
             valid_neighbor_indices = neighbor_indices[valid_neighbors]  # [3, 4]
 
+            # Neighbor contribution
             neighbor_contrib = torch.zeros_like(center_contrib)
-
             for n_idx, neighbor_idx in enumerate(valid_neighbor_indices):
                 neighbor = x[:, :, neighbor_idx]  # [batch_size, in_channels]
 

@@ -43,5 +43,3 @@ def get_neighbor_list_by_kernel(kernel_size: int) -> list[list[int]]:
         expanded_neighbors[hex_idx] = list(current_ring)
 
     return expanded_neighbors
-
-print(get_neighbor_list_by_kernel(1))
