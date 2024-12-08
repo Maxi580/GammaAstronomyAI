@@ -1,13 +1,12 @@
 import torch
 import torch.nn as nn
+
 from arrayClassification.HexLayers.neighbor import get_neighbor_tensor
 
 
 class ConvHex(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=1):
+    def __init__(self, in_channels, out_channels, kernel_size):
         super().__init__()
-
-        assert kernel_size >= 1, "Kernel size must be greater than 0"
         self.kernel_size = kernel_size
 
         self.in_channels = in_channels
@@ -17,6 +16,7 @@ class ConvHex(nn.Module):
         self.register_buffer('neighbors', neighbor_info.tensor)  # (Makes it accessible under self.neighbors)
 
         # Create weight matrix for central hexagons
+        # [out_channels, in_channels]
         self.weight_center = nn.Parameter(
             torch.randn(out_channels, in_channels) / torch.sqrt(torch.tensor(in_channels))
         )
@@ -31,33 +31,53 @@ class ConvHex(nn.Module):
         self.bias = nn.Parameter(torch.zeros(out_channels))
 
     def forward(self, x):
-        batch_size = x.shape[0]
-        num_hexagons = x.shape[2]
+        # [batch_size, in_channels, num_hexagons]
+        batch_size, in_channels, num_hexagons = x.shape
 
-        out = torch.zeros(batch_size, self.out_channels, num_hexagons, device=x.device)
+        # Center Contribution
+        # [batch_size, num_hexagons, in_channels] [32, 1039, 1]
+        x = x.transpose(1, 2)
+        # Weight.T: [in_channels, out_channels] [1, 16]
+        # Contrib form will be: # [batch_size, num_hexagon, Out_channel] [32, 1039, 16]
+        center_contrib = torch.matmul(x, self.weight_center.t())
 
+        # Neighbor Contribution
+        neighbor_contrib = torch.zeros_like(center_contrib)
         for hex_idx in range(num_hexagons):
-            # Get central hexagon values
-            center = x[:, :, hex_idx]  # Shape: [batch_size, in_channels]
+            # Get all valid neighbors (indices that are not -1/ padding)
+            neighbor_indices = self.neighbors[hex_idx]
+            valid_neighbors = neighbor_indices >= 0
+            valid_neighbor_indices = neighbor_indices[valid_neighbors]
 
-            # Central contribution
-            center_contrib = torch.matmul(center, self.weight_center.t())  # [batch_size, out_channels]
+            # [batch_size, num_valid_neighbors, in_channels]
+            neighbor_values = x[:, valid_neighbor_indices]
 
-            # Get neighbor indices for current hexagon
-            neighbor_indices = self.neighbors[hex_idx]  # [3, 4, -1 , -1]
-            valid_neighbors = neighbor_indices >= 0  # [True, True, False, False]
-            valid_neighbor_indices = neighbor_indices[valid_neighbors]  # [3, 4]
+            # Get weights for each valid neighbor
+            # [out_channels, in_channels, num_valid_neighbors]
+            valid_weights = self.weight_neighbors[:, :, :len(valid_neighbor_indices)]
 
-            # Neighbor contribution
-            neighbor_contrib = torch.zeros_like(center_contrib)
-            for n_idx, neighbor_idx in enumerate(valid_neighbor_indices):
-                neighbor = x[:, :, neighbor_idx]  # [batch_size, in_channels]
+            # For each neighbor:
+            # [batch_size, num_valid_neighbors, in_channels] @ [in_channels, out_channels]
+            n_contrib = 0
+            for i in range(len(valid_neighbor_indices)):
+                # Get weights for this neighbor position
+                # [out_channels, in_channels] -> [in_channels, out_channels]
+                neighbor_weights = valid_weights[:, :, i].t()
 
-                n_contrib = torch.matmul(neighbor, self.weight_neighbors[:, :, n_idx].t())
-                neighbor_contrib += n_contrib
+                # Get values for this neighbor
+                # [batch_size, in_channels]
+                neighbor_value = neighbor_values[:, i]
 
-            # Combine contributions and add bias
-            total_valid = len(valid_neighbor_indices) + 1  # number of valid neighbors plus center
-            out[:, :, hex_idx] = (center_contrib + neighbor_contrib) / total_valid + self.bias
+                # Calculate contribution
+                # [batch_size, out_channels]
+                curr_contrib = torch.matmul(neighbor_value, neighbor_weights)
+                n_contrib += curr_contrib
 
-        return out
+            neighbor_contrib[:, hex_idx] = n_contrib
+
+        # Normalize by total number of valid neighbors + center
+        total_valid = (self.neighbors[0] >= 0).sum() + 1  # Add 1 for center
+        out = (center_contrib + neighbor_contrib) / total_valid + self.bias
+
+        # Return in the expected shape [batch_size, out_channels, num_hexagons]
+        return out.transpose(1, 2)

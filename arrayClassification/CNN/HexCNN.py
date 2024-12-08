@@ -10,12 +10,12 @@ class HexCNN(nn.Module):
             ConvHex(in_channels=1, out_channels=16, kernel_size=2),
             nn.BatchNorm1d(16),
             nn.ReLU(),
-            nn.Dropout1d(0.5),
+            nn.Dropout1d(0.6),
 
             ConvHex(in_channels=16, out_channels=32, kernel_size=2),
             nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.Dropout1d(0.4),
+            nn.Dropout1d(0.6),
         )
 
         self.classifier = nn.Sequential(

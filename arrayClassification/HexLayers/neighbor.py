@@ -58,7 +58,6 @@ def _get_neighbor_list_by_kernel(kernel_size: int) -> list[list[int]]:
 def get_neighbor_tensor(kernel_size: int) -> NeighborInfo:
     """Move to gpu for efficiency"""
     if kernel_size not in _NEIGHBOR_CACHE:
-        print(f"LOADS DIFFERENT TENSOR")
         neighbors_list = _get_neighbor_list_by_kernel(kernel_size)
         max_neighbors = max(len(neighbors) for neighbors in neighbors_list)
 
