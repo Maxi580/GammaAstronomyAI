@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from arrayClassification.HexLayers.neighbor_list import get_neighbor_list
+from tables.utils import idx2long
+
+from arrayClassification.HexLayers.neighbor_list import get_neighbor_indices
 
 
 class ConvHex(nn.Module):
@@ -13,7 +15,16 @@ class ConvHex(nn.Module):
 
         # Register the neighbors list as a buffer so it moves to GPU with the model
         # Convert to tensor and store as buffer (non-trainable)
-        neighbors_list = get_neighbor_list()
+        kernel_size = 2
+        neighbors_indices = get_neighbor_indices()
+        neighbor_list = neighbors_indices.copy()
+        for i in range(1, kernel_size):
+            for hex in neighbors_indices:
+                for idx in range(len(neighbor_list)):
+                    neighbors_indices[idx] = neighbors_indices[neighbors_indices[idx]]
+
+
+
         max_neighbors = max(len(neighbors) for neighbors in neighbors_list)
 
         # We need to move the list to gpu, for efficiency. So we convert it to tensor which is why every element must
@@ -22,9 +33,8 @@ class ConvHex(nn.Module):
         for neighbors in neighbors_list:
             padded = neighbors + [-1] * (max_neighbors - len(neighbors))
             padded_neighbors.append(padded)
-
         neighbors_tensor = torch.tensor(padded_neighbors, dtype=torch.long)
-        self.register_buffer('neighbors', neighbors_tensor)
+        self.register_buffer('neighbors', neighbors_tensor)  # (Makes it accessible under self.neighbors)
 
         # Create weight matrix for central hexagons
         self.weight_center = nn.Parameter(
