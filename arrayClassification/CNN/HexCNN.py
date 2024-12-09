@@ -17,15 +17,15 @@ class HexCNN(nn.Module):
             nn.ReLU(),
             nn.Dropout1d(0.3),
 
-            ConvHex(in_channels=16, out_channels=32, kernel_size=2),
-            nn.BatchNorm1d(32),
+            ConvHex(in_channels=32, out_channels=48, kernel_size=2),
+            nn.BatchNorm1d(48),
             nn.ReLU(),
             nn.Dropout1d(0.3),
         )
 
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(32*1039, 8*1039),
+            nn.Linear(48*1039, 8*1039),
             nn.ReLU(),
             nn.Dropout(0.4),
             nn.Linear(8*1039, 1024),
