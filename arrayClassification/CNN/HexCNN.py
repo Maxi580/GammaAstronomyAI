@@ -7,13 +7,13 @@ class HexCNN(nn.Module):
         super(HexCNN, self).__init__()
 
         self.features = nn.Sequential(
-            ConvHex(in_channels=1, out_channels=16, kernel_size=3),
-            nn.BatchNorm1d(16),
+            ConvHex(in_channels=1, out_channels=8, kernel_size=3),
+            nn.BatchNorm1d(8),
             nn.ReLU(),
             nn.Dropout1d(0.4),
 
-            ConvHex(in_channels=16, out_channels=32, kernel_size=2),
-            nn.BatchNorm1d(32),
+            ConvHex(in_channels=8, out_channels=16, kernel_size=2),
+            nn.BatchNorm1d(16),
             nn.ReLU(),
             nn.Dropout1d(0.3),
         )
