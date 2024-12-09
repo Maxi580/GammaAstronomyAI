@@ -26,7 +26,7 @@ class ConvHex(nn.Module):
 
         # Expand Size to match with neighbors, because we are gonna merge them
         center_values = x.unsqueeze(2)
-        # Center values shape [Batch_size, number_of_hexagons, 1, in_channel]
+        # Center values shape [Batch_size, number_of_hexagons, 1, in_channel] (1 later holds all values that exist)
 
         # [True, True, False...] etc. greats a mask to save valid/ padding indices
         valid_mask = (self.neighbors >= 0)
