@@ -137,8 +137,6 @@ class TrainingSupervisor:
             torch.cuda.manual_seed(42)
 
         best_validation_accuracy = 0
-        early_stopping_patience = 5
-        no_improve = 0
 
         for epoch in range(num_epochs):
             print(f"Training Epoch {epoch + 1}/{num_epochs}...")
@@ -161,11 +159,6 @@ class TrainingSupervisor:
                     self.model.state_dict(),
                     os.path.join(self.output_dir, "trained_model.pth"),
                 )
-            else:
-                no_improve += 1
-                if no_improve >= early_stopping_patience:
-                    print("Early stopping triggered")
-                    break
 
     def _training_step(self, optimizer: optim.Optimizer, criterion):
         # Test accuracy on training data for current epoch
