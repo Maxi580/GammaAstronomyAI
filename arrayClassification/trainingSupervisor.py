@@ -90,11 +90,20 @@ class TrainingSupervisor:
 
         print("Loading Data Loaders...\n")
 
+        if torch.cuda.is_available():
+            gpu_mem = torch.cuda.get_device_properties(0).total_memory
+            self.batch_size = min(32, gpu_mem // (1024 ** 3) * 8)  # 8 Per GPU Memory GB
+        else:
+            self.batch_size = 16
+
+        print(f"Batch Size Calculated: {self.batch_size}\n")
+
+
         self.training_data_loader = DataLoader(
-            self.train_dataset, batch_size=32, shuffle=True
+            self.train_dataset, batch_size=self.batch_size, shuffle=True
         )
         self.validation_data_loader = DataLoader(
-            self.val_dataset, batch_size=32, shuffle=True
+            self.val_dataset, batch_size=self.batch_size, shuffle=False
         )
 
     def start_training(self, epochs: int, info_prints: bool = False):
@@ -120,13 +129,17 @@ class TrainingSupervisor:
         self._train_model(epochs, info_prints)
 
     def _train_model(self, num_epochs: int, info_prints: bool = False):
-
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(self.model.parameters(), lr=0.001, weight_decay=0.01)
-
+        optimizer = optim.Adam(self.model.parameters(), lr=1e-3, weight_decay=1e-4)
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", patience=3)
 
+        torch.manual_seed(42)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(42)
+
         best_validation_accuracy = 0
+        early_stopping_patience = 5
+        no_improve = 0
 
         for epoch in range(num_epochs):
             print(f"Training Epoch {epoch + 1}/{num_epochs}...")
@@ -149,6 +162,11 @@ class TrainingSupervisor:
                     self.model.state_dict(),
                     os.path.join(self.output_dir, "trained_model.pth"),
                 )
+            else:
+                no_improve += 1
+                if no_improve >= early_stopping_patience:
+                    print("Early stopping triggered")
+                    break
 
     def _training_step(self, optimizer: optim.Optimizer, criterion):
         # Test accuracy on training data for current epoch
@@ -161,6 +179,7 @@ class TrainingSupervisor:
             optimizer.zero_grad()
             outputs = self.model(inputs)
             loss = criterion(outputs, labels)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
             loss.backward()
             optimizer.step()
 
