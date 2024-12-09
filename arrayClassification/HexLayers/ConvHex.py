@@ -11,8 +11,6 @@ class ConvHex(nn.Module):
         self.register_buffer('neighbors', neighbor_info.tensor)
 
         total_inputs = neighbor_info.max_neighbors + 1
-        print(f"Init - total_inputs: {total_inputs}")
-        print(f"Init - Creating weights with shape: [{out_channels}, {in_channels}, {total_inputs}]")
 
         # Shape [out_channels, in_channels, number_of_hexagons]
         self.weights = nn.Parameter(
