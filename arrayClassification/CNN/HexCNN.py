@@ -13,7 +13,7 @@ class HexCNN(nn.Module):
             nn.Dropout1d(0.6),
 
             ConvHex(in_channels=8, out_channels=16, kernel_size=3),
-            nn.BatchNorm1d(24),
+            nn.BatchNorm1d(16),
             nn.ReLU(),
             nn.Dropout1d(0.5),
 
