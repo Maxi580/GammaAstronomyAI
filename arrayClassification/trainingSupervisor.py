@@ -91,10 +91,10 @@ class TrainingSupervisor:
         print("Loading Data Loaders...\n")
 
         self.training_data_loader = DataLoader(
-            self.train_dataset, batch_size=16, shuffle=True
+            self.train_dataset, batch_size=32, shuffle=True
         )
         self.validation_data_loader = DataLoader(
-            self.val_dataset, batch_size=16, shuffle=True
+            self.val_dataset, batch_size=32, shuffle=True
         )
 
     def start_training(self, epochs: int, info_prints: bool = False):
