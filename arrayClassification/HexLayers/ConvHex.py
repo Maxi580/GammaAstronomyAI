@@ -44,39 +44,19 @@ class ConvHex(nn.Module):
         # Neighbor Contribution
         neighbor_contrib = torch.zeros_like(center_contrib)
         for hex_idx in range(num_hexagons):
-            # Get all valid neighbors (indices that are not -1/ padding)
             neighbor_indices = self.neighbors[hex_idx]
-            valid_neighbors = neighbor_indices >= 0
-            valid_neighbor_indices = neighbor_indices[valid_neighbors]
 
-            # [batch_size, num_valid_neighbors, in_channels]
-            neighbor_values = x[:, valid_neighbor_indices]
-
-            # Get weights for each valid neighbor
-            # [out_channels, in_channels, num_valid_neighbors]
-            valid_weights = self.weight_neighbors[:, :, :len(valid_neighbor_indices)]
-
-            # For each neighbor:
-            # [batch_size, num_valid_neighbors, in_channels] @ [in_channels, out_channels]
-            n_contrib = 0
-            for i in range(len(valid_neighbor_indices)):
-                # Get weights for this neighbor position
-                # [out_channels, in_channels] -> [in_channels, out_channels]
-                neighbor_weights = valid_weights[:, :, i].t()
-
-                # Get values for this neighbor
-                # [batch_size, in_channels]
-                neighbor_value = neighbor_values[:, i]
-
-                # Calculate contribution
-                # [batch_size, out_channels]
-                curr_contrib = torch.matmul(neighbor_value, neighbor_weights)
-                n_contrib += curr_contrib
-
-            neighbor_contrib[:, hex_idx] = n_contrib
+            # Every valid neighbor gets multiplied with the corresponding weight
+            for pos, neighbor_idx in enumerate(neighbor_indices):
+                # Filter out padding
+                if neighbor_idx >= 0:
+                    neighbor_value = x[:, neighbor_idx]
+                    neighbor_weights = self.weight_neighbors[:, :, pos].t()
+                    curr_contrib = torch.matmul(neighbor_value, neighbor_weights)
+                    neighbor_contrib[:, hex_idx] += curr_contrib
 
         # Normalize by total number of valid neighbors + center
-        total_valid = (self.neighbors[0] >= 0).sum() + 1  # Add 1 for center
+        total_valid = (self.neighbors[0] >= 0).sum() + 1
         out = (center_contrib + neighbor_contrib) / total_valid + self.bias
 
         # Return in the expected shape [batch_size, out_channels, num_hexagons]
