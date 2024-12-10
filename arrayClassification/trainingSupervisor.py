@@ -89,14 +89,8 @@ class TrainingSupervisor:
         self.val_dataset = Subset(self.full_dataset, val_indices)
 
         print("Loading Data Loaders...\n")
-
-        """if torch.cuda.is_available():
-            gpu_mem = torch.cuda.get_device_properties(0).total_memory
-            self.batch_size = min(32, gpu_mem // (1024 ** 3) * 8)  # 8 Per GPU Memory GB
-        else:
-            self.batch_size = 16
-
-        print(f"Batch Size Calculated: {self.batch_size}\n")"""
+        gpu_mem = torch.cuda.get_device_properties(0).total_memory
+        print(f"Available gpu memory: {gpu_mem}\n ")
 
         self.training_data_loader = DataLoader(
             self.train_dataset, batch_size=8, shuffle=True
