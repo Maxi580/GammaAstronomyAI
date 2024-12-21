@@ -89,8 +89,10 @@ class TrainingSupervisor:
         self.val_dataset = Subset(self.full_dataset, val_indices)
 
         print("Loading Data Loaders...\n")
-        gpu_mem = torch.cuda.get_device_properties(0).total_memory
-        print(f"Available gpu memory: {gpu_mem}\n ")
+
+        if self.device == "cuda":
+            gpu_mem = torch.cuda.get_device_properties(0).total_memory
+            print(f"Available gpu memory: {gpu_mem}\n ")
 
         self.training_data_loader = DataLoader(
             self.train_dataset, batch_size=8, shuffle=True
@@ -123,8 +125,24 @@ class TrainingSupervisor:
 
     def _train_model(self, num_epochs: int, info_prints: bool = False):
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.Adam(self.model.parameters(), lr=1e-3, weight_decay=1e-4)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", patience=3)
+        optimizer = optim.AdamW(
+            self.model.parameters(),
+            lr=1e-3,
+            betas=(0.9, 0.999),
+            eps=1e-8,
+            weight_decay=1e-2
+        )
+
+        steps_per_epoch = len(self.training_data_loader)
+
+        scheduler = optim.lr_scheduler.CyclicLR(
+            optimizer,
+            base_lr=1e-4,  # Minimum learning rate
+            max_lr=1e-3,  # Maximum learning rate
+            step_size_up=2 * steps_per_epoch,  # Steps to reach max_lr
+            mode='triangular2',  # Learning rate policy
+            cycle_momentum=False  # Don't cycle momentum for Adam
+        )
 
         torch.manual_seed(42)
         if torch.cuda.is_available():
