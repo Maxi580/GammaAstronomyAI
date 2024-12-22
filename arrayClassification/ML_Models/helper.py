@@ -10,25 +10,29 @@ def load_data_from_json(data_dir, annotation_dir):
 
     json_files = sorted(glob.glob(os.path.join(data_dir, '*.json')))
 
-    for json_file in json_files:
-        # Get the base filename to find corresponding annotation
-        base_name = os.path.basename(json_file)
-        annotation_file = os.path.join(annotation_dir,
-                                       base_name.replace('.json', '.txt'))
+    print(f"Found {len(json_files)} JSON files")
 
-        # Check if both files exist
+    for json_file in json_files:
+        base_name = os.path.basename(json_file)
+        annotation_file = os.path.join(annotation_dir, base_name.replace('.json', '.txt'))
+
         if not os.path.exists(annotation_file):
             print(f"Warning: No annotation found for {base_name}, skipping...")
             continue
 
         try:
-            # Load the array from JSON
+            # Load the JSON data
             with open(json_file, 'r') as f:
-                array_data = json.load(f)
+                data = json.load(f)
 
-            # Convert to numpy array
-            array = np.array(array_data)
+            # Extract the pixel_array from the JSON structure
+            if isinstance(data, dict) and 'pixel_array' in data:
+                array = np.array(data['pixel_array'], dtype=float)
+            else:
+                print(f"Warning: Unexpected data structure in {base_name}")
+                continue
 
+            # Read the label
             with open(annotation_file, 'r') as f:
                 label = f.read().strip()
 
@@ -38,6 +42,11 @@ def load_data_from_json(data_dir, annotation_dir):
         except Exception as e:
             print(f"Error processing {base_name}: {str(e)}")
             continue
+
+    print(f"\nSuccessfully loaded {len(arrays)} arrays")
+    if len(arrays) > 0:
+        print(f"First array shape: {arrays[0].shape}")
+        print(f"Sample labels: {labels[:5]}")
 
     return arrays, labels
 

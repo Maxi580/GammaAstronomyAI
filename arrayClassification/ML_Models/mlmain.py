@@ -3,8 +3,8 @@ from helper import load_data_from_json
 from arrayClassification.ML_Models.EnsembleML import EnsembleArrayClassifier
 
 # TODO
-ARRAYS_DIR = "../../simulated_data/arrays"
-ANNOTATIONS_DIR = "../../simulated_data/annotations"
+ARRAYS_DIR = "../../datasets/Huge10kSet/arrays"
+ANNOTATIONS_DIR = "../../datasets/Huge10kSet/annotations"
 
 
 def main():
