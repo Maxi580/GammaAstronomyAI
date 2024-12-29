@@ -5,12 +5,13 @@ import torch.nn.functional as F
 
 class ResidualConvHex(nn.Module):
     """Trying to solve "gradient vanishing problem".
-       this is essentially achieved by skipping connections"""
-    def __init__(self, channels):
+       this is essentially achieved by skipping connections
+       Probably not needed as we don't have 100 convolution layers right now"""
+    def __init__(self, channels, kernel_size):
         super().__init__()
-        self.conv1 = ConvHex(channels, channels, kernel_size=2)
+        self.conv1 = ConvHex(channels, channels, kernel_size=kernel_size)
         self.bn1 = nn.BatchNorm1d(channels)
-        self.conv2 = ConvHex(channels, channels, kernel_size=2)
+        self.conv2 = ConvHex(channels, channels, kernel_size=kernel_size)
         self.bn2 = nn.BatchNorm1d(channels)
 
     def forward(self, x):
