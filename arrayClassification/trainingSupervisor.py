@@ -110,8 +110,6 @@ class TrainingSupervisor:
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
 
-
-
     def load_training_data(self) -> tuple[ShapeDataset, Subset, Subset]:
         print("Loading Training Data...\n")
 
@@ -257,7 +255,7 @@ class TrainingSupervisor:
                 val_preds.extend(predicted.cpu().numpy())
                 val_labels.extend(labels.cpu().numpy())
                 val_loss += loss.item()
-        scheduler.step(val_loss)
+        scheduler.step()
 
         # Calculate metrics on validation data for current epoch
         metrics = calc_metrics(

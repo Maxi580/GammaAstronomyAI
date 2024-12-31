@@ -25,6 +25,7 @@ class SampleGenerator:
         shape_probabilities: List[float] = None,
         output_size: int = 640,
         target_count: int = 1039,
+        generate_images: bool = False,
     ):
         self.plane_generator = plane_generator
         self.shapes = shapes
@@ -34,6 +35,7 @@ class SampleGenerator:
         )
         self.output_size = output_size
         self.target_count = target_count
+        self.generate_images = generate_images
         self.image_dir = image_dir
         self.annotation_dir = annotation_dir
         self.array_dir = array_dir
@@ -133,8 +135,9 @@ class SampleGenerator:
             data = {"pixel_array": pixel_array, "noise_only": noise_values}
 
             # Save the image
-            image_path = os.path.join(self.image_dir, f"image_{i:04d}.png")
-            background_copy.save(image_path, "PNG")
+            if self.generate_images:
+                image_path = os.path.join(self.image_dir, f"image_{i:04d}.png")
+                background_copy.save(image_path, "PNG")
 
             # Save the annotation
             annotation_path = os.path.join(self.annotation_dir, f"image_{i:04d}.txt")

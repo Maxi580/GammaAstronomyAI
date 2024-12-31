@@ -22,4 +22,29 @@ def main(modelname: str, dataset: str, epochs: int):
 
 
 if __name__ == "__main__":
-    main("HexCNN", "DebugSet", 5)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-e",
+        "--epochs",
+        metavar="epochs",
+        type=int,
+        default=30,
+        help="Specify number of epochs for training the model.",
+    )
+    parser.add_argument(
+        "-m",
+        "--model",
+        metavar="modelname",
+        required=True,
+        help="Specify the model you want to train.",
+    )
+    parser.add_argument(
+        "-d",
+        "--dataset",
+        metavar="dataset_name",
+        required=True,
+        help="Specify what dataset to use. (Must be in ./datasets)",
+    )
+    args = parser.parse_args(sys.argv[1:])
+
+    main(args.model, args.dataset, args.epochs)

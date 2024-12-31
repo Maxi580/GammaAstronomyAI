@@ -27,7 +27,7 @@ def main(count: int, name: str, shapes, probabilities):
     Select Noise generator here.
     You can pass a seed for reproducibility.
     """
-    noise_gen = None
+    noise_gen = SimpleNoiseGenerator(0.1, 0.7)
     # noise_gen = SimpleNoiseGenerator(0.1, 0.7)
     # noise_gen = SpikyNoiseGenerator(0.1, 0.35)
 
@@ -41,6 +41,7 @@ def main(count: int, name: str, shapes, probabilities):
         shape_probabilities=probabilities,
         output_size=640,
         target_count=1039,
+        generate_images=False,
         image_dir=output_dir + "/images",
         annotation_dir=output_dir + "/annotations",
         array_dir=output_dir + "/arrays",
@@ -78,7 +79,6 @@ def parse_shapes(input_str: str):
 
 
 if __name__ == "__main__":
-    # Parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-n",
@@ -101,8 +101,6 @@ if __name__ == "__main__":
         help="Specify what shapes to generate and their probabilities.",
     )
     args = parser.parse_args(sys.argv[1:])
-
     shapes, probabilities = parse_shapes(args.shapes)
 
-    # Start generation
     main(args.n, args.name, shapes, probabilities)
