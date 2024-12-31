@@ -24,25 +24,25 @@ class CustomHexCNN(nn.Module):
         super(CustomHexCNN, self).__init__()
 
         self.features = nn.Sequential(
-            ConvHex(in_channels=1, out_channels=channels1, kernel_size=kernel_size1),
-            nn.BatchNorm1d(channels1),
+            ConvHex(in_channels=1, out_channels=8, kernel_size=kernel_size1),
+            nn.BatchNorm1d(8),
             nn.ReLU(),
             nn.Dropout1d(dropout_conv1),
 
-            ConvHex(in_channels=channels1, out_channels=channels2, kernel_size=kernel_size2),
-            nn.BatchNorm1d(channels2),
+            ConvHex(in_channels=8, out_channels=16, kernel_size=kernel_size2),
+            nn.BatchNorm1d(16),
             nn.ReLU(),
             nn.Dropout1d(dropout_conv2),
 
-            ConvHex(in_channels=channels2, out_channels=channels3, kernel_size=kernel_size3),
-            nn.BatchNorm1d(channels3),
+            ConvHex(in_channels=16, out_channels=32, kernel_size=kernel_size3),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
             nn.Dropout1d(dropout_conv3),
         )
 
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(channels3 * 1039, linear1_size),
+            nn.Linear(32 * 1039, linear1_size),
             nn.ReLU(),
             nn.Dropout(dropout_linear1),
 

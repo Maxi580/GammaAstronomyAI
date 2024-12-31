@@ -7,9 +7,6 @@ from arrayClassification.Hyperparameter.CustomHexCNN import CustomHexCNN
 
 def create_model_with_params(trial):
     return CustomHexCNN(
-        channels1=trial.suggest_int('channels1', 8, 64, step=8),
-        channels2=trial.suggest_int('channels2', 16, 128, step=16),
-        channels3=trial.suggest_int('channels3', 32, 256, step=32),
         kernel_size1=trial.suggest_int('kernel_size1', 1, 5),
         kernel_size2=trial.suggest_int('kernel_size2', 1, 5),
         kernel_size3=trial.suggest_int('kernel_size3', 1, 5),
