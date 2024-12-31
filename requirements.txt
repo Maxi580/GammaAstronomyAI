@@ -10,3 +10,4 @@ torchvision~=0.20.1
 ctapipe-io-magic~=0.5.5 
 ctapipe~=0.22.0
 matplotlib~=3.9.2
+optuna==4.1.0

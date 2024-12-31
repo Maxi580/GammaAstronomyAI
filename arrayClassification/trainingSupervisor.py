@@ -1,14 +1,11 @@
-import json
 import os
-from typing import List, TypedDict
+from typing import TypedDict, Literal
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import (
-    ConfusionMatrixDisplay,
     accuracy_score,
     confusion_matrix,
     f1_score,
@@ -21,6 +18,7 @@ from torch.utils.data import DataLoader, Subset
 from arrayClassification.CNN.HexCNN import HexCNN
 from arrayClassification.CNN.shapeDataset import ShapeDataset
 from arrayClassification.CNN.SimpleShapeCNN import SimpleShapeCNN
+from arrayClassification.resultsWriter import ResultsWriter
 
 MetricsDict = TypedDict(
     "MetricsDict",
@@ -38,36 +36,93 @@ MetricsDict = TypedDict(
 )
 
 
+def calc_metrics(y_pred, y_true, loss):
+    accuracy = 100.0 * accuracy_score(y_true, y_pred)
+    precision = 100.0 * precision_score(y_true, y_pred, zero_division=0)
+    recall = 100.0 * recall_score(y_true, y_pred)
+    f1 = 100.0 * f1_score(y_true, y_pred)
+
+    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
+    tn, fp, fn, tp = cm.ravel()
+
+    metrics = {
+        "loss": loss,
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+        "tn": float(tn),
+        "fp": float(fp),
+        "fn": float(fn),
+        "tp": float(tp),
+    }
+
+    return metrics
+
+
+def print_metrics(metrics: MetricsDict):
+    print(f"\nModel Performance Metrics:")
+    print(f"{'Accuracy:':<12} {metrics['accuracy']:>6.2f}%")
+    print(f"{'Precision:':<12} {metrics['precision']:>6.2f}%")
+    print(f"{'Recall:':<12} {metrics['recall']:>6.2f}%")
+    print(f"{'F1-Score:':<12} {metrics['f1']:>6.2f}%")
+    print(f"{'Loss:':<12} {metrics['loss']:>6.4f}")
+
+    print("\nConfusion Matrix:")
+    print("─" * 33)
+    print(f"│          │ Predicted   │")
+    print(f"│          │ Neg    Pos  │")
+    print(f"├──────────┼─────────────┤")
+    print(f"│ Actual   │ {metrics['tn']:4.0f}   {metrics['fp']:4.0f} │")
+    print(f"│ Neg/Pos  │ {metrics['fn']:4.0f}   {metrics['tp']:4.0f} │")
+    print("─" * 33)
+
+
 class TrainingSupervisor:
-    model: nn.Module
-    device: torch.device
-    training_data_loader: DataLoader
-    validation_data_loader: DataLoader
+    TRAINING_DATA_LOADER: DataLoader
+    VALIDATION_DATA_LOADER: DataLoader
 
-    training_metrics: List[MetricsDict] = []
-    validation_metrics: List[MetricsDict] = []
+    DATA_TEST_SPLIT: float = 0.3
+    BATCH_SIZE: int = 8
+    LEARNING_RATE: float = 1e-3
+    ADAM_BETA_1: float = 0.9
+    ADAM_BETA_2: float = 0.999
+    ADAM_EPSILON: float = 1e-8
+    WEIGHT_DECAY: float = 1e-2
+    SCHEDULER_MIN_LR: float = 1e-4
+    SCHEDULER_MAX_LR: float = 1e-3
+    SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
+    SCHEDULER_CYCLE_MOMENTUM: bool = False
+    GRAD_CLIP_NORM: float = 1
 
-    def __init__(self, modelname: str, output_dir: str) -> None:
-        self.modelname = modelname
+    def __init__(self, model_name: str, input_dir: str, output_dir: str) -> None:
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Training on Device: {self.device}")
+
+        self.model_name = model_name
+        self.model = self.load_model()
+        self.validation_metrics = []
+        self.train_metrics = []
+
+        self.input_dir = input_dir
+        self.dataset, self.train_dataset, self.val_dataset = self.load_training_data()
 
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"Training on Device: {self.device}")
 
-    def load_training_data(self, training_dir):
-        print("Loading Training Data into Datasets...\n")
-        self.training_dir = training_dir
 
-        self.full_dataset = ShapeDataset(training_dir)
+    def load_training_data(self) -> tuple[ShapeDataset, Subset, Subset]:
+        print("Loading Training Data...\n")
 
-        # Print info about the training data
-        self.data_distribution = self.full_dataset.get_distribution()
+        dataset = ShapeDataset(self.input_dir)
+        data_distribution = dataset.get_distribution()
+
+        # Debug Information about Dataset
         print("Full Dataset Overview:")
-        print(f"Total number of samples: {self.data_distribution["total_samples"]}\n")
+        print(f"Total number of samples: {data_distribution["total_samples"]}\n")
         print("Class Distribution:")
-        for label, info in self.data_distribution["distribution"].items():
+        for label, info in data_distribution["distribution"].items():
             print(f"{label}: {info["count"]} samples ({info["percentage"]:.2f}%)")
         print("\n")
 
@@ -75,73 +130,58 @@ class TrainingSupervisor:
         # Use 70% of data for training and 30% for validation
         print("Splitting Dataset equally...\n")
         labels = torch.tensor(
-            [self.full_dataset[i][1] for i in range(len(self.full_dataset))]
+            [dataset[i][1] for i in range(len(dataset))]
         )
         train_indices, val_indices = train_test_split(
-            np.arange(len(self.full_dataset)),
-            test_size=0.3,
-            stratify=labels.numpy(),  # Use the labels for stratification
+            np.arange(len(dataset)),
+            test_size=self.DATA_TEST_SPLIT,
+            stratify=labels.numpy(),
             random_state=42,
         )
 
-        # Create subsets for training and testing
-        self.train_dataset = Subset(self.full_dataset, train_indices)
-        self.val_dataset = Subset(self.full_dataset, val_indices)
+        train_dataset = Subset(dataset, train_indices)
+        val_dataset = Subset(dataset, val_indices)
 
-        print("Loading Data Loaders...\n")
-
-        if self.device == "cuda":
-            gpu_mem = torch.cuda.get_device_properties(0).total_memory
-            print(f"Available gpu memory: {gpu_mem}\n ")
-
-        self.training_data_loader = DataLoader(
-            self.train_dataset, batch_size=8, shuffle=True
+        self.TRAINING_DATA_LOADER = DataLoader(
+            train_dataset, batch_size=self.BATCH_SIZE, shuffle=True
         )
-        self.validation_data_loader = DataLoader(
-            self.val_dataset, batch_size=8, shuffle=False
+        self.VALIDATION_DATA_LOADER = DataLoader(
+            val_dataset, batch_size=self.BATCH_SIZE, shuffle=False
         )
 
-    def start_training(self, epochs: int, info_prints: bool = False):
+        return dataset, train_dataset, val_dataset
+
+    def load_model(self):
         print("Starting Training...")
-        self.epochs = epochs
 
-        match self.modelname.lower():
+        match self.model_name.lower():
             case "hexcnn":
-                self.model = HexCNN()
+                model = HexCNN()
             case "simpleshapecnn":
-                self.model = SimpleShapeCNN()
+                model = SimpleShapeCNN()
             case _:
-                raise ValueError(f"Invalid Modelname: '{self.modelname}'")
+                raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
-        self.model: nn.Module = self.model.to(self.device)
+        return model.to(self.device)
 
-        self.training_metrics = []
-        self.validation_metrics = []
-
-        self.training_confusion_matrices = []
-        self.validation_confusion_matrices = []
-
-        self._train_model(epochs, info_prints)
-
-    def _train_model(self, num_epochs: int, info_prints: bool = False):
+    def train_model(self, epochs: int):
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.AdamW(
             self.model.parameters(),
-            lr=1e-3,
-            betas=(0.9, 0.999),
-            eps=1e-8,
-            weight_decay=1e-2
+            lr=self.LEARNING_RATE,
+            betas=(self.ADAM_BETA_1, self.ADAM_BETA_2),
+            eps=self.ADAM_EPSILON,
+            weight_decay=self.WEIGHT_DECAY
         )
 
-        steps_per_epoch = len(self.training_data_loader)
-
+        steps_per_epoch = len(self.TRAINING_DATA_LOADER)
         scheduler = optim.lr_scheduler.CyclicLR(
             optimizer,
-            base_lr=1e-4,  # Minimum learning rate
-            max_lr=1e-3,  # Maximum learning rate
-            step_size_up=2 * steps_per_epoch,  # Steps to reach max_lr
-            mode='triangular2',  # Learning rate policy
-            cycle_momentum=False  # Don't cycle momentum for Adam
+            base_lr=self.SCHEDULER_MIN_LR,
+            max_lr=self.SCHEDULER_MAX_LR,
+            step_size_up=2 * steps_per_epoch,
+            mode=self.SCHEDULER_MODE,  # Learning rate policy
+            cycle_momentum=self.SCHEDULER_CYCLE_MOMENTUM  # Don't cycle momentum for Adam
         )
 
         torch.manual_seed(42)
@@ -149,41 +189,43 @@ class TrainingSupervisor:
             torch.cuda.manual_seed(42)
 
         best_validation_accuracy = 0
-
-        for epoch in range(num_epochs):
-            print(f"Training Epoch {epoch + 1}/{num_epochs}...")
+        for epoch in range(epochs):
+            print(f"Training Epoch {epoch + 1}/{epochs}...")
             self.model.train()
 
-            self._training_step(optimizer, criterion)
+            train_metrics = self._training_step(optimizer, criterion)
+            print(f"Training Metrics of epoch: {epoch}: \n")
+            print_metrics(train_metrics)
 
             self.model.eval()
 
-            validation_accuracy = self._validation_step(scheduler, criterion)
-
-            if info_prints:
-                self._print_metrics_last_epoch()
+            val_metrics = self._validation_step(scheduler, criterion)
+            print(f"Validation Metrics of epoch: {epoch}: \n")
+            print_metrics(val_metrics)
 
             print("-" * 50)
 
-            if validation_accuracy > best_validation_accuracy:
-                best_validation_accuracy = validation_accuracy
+            if val_metrics['accuracy'] > best_validation_accuracy:
+                best_validation_accuracy = val_metrics['accuracy']
                 torch.save(
                     self.model.state_dict(),
                     os.path.join(self.output_dir, "trained_model.pth"),
                 )
 
-    def _training_step(self, optimizer: optim.Optimizer, criterion):
+        self.write_results(epochs)
+
+    def _training_step(self, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
         # Test accuracy on training data for current epoch
         train_preds = []
         train_labels = []
         train_loss = 0
-        for inputs, labels in self.training_data_loader:
+        for inputs, labels in self.TRAINING_DATA_LOADER:
             inputs, labels = inputs.to(self.device), labels.to(self.device)
 
             optimizer.zero_grad()
             outputs = self.model(inputs)
             loss = criterion(outputs, labels)
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.GRAD_CLIP_NORM)
             loss.backward()
             optimizer.step()
 
@@ -192,22 +234,21 @@ class TrainingSupervisor:
             train_labels.extend(labels.cpu().numpy())
             train_loss += loss.item()
 
-        # Calculate metrics on training data for current epoch
-        self._calc_metrics(
-            self.training_metrics,
+        metrics = calc_metrics(
             train_labels,
             train_preds,
-            train_loss / len(self.training_data_loader),
-            self.training_confusion_matrices,
+            train_loss / len(self.TRAINING_DATA_LOADER),
         )
+        self.train_metrics.append(metrics)
+        return metrics
 
-    def _validation_step(self, scheduler, criterion) -> float:
+    def _validation_step(self, scheduler, criterion) -> dict[str, float]:
         # Test accuracy on validation data for current epoch
         val_loss = 0
         val_preds = []
         val_labels = []
         with torch.no_grad():
-            for inputs, labels in self.validation_data_loader:
+            for inputs, labels in self.VALIDATION_DATA_LOADER:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = self.model(inputs)
                 loss = criterion(outputs, labels)
@@ -219,159 +260,13 @@ class TrainingSupervisor:
         scheduler.step(val_loss)
 
         # Calculate metrics on validation data for current epoch
-        accuracy = self._calc_metrics(
-            self.validation_metrics,
+        metrics = calc_metrics(
             val_labels,
             val_preds,
-            val_loss / len(self.validation_data_loader),
-            self.validation_confusion_matrices,
+            val_loss / len(self.VALIDATION_DATA_LOADER),
         )
-
-        return accuracy
-
-    def _calc_metrics(self, metrics: List[MetricsDict], y_pred, y_true, loss, cm_list):
-        # Calculate metrics on training data for current epoch
-        accuracy = 100.0 * accuracy_score(y_true, y_pred)
-        precision = 100.0 * precision_score(y_true, y_pred, zero_division=0)
-        recall = 100.0 * recall_score(y_true, y_pred)
-        f1 = 100.0 * f1_score(y_true, y_pred)
-
-        cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
-        tn, fp, fn, tp = cm.ravel()
-        cm_list.append(cm)
-
-        metrics.append(
-            {
-                "loss": loss,
-                "accuracy": accuracy,
-                "precision": precision,
-                "recall": recall,
-                "f1": f1,
-                "tn": float(tn),
-                "fp": float(fp),
-                "fn": float(fn),
-                "tp": float(tp),
-            }
-        )
-
-        return accuracy
-
-    def _print_metrics_last_epoch(self):
-        train_metrics = self.training_metrics[-1]
-        val_metrics = self.validation_metrics[-1]
-
-        print("\nTraining Metrics:")
-        print(f"Loss: {train_metrics["loss"]:.4f}")
-        print(f"Accuracy: {train_metrics["accuracy"]:.2f}%")
-        print(f"Precision: {train_metrics["precision"]:.2f}%")
-        print(f"Recall: {train_metrics["recall"]:.2f}%")
-        print(f"F1-Score: {train_metrics["f1"]:.2f}%")
-
-        print("\nValidation Metrics:")
-        print(f"Loss: {val_metrics["loss"]:.4f}")
-        print(f"Accuracy: {val_metrics["accuracy"]:.2f}%")
-        print(f"Precision: {val_metrics["precision"]:.2f}%")
-        print(f"Recall: {val_metrics["recall"]:.2f}%")
-        print(f"F1-Score: {val_metrics["f1"]:.2f}%")
-
-    def write_results(self):
-        print("Writing Training Results...")
-
-        data = {
-            "dataset": {
-                "directory": self.training_dir,
-                "distribution": self.data_distribution,
-            },
-            "epochs": self.epochs,
-            "model": {
-                "name": self.modelname,
-                "structure": self._get_model_structure(),
-                "trainable_weights": self._count_trainable_weights(),
-            },
-            "training_metrics": self.training_metrics,
-            "validation_metrics": self.validation_metrics,
-        }
-
-        with open(os.path.join(self.output_dir, "info.json"), "w") as file:
-            file.write(json.dumps(data, indent=4))
-
-        epochs = np.arange(1, self.epochs + 1)
-
-        # Create a diagram with loss values
-        graphs = [
-            (epochs, [m["loss"] for m in self.training_metrics], "Training"),
-            (epochs, [m["loss"] for m in self.validation_metrics], "Validation"),
-        ]
-        self._create_diagram(
-            filename="loss_diagram.png",
-            title="Loss Diagram",
-            x_axis=((1, self.epochs), None, "Epochs"),
-            y_axis=((0, 1), np.arange(0, 1.1, 0.1), "Loss Value"),
-            graphs=graphs,
-        )
-
-        # Create Diagram for training metrics
-        graphs = [
-            (epochs, [m["accuracy"] for m in self.training_metrics], "Accuracy"),
-            (epochs, [m["precision"] for m in self.training_metrics], "Precision"),
-            (epochs, [m["recall"] for m in self.training_metrics], "Recall"),
-            (epochs, [m["f1"] for m in self.training_metrics], "F1"),
-        ]
-        self._create_diagram(
-            filename="training_metrics.png",
-            title="Training Metrics",
-            x_axis=((1, self.epochs), None, "Epochs"),
-            y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
-            graphs=graphs,
-        )
-
-        # Create Diagram for validation metrics
-        graphs = [
-            (epochs, [m["accuracy"] for m in self.validation_metrics], "Accuracy"),
-            (epochs, [m["precision"] for m in self.validation_metrics], "Precision"),
-            (epochs, [m["recall"] for m in self.validation_metrics], "Recall"),
-            (epochs, [m["f1"] for m in self.validation_metrics], "F1"),
-        ]
-        self._create_diagram(
-            filename="validation_metrics.png",
-            title="Validation Metrics",
-            x_axis=((1, self.epochs), None, "Epochs"),
-            y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
-            graphs=graphs,
-        )
-
-        # Create Diagram for Accuracy Comparison
-        graphs = [
-            (
-                epochs,
-                [m["accuracy"] for m in self.training_metrics],
-                "Accuracy Training",
-            ),
-            (
-                epochs,
-                [m["accuracy"] for m in self.validation_metrics],
-                "Accuracy Validation",
-            ),
-        ]
-        self._create_diagram(
-            filename="accuracy_comparison.png",
-            title="Accuracy Comparison",
-            x_axis=((1, self.epochs), None, "Epochs"),
-            y_axis=((0, 100), np.arange(0, 101, 10), "Percentage"),
-            graphs=graphs,
-        )
-
-        # Plot Confusion matrices
-        # TODO: add correct labels
-        training_cm = ConfusionMatrixDisplay(self.training_confusion_matrices[-1])
-        training_cm.plot().figure_.savefig(
-            os.path.join(self.output_dir, "training_confusion_matrix.png")
-        )
-
-        validation_cm = ConfusionMatrixDisplay(self.validation_confusion_matrices[-1])
-        validation_cm.plot().figure_.savefig(
-            os.path.join(self.output_dir, "validation_confusion_matrix.png")
-        )
+        self.validation_metrics.append(metrics)
+        return metrics
 
     def _get_model_structure(self):
         model_structure = {}
@@ -383,29 +278,21 @@ class TrainingSupervisor:
     def _count_trainable_weights(self):
         return sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
-    def _create_diagram(self, filename: str, title: str, x_axis, y_axis, graphs):
-        ax = plt.subplot()
+    def write_results(self, epochs):
+        training_data = {
+            "dataset": {
+                "directory": self.input_dir,
+                "distribution": self.dataset.get_distribution(),
+            },
+            "epochs": epochs,
+            "model": {
+                "name": self.model_name,
+                "structure": self._get_model_structure(),
+                "trainable_weights": self._count_trainable_weights(),
+            },
+            "training_metrics": self.train_metrics,
+            "validation_metrics": self.validation_metrics,
+        }
 
-        for x, y, label in graphs:
-            ax.plot(x, y, label=label)
-
-        xlim, xticks, xlabel = x_axis
-        ylim, yticks, ylabel = y_axis
-
-        ax.set(
-            xlim=xlim,
-            ylim=ylim,
-        )
-
-        if xticks is not None:
-            ax.set_xticks(xticks)
-        if yticks is not None:
-            ax.set_yticks(yticks)
-
-        ax.set_title(title)
-        ax.legend()
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-
-        ax.figure.savefig(os.path.join(self.output_dir, filename))
-        ax.clear()
+        writer = ResultsWriter(self.output_dir)
+        writer.save_training_results(training_data)
