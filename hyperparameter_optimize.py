@@ -31,7 +31,7 @@ def objective(trial, dataset: str, study_name, epochs: int):
                                   nametag)
         os.makedirs(output_dir, exist_ok=True)
 
-        supervisor = TrainingSupervisor("hexcnn", dataset_dir, output_dir)
+        supervisor = TrainingSupervisor("hexcnn", dataset_dir, output_dir, debug_info=False)
 
         supervisor.model = create_model_with_params(trial).to(supervisor.device)
 
@@ -44,7 +44,7 @@ def objective(trial, dataset: str, study_name, epochs: int):
         supervisor.SCHEDULER_MAX_LR = trial.suggest_float('scheduler_max_lr', 1e-4, 1e-2, log=True)
         supervisor.GRAD_CLIP_NORM = trial.suggest_float('grad_clip_norm', 0.1, 5.0)
 
-        supervisor.train_model(epochs, debug_info=False)
+        supervisor.train_model(epochs)
         accuracy = supervisor.validation_metrics[-1]['accuracy']
 
         print(f"\nTrial {trial.number} got an accuracy of {accuracy}%")

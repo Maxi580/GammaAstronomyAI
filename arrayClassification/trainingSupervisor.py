@@ -95,7 +95,7 @@ class TrainingSupervisor:
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     GRAD_CLIP_NORM: float = 1
 
-    def __init__(self, model_name: str, input_dir: str, output_dir: str) -> None:
+    def __init__(self, model_name: str, input_dir: str, output_dir: str, debug_info=True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Training on Device: {self.device}")
 
@@ -110,23 +110,25 @@ class TrainingSupervisor:
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
 
+        self.debug_info = debug_info
+
     def load_training_data(self) -> tuple[ShapeDataset, Subset, Subset]:
-        print("Loading Training Data...\n")
+        if self.debug_info:
+            print("Loading Training Data...\n")
 
         dataset = ShapeDataset(self.input_dir)
         data_distribution = dataset.get_distribution()
 
-        # Debug Information about Dataset
-        print("Full Dataset Overview:")
-        print(f"Total number of samples: {data_distribution["total_samples"]}\n")
-        print("Class Distribution:")
-        for label, info in data_distribution["distribution"].items():
-            print(f"{label}: {info["count"]} samples ({info["percentage"]:.2f}%)")
-        print("\n")
+        if self.debug_info:
+            print("Full Dataset Overview:")
+            print(f"Total number of samples: {data_distribution["total_samples"]}\n")
+            print("Class Distribution:")
+            for label, info in data_distribution["distribution"].items():
+                print(f"{label}: {info["count"]} samples ({info["percentage"]:.2f}%)")
+            print("\n")
 
         # Stratified splitting using sklearn
         # Use 70% of data for training and 30% for validation
-        print("Splitting Dataset equally...\n")
         labels = torch.tensor(
             [dataset[i][1] for i in range(len(dataset))]
         )
@@ -147,11 +149,12 @@ class TrainingSupervisor:
             val_dataset, batch_size=self.BATCH_SIZE, shuffle=False
         )
 
+        if self.debug_info:
+            print("Dataset loaded.")
+
         return dataset, train_dataset, val_dataset
 
     def load_model(self):
-        print("Starting Training...")
-
         match self.model_name.lower():
             case "hexcnn":
                 model = HexCNN()
@@ -160,9 +163,12 @@ class TrainingSupervisor:
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
+        if self.debug_info:
+            print("Model loaded.")
+
         return model.to(self.device)
 
-    def train_model(self, epochs: int, debug_info=True):
+    def train_model(self, epochs: int):
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.AdamW(
             self.model.parameters(),
@@ -188,20 +194,20 @@ class TrainingSupervisor:
 
         best_validation_accuracy = 0
         for epoch in range(epochs):
-            if debug_info:
+            if self.debug_info:
                 print(f"Training Epoch {epoch + 1}/{epochs}...")
 
             self.model.train()
 
             train_metrics = self._training_step(optimizer, criterion)
-            if debug_info:
+            if self.debug_info:
                 print(f"Training Metrics of epoch: {epoch}: \n")
                 print_metrics(train_metrics)
 
             self.model.eval()
 
             val_metrics = self._validation_step(scheduler, criterion)
-            if debug_info:
+            if self.debug_info:
                 print(f"Validation Metrics of epoch: {epoch}: \n")
                 print_metrics(val_metrics)
                 print("-" * 50)
