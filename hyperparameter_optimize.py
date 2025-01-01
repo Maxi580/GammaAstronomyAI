@@ -4,6 +4,7 @@ import time
 import torch
 from arrayClassification.trainingSupervisor import TrainingSupervisor
 from arrayClassification.Hyperparameter.CustomHexCNN import CustomHexCNN
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 
 def create_model_with_params(trial):
@@ -14,9 +15,9 @@ def create_model_with_params(trial):
         dropout_conv1=trial.suggest_float('dropout_conv1', 0.025, 0.5),
         dropout_conv2=trial.suggest_float('dropout_conv2', 0.025, 0.5),
         dropout_conv3=trial.suggest_float('dropout_conv3', 0.025, 0.5),
-        linear1_size=trial.suggest_int('linear1_size', 512, 38400, step=1, log=True),
-        linear2_size=trial.suggest_int('linear2_size', 128, 5096, step=1, log=True),
-        linear3_size=trial.suggest_int('linear3_size', 32, 2048, step=1, log=True),
+        linear1_size=trial.suggest_int('linear1_size', 512, 10240, step=1, log=True),
+        linear2_size=trial.suggest_int('linear2_size', 256, 5120, step=1, log=True),
+        linear3_size=trial.suggest_int('linear3_size', 128, 2560, step=1, log=True),
         dropout_linear1=trial.suggest_float('dropout_linear1', 0.025, 0.5),
         dropout_linear2=trial.suggest_float('dropout_linear2', 0.025, 0.5),
         dropout_linear3=trial.suggest_float('dropout_linear3', 0.025, 0.3)
@@ -104,4 +105,4 @@ def main(dataset: str, epochs: int, n_trials: int):
 
 
 if __name__ == "__main__":
-    main("Dataset20k", 1, 5)
+    main("TuneDataset20k", 10, 500)

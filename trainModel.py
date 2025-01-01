@@ -2,9 +2,8 @@ import argparse
 import os
 import sys
 import time
-
 from arrayClassification.trainingSupervisor import TrainingSupervisor
-
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 def main(modelname: str, dataset: str, epochs: int):
     nametag = f"{modelname}_{dataset}_{time.strftime('%Y-%m-%d_%H-%M-%S')}"
