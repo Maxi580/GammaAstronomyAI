@@ -4,7 +4,8 @@ import time
 import torch
 from arrayClassification.trainingSupervisor import TrainingSupervisor
 from arrayClassification.Hyperparameter.CustomHexCNN import CustomHexCNN
-os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
 
 def create_model_with_params(trial):
@@ -15,9 +16,9 @@ def create_model_with_params(trial):
         dropout_conv1=trial.suggest_float('dropout_conv1', 0.025, 0.5),
         dropout_conv2=trial.suggest_float('dropout_conv2', 0.025, 0.5),
         dropout_conv3=trial.suggest_float('dropout_conv3', 0.025, 0.5),
-        linear1_size=trial.suggest_int('linear1_size', 512, 10240, step=1, log=True),
-        linear2_size=trial.suggest_int('linear2_size', 256, 5120, step=1, log=True),
-        linear3_size=trial.suggest_int('linear3_size', 128, 2560, step=1, log=True),
+        linear1_size=trial.suggest_int('linear1_size', 512, 10240, step=512),
+        linear2_size=trial.suggest_int('linear2_size', 256, 5120, step=256),
+        linear3_size=trial.suggest_int('linear3_size', 128, 2560, step=128),
         dropout_linear1=trial.suggest_float('dropout_linear1', 0.025, 0.5),
         dropout_linear2=trial.suggest_float('dropout_linear2', 0.025, 0.5),
         dropout_linear3=trial.suggest_float('dropout_linear3', 0.025, 0.3)

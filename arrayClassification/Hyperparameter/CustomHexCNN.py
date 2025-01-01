@@ -5,9 +5,6 @@ from arrayClassification.HexLayers.ConvHex import ConvHex
 class CustomHexCNN(nn.Module):
     def __init__(
             self,
-            channels1=8,
-            channels2=16,
-            channels3=32,
             kernel_size1=4,
             kernel_size2=3,
             kernel_size3=2,
