@@ -95,9 +95,11 @@ class TrainingSupervisor:
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     GRAD_CLIP_NORM: float = 1
 
-    def __init__(self, model_name: str, input_dir: str, output_dir: str, debug_info=True) -> None:
+    def __init__(self, model_name: str, input_dir: str, output_dir: str, debug_info: bool = True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"Training on Device: {self.device}")
+        self.debug_info = debug_info
+        if debug_info:
+            print(f"Training on Device: {self.device}")
 
         self.model_name = model_name
         self.model = self.load_model()
@@ -109,8 +111,6 @@ class TrainingSupervisor:
 
         self.output_dir = output_dir
         os.makedirs(output_dir, exist_ok=True)
-
-        self.debug_info = debug_info
 
     def load_training_data(self) -> tuple[ShapeDataset, Subset, Subset]:
         if self.debug_info:
