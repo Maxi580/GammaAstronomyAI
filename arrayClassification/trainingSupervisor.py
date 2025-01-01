@@ -83,7 +83,7 @@ class TrainingSupervisor:
     VALIDATION_DATA_LOADER: DataLoader
 
     DATA_TEST_SPLIT: float = 0.3
-    BATCH_SIZE: int = 8
+    BATCH_SIZE: int = 16
     LEARNING_RATE: float = 1e-3
     ADAM_BETA_1: float = 0.9
     ADAM_BETA_2: float = 0.999

@@ -1,5 +1,6 @@
 import optuna
 import os
+import gc
 import time
 import torch
 from arrayClassification.trainingSupervisor import TrainingSupervisor
@@ -16,16 +17,25 @@ def create_model_with_params(trial):
         dropout_conv1=trial.suggest_float('dropout_conv1', 0.025, 0.5),
         dropout_conv2=trial.suggest_float('dropout_conv2', 0.025, 0.5),
         dropout_conv3=trial.suggest_float('dropout_conv3', 0.025, 0.5),
-        linear1_size=trial.suggest_int('linear1_size', 512, 10240, step=512),
-        linear2_size=trial.suggest_int('linear2_size', 256, 5120, step=256),
-        linear3_size=trial.suggest_int('linear3_size', 128, 2560, step=128),
+        linear1_size=trial.suggest_int('linear1_size', 256, 2048, step=256),
+        linear2_size=trial.suggest_int('linear2_size', 128, 1024, step=128),
+        linear3_size=trial.suggest_int('linear3_size', 64, 512, step=64),
         dropout_linear1=trial.suggest_float('dropout_linear1', 0.025, 0.5),
         dropout_linear2=trial.suggest_float('dropout_linear2', 0.025, 0.5),
         dropout_linear3=trial.suggest_float('dropout_linear3', 0.025, 0.3)
     )
 
 
+def clean_memory():
+    gc.collect()
+    torch.cuda.empty_cache()
+    # Force a sync with GPU
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+
+
 def objective(trial, dataset: str, study_name, epochs: int):
+    supervisor = None
     try:
         nametag = f"{study_name}_{dataset}_{time.strftime('%Y-%m-%d_%H-%M-%S')}_trial_{trial.number}"
         dataset_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "datasets", dataset)
@@ -55,29 +65,33 @@ def objective(trial, dataset: str, study_name, epochs: int):
             print(f"  {param_name}: {param_value}")
         print("-" * 50)
 
-        # Clean up
-        del supervisor.model
-        del supervisor
-        torch.cuda.empty_cache()
-
-        return accuracy
-
     except (RuntimeError, torch.cuda.OutOfMemoryError) as e:
-        # Clean up on error
-        if 'supervisor' in locals():
-            del supervisor.model
-            del supervisor
-        torch.cuda.empty_cache()
-
         print(f"Trial {trial.number} failed with error: {str(e)}")
-        # Tell Optuna to prune this trial
         raise optuna.exceptions.TrialPruned()
+
+    finally:
+        if supervisor is not None:
+            # Clean up DataLoaders
+            if hasattr(supervisor, 'TRAINING_DATA_LOADER'):
+                del supervisor.TRAINING_DATA_LOADER
+
+            if hasattr(supervisor, 'VALIDATION_DATA_LOADER'):
+                del supervisor.VALIDATION_DATA_LOADER
+
+            # Clean up the model
+            if hasattr(supervisor, 'model'):
+                supervisor.model.cpu()
+                del supervisor.model
+
+            del supervisor
+
+        clean_memory()
 
 
 def start_or_resume_study(dataset: str, study_name: str, epochs: int, n_trials: int):
     try:
         study = optuna.load_study(
-            study_name= study_name,
+            study_name=study_name,
             storage="sqlite:///optuna_study.db"
         )
         print("Resuming existing study")
