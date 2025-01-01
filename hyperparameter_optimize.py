@@ -65,6 +65,8 @@ def objective(trial, dataset: str, study_name, epochs: int):
             print(f"  {param_name}: {param_value}")
         print("-" * 50)
 
+        return accuracy
+
     except (RuntimeError, torch.cuda.OutOfMemoryError) as e:
         print(f"Trial {trial.number} failed with error: {str(e)}")
         raise optuna.exceptions.TrialPruned()
