@@ -162,7 +162,7 @@ class TrainingSupervisor:
 
         return model.to(self.device)
 
-    def train_model(self, epochs: int):
+    def train_model(self, epochs: int, debug_info=True):
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.AdamW(
             self.model.parameters(),
@@ -188,20 +188,23 @@ class TrainingSupervisor:
 
         best_validation_accuracy = 0
         for epoch in range(epochs):
-            print(f"Training Epoch {epoch + 1}/{epochs}...")
+            if debug_info:
+                print(f"Training Epoch {epoch + 1}/{epochs}...")
+
             self.model.train()
 
             train_metrics = self._training_step(optimizer, criterion)
-            print(f"Training Metrics of epoch: {epoch}: \n")
-            print_metrics(train_metrics)
+            if debug_info:
+                print(f"Training Metrics of epoch: {epoch}: \n")
+                print_metrics(train_metrics)
 
             self.model.eval()
 
             val_metrics = self._validation_step(scheduler, criterion)
-            print(f"Validation Metrics of epoch: {epoch}: \n")
-            print_metrics(val_metrics)
-
-            print("-" * 50)
+            if debug_info:
+                print(f"Validation Metrics of epoch: {epoch}: \n")
+                print_metrics(val_metrics)
+                print("-" * 50)
 
             if val_metrics['accuracy'] > best_validation_accuracy:
                 best_validation_accuracy = val_metrics['accuracy']
