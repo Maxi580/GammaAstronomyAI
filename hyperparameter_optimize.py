@@ -43,7 +43,7 @@ def objective(trial, dataset: str, study_name, epochs: int):
                                   nametag)
         os.makedirs(output_dir, exist_ok=True)
 
-        supervisor = TrainingSupervisor("hexcnn", dataset_dir, output_dir, debug_info=False)
+        supervisor = TrainingSupervisor("hexcnn", dataset_dir, output_dir, debug_info=False, save_model=False)
 
         supervisor.model = create_model_with_params(trial).to(supervisor.device)
 
