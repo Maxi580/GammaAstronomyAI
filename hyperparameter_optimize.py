@@ -17,7 +17,7 @@ def create_model_with_params(trial):
         dropout_conv1=trial.suggest_float('dropout_conv1', 0.025, 0.5),
         dropout_conv2=trial.suggest_float('dropout_conv2', 0.025, 0.5),
         dropout_conv3=trial.suggest_float('dropout_conv3', 0.025, 0.5),
-        linear1_size=trial.suggest_int('linear1_size', 256, 2048, step=256),
+        linear1_size=trial.suggest_int('linear1_size', 256, 4096, step=256),
         linear2_size=trial.suggest_int('linear2_size', 128, 1024, step=128),
         linear3_size=trial.suggest_int('linear3_size', 64, 512, step=64),
         dropout_linear1=trial.suggest_float('dropout_linear1', 0.025, 0.5),
