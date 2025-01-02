@@ -26,11 +26,11 @@ class HexCNN(nn.Module):
         self.classifier = nn.Sequential(
             nn.Flatten(),
 
-            nn.Linear(32 * 1039, 1024),
+            nn.Linear(32 * 1039, 2048),
             nn.ReLU(),
             nn.Dropout(0.2),
 
-            nn.Linear(1024, 256),
+            nn.Linear(2048, 256),
             nn.ReLU(),
             nn.Dropout(0.2),
 

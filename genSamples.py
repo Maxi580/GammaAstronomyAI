@@ -27,7 +27,7 @@ def main(count: int, name: str, shapes, probabilities):
     Select Noise generator here.
     You can pass a seed for reproducibility.
     """
-    noise_gen = SimpleNoiseGenerator(0.1, 0.7)
+    noise_gen = SpikyNoiseGenerator(0.1, 0.35)
     # noise_gen = SimpleNoiseGenerator(0.1, 0.7)
     # noise_gen = SpikyNoiseGenerator(0.1, 0.35)
 

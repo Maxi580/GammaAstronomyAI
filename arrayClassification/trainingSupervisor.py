@@ -83,7 +83,7 @@ class TrainingSupervisor:
     VALIDATION_DATA_LOADER: DataLoader
 
     DATA_TEST_SPLIT: float = 0.3
-    BATCH_SIZE: int = 16
+    BATCH_SIZE: int = 32
     LEARNING_RATE: float = 1e-3
     ADAM_BETA_1: float = 0.9
     ADAM_BETA_2: float = 0.999
@@ -95,9 +95,11 @@ class TrainingSupervisor:
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     GRAD_CLIP_NORM: float = 1
 
-    def __init__(self, model_name: str, input_dir: str, output_dir: str, debug_info: bool = True) -> None:
+    def __init__(self, model_name: str, input_dir: str, output_dir: str, debug_info: bool = True,
+                 save_model: bool = True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.debug_info = debug_info
+        self.save_model = save_model
         if debug_info:
             print(f"Training on Device: {self.device}")
 
@@ -214,12 +216,14 @@ class TrainingSupervisor:
 
             if val_metrics['accuracy'] > best_validation_accuracy:
                 best_validation_accuracy = val_metrics['accuracy']
-                torch.save(
-                    self.model.state_dict(),
-                    os.path.join(self.output_dir, "trained_model.pth"),
-                )
+                if self.save_model:
+                    torch.save(
+                        self.model.state_dict(),
+                        os.path.join(self.output_dir, "trained_model.pth"),
+                    )
 
-        self.write_results(epochs)
+        if self.debug_info:
+            self.write_results(epochs)
 
     def _training_step(self, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
         # Test accuracy on training data for current epoch
