@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from cnn.ConvolutionLayers.Neighbor import get_neighbor_tensor
+from CNN.ConvolutionLayers.neighbor import get_neighbor_tensor
 
 
 class ConvHex(nn.Module):

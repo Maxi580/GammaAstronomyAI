@@ -1,6 +1,6 @@
 from helper import load_data_from_json
 
-from cnn.ML_Models.EnsembleML import EnsembleArrayClassifier
+from ML_Models.EnsembleML import EnsembleArrayClassifier
 
 # TODO
 ARRAYS_DIR = "../../datasets/Huge10kSet/arrays"

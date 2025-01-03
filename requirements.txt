@@ -11,3 +11,6 @@ ctapipe-io-magic~=0.5.5
 ctapipe~=0.22.0
 matplotlib~=3.9.2
 optuna==4.1.0
+pandas==2.2.3
+pyarrow==18.1.0
+fastparquet==2024.11.0

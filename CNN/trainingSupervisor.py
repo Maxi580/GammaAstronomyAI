@@ -15,10 +15,10 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
 
-from cnn.Architectures.HexCNN import HexCNN
-from cnn.shapeDataset import ShapeDataset
-from cnn.Architectures.BasicCNN import BasicCNN
-from cnn.resultsWriter import ResultsWriter
+from CNN.CNNArchitectures.HexCNN import HexCNN
+from CNN.shapeDataset import ShapeDataset
+from CNN.CNNArchitectures.BasicCNN import BasicCNN
+from CNN.resultsWriter import ResultsWriter
 
 MetricsDict = TypedDict(
     "MetricsDict",

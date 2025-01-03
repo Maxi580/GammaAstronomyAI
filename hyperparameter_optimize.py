@@ -3,8 +3,8 @@ import os
 import gc
 import time
 import torch
-from cnn.trainingSupervisor import TrainingSupervisor
-from cnn.Hyperparameter.CustomHexCNN import CustomHexCNN
+from CNN.trainingSupervisor import TrainingSupervisor
+from CNN.HyperparameterTuning.CustomHexCNN import CustomHexCNN
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
