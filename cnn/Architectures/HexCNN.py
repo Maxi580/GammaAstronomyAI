@@ -1,5 +1,5 @@
 import torch.nn as nn
-from arrayClassification.HexLayers.ConvHex import ConvHex
+from cnn.ConvolutionLayers.ConvHex import ConvHex
 
 
 class HexCNN(nn.Module):

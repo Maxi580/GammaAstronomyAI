@@ -4,8 +4,6 @@ import os
 import torch
 from torch.utils.data import Dataset
 
-from arrayClassification.CNN.constants import LABELS, LABELS_SQUARE
-
 
 class ShapeDataset(Dataset):
     def __init__(self, testdata_dir):
@@ -22,9 +20,7 @@ class ShapeDataset(Dataset):
             raise Exception(f"Directory not found: '{self.annotation_dir}'")
 
         self.arrays = sorted(os.listdir(self.array_dir))
-
-        # TODO: make this selection automatic
-        self.labels = LABELS_SQUARE  # Or LABELS for centered and normal ellipses
+        self.labels = self.detect_labels()
 
     def __len__(self):
         return len(self.arrays)
@@ -43,6 +39,20 @@ class ShapeDataset(Dataset):
 
         return torch.tensor([array]), self.labels[label]
 
+    def detect_labels(self):
+        unique_labels = set()
+        for array_file in self.arrays:
+            label_path = os.path.join(
+                self.annotation_dir, array_file.replace(".json", ".txt")
+            )
+            with open(label_path, "r") as f:
+                label = f.read().strip()
+            unique_labels.add(label)
+
+        sorted_labels = sorted(list(unique_labels))
+
+        return {label: idx for idx, label in enumerate(sorted_labels)}
+
     def get_distribution(self):
         all_labels = []
         for array_file in self.arrays:
@@ -55,7 +65,7 @@ class ShapeDataset(Dataset):
 
         total_samples = len(all_labels)
         label_counts = {}
-        for label_name, label_idx in LABELS.items():
+        for label_name, label_idx in self.labels.items():
             count = all_labels.count(label_idx)
             percentage = (count / total_samples) * 100
             label_counts[label_name] = {"count": count, "percentage": percentage}

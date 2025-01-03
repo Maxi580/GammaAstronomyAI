@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 import time
-from arrayClassification.trainingSupervisor import TrainingSupervisor
+from cnn.trainingSupervisor import TrainingSupervisor
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
@@ -23,7 +23,7 @@ def main(model_name: str, dataset: str, epochs: int):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    """parser = argparse.ArgumentParser()
     parser.add_argument(
         "-e",
         "--epochs",
@@ -46,6 +46,6 @@ if __name__ == "__main__":
         required=True,
         help="Specify what dataset to use. (Must be in ./datasets)",
     )
-    args = parser.parse_args(sys.argv[1:])
+    args = parser.parse_args(sys.argv[1:])"""
 
-    main(args.model, args.dataset, args.epochs)
+    main("HexCNN", "DebugSet", 1)

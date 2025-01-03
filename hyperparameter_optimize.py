@@ -3,8 +3,8 @@ import os
 import gc
 import time
 import torch
-from arrayClassification.trainingSupervisor import TrainingSupervisor
-from arrayClassification.Hyperparameter.CustomHexCNN import CustomHexCNN
+from cnn.trainingSupervisor import TrainingSupervisor
+from cnn.Hyperparameter.CustomHexCNN import CustomHexCNN
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
@@ -41,7 +41,6 @@ def objective(trial, dataset: str, study_name, epochs: int):
         dataset_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "datasets", dataset)
         output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), f"parameter_tuning/{study_name}",
                                   nametag)
-        os.makedirs(output_dir, exist_ok=True)
 
         supervisor = TrainingSupervisor("hexcnn", dataset_dir, output_dir, debug_info=False, save_model=False)
 

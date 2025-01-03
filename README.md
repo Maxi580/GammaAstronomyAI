@@ -54,6 +54,6 @@ The Dataset used for training must be saved in `./datasets`.
 
 Valid Models are:
 - `HexCNN`
-- `SimpleShapeCNN`
+- `BasicCNN`
 
 The trained models, diagrams and other information about the training process, like metrics will be saved in `./trained_models`.

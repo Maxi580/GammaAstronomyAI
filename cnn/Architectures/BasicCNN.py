@@ -1,9 +1,9 @@
 import torch.nn as nn
 
 
-class SimpleShapeCNN(nn.Module):
+class BasicCNN(nn.Module):
     def __init__(self):
-        super(SimpleShapeCNN, self).__init__()
+        super(BasicCNN, self).__init__()
 
         self.features = nn.Sequential(
             nn.Conv1d(1, 16, kernel_size=3, padding=0),
@@ -24,7 +24,7 @@ class SimpleShapeCNN(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(8192, 32),  # 64*129 because of pooling
+            nn.Linear(8192, 32),
             nn.ReLU(),
             nn.Dropout(0.3),
             nn.Linear(32, 16),
