@@ -36,7 +36,7 @@ class CombinedNet(nn.Module):
 
         self.cnn_reducer = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(32 * NUM_OF_HEXAGONS, CNN_REDUCE_OUTPUT_FEATURES),  # Reduce cnn output to 2048 features
+            nn.Linear(32 * NUM_OF_HEXAGONS, CNN_REDUCE_OUTPUT_FEATURES),
             nn.ReLU(),
             nn.Dropout(0.2)
         )
@@ -54,7 +54,7 @@ class CombinedNet(nn.Module):
 
     def forward(self, m1_image, m2_image, other_features):
         # TODO: Understand why we have 1183 elements and not only 1039, workaround should work ok i think
-        # First add channel dimension
+        # First add channel dimension (1 = in_channels)
         m1_image = m1_image.unsqueeze(1)  # Shape becomes [batch_size, 1, num_hexagons]
         m2_image = m2_image.unsqueeze(1)
 
