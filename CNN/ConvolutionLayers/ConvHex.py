@@ -24,7 +24,7 @@ class ConvHex(nn.Module):
         x = x.transpose(1, 2)
         # After Transpose [Batch_size, num_hex, in_channel]
 
-        # Expand Size to match with neighbors, because we are gonna merge them
+        # Expand Size to match with neighbors, because we are going to merge them
         center_values = x.unsqueeze(2)
         # Center values shape [Batch_size, number_of_hexagons, 1, in_channel] (1 later holds all values that exist)
 

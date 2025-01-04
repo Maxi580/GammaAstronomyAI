@@ -33,32 +33,32 @@ class ResultsWriter:
 
         plots = [
             _plot_config("loss_diagram.png", "Loss Diagram",
-                              ((1, data["epochs"]), None, "Epochs"),
-                              ((0, 1), np.arange(0, 1.1, 0.1), "Loss Value"),
-                              [("loss", train_metrics, "Training"),
-                               ("loss", val_metrics, "Validation")]),
+                         ((1, data["epochs"]), None, "Epochs"),
+                         ((0, 1), np.arange(0, 1.1, 0.1), "Loss Value"),
+                         [("loss", train_metrics, "Training"),
+                          ("loss", val_metrics, "Validation")]),
 
             _plot_config("training_metrics.png", "Training Metrics",
-                              ((1, data["epochs"]), None, "Epochs"),
-                              ((0, 100), np.arange(0, 101, 10), "Percentage"),
-                              [("accuracy", train_metrics, "Accuracy"),
-                               ("precision", train_metrics, "Precision"),
-                               ("recall", train_metrics, "Recall"),
-                               ("f1", train_metrics, "F1")]),
+                         ((1, data["epochs"]), None, "Epochs"),
+                         ((0, 100), np.arange(0, 101, 10), "Percentage"),
+                         [("accuracy", train_metrics, "Accuracy"),
+                          ("precision", train_metrics, "Precision"),
+                          ("recall", train_metrics, "Recall"),
+                          ("f1", train_metrics, "F1")]),
 
             _plot_config("validation_metrics.png", "Validation Metrics",
-                              ((1, data["epochs"]), None, "Epochs"),
-                              ((0, 100), np.arange(0, 101, 10), "Percentage"),
-                              [("accuracy", val_metrics, "Accuracy"),
-                               ("precision", val_metrics, "Precision"),
-                               ("recall", val_metrics, "Recall"),
-                               ("f1", val_metrics, "F1")]),
+                         ((1, data["epochs"]), None, "Epochs"),
+                         ((0, 100), np.arange(0, 101, 10), "Percentage"),
+                         [("accuracy", val_metrics, "Accuracy"),
+                          ("precision", val_metrics, "Precision"),
+                          ("recall", val_metrics, "Recall"),
+                          ("f1", val_metrics, "F1")]),
 
             _plot_config("accuracy_comparison.png", "Accuracy Comparison",
-                              ((1, data["epochs"]), None, "Epochs"),
-                              ((0, 100), np.arange(0, 101, 10), "Percentage"),
-                              [("accuracy", train_metrics, "Training Accuracy"),
-                               ("accuracy", val_metrics, "Validation Accuracy")])
+                         ((1, data["epochs"]), None, "Epochs"),
+                         ((0, 100), np.arange(0, 101, 10), "Percentage"),
+                         [("accuracy", train_metrics, "Training Accuracy"),
+                          ("accuracy", val_metrics, "Validation Accuracy")])
         ]
 
         for plot in plots:
@@ -85,5 +85,3 @@ class ResultsWriter:
 
         ax.figure.savefig(os.path.join(self.output_dir, plot_config["filename"]))
         plt.close(ax.figure)
-
-

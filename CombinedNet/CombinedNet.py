@@ -11,22 +11,22 @@ class CombinedNet(nn.Module):
     def __init__(self):
         super().__init__()
 
-        # CNN for each telescope
+        # Gets 32 * Num_of_hexagons features
         self.cnn_features = nn.Sequential(
-            ConvHex(in_channels=1, out_channels=8, kernel_size=4),
+            ConvHex(in_channels=1, out_channels=8, kernel_size=1),
             nn.BatchNorm1d(8),
             nn.ReLU(),
-            nn.Dropout1d(0.1),
+            nn.Dropout1d(0.061173084865384815),
 
-            ConvHex(in_channels=8, out_channels=16, kernel_size=3),
+            ConvHex(in_channels=8, out_channels=16, kernel_size=5),
             nn.BatchNorm1d(16),
             nn.ReLU(),
-            nn.Dropout1d(0.1),
+            nn.Dropout1d(0.026358832448413604),
 
-            ConvHex(in_channels=16, out_channels=32, kernel_size=2),
+            ConvHex(in_channels=16, out_channels=32, kernel_size=1),
             nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.Dropout1d(0.1),
+            nn.Dropout1d(0.09316383648273836),
         )
 
         self.cnn_reducer = nn.Sequential(

@@ -1,8 +1,6 @@
 import torch.nn as nn
 from CNN.ConvolutionLayers.ConvHex import ConvHex
 
-from CNN.constants import array_len
-
 
 class HexCNN(nn.Module):
     def __init__(self):
@@ -28,7 +26,7 @@ class HexCNN(nn.Module):
         self.classifier = nn.Sequential(
             nn.Flatten(),
 
-            nn.Linear(32 * array_len, 2048),
+            nn.Linear(32 * 1039, 2048),
             nn.ReLU(),
             nn.Dropout(0.2),
 

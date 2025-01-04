@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 import time
-from CNN.trainingSupervisor import TrainingSupervisor
+from SimulatedData.trainingSupervisor import TrainingSupervisor
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
