@@ -11,8 +11,7 @@ class ConvHex(nn.Module):
         self.register_buffer('neighbors', neighbor_info.tensor)
 
         total_inputs = neighbor_info.max_neighbors + 1
-
-        # Shape [out_channels, in_channels, number_of_hexagons]
+        # Shape [out_channels, in_channels, total_inputs]
         self.weights = nn.Parameter(
             torch.randn(out_channels, in_channels, total_inputs) /
             torch.sqrt(torch.tensor(in_channels * total_inputs))

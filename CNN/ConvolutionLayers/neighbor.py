@@ -3,6 +3,7 @@ from ctapipe.core import Provenance
 from ctapipe.instrument import CameraGeometry
 from importlib.resources import files
 import torch
+import numpy as np
 
 
 class NeighborInfo(NamedTuple):
@@ -13,11 +14,36 @@ class NeighborInfo(NamedTuple):
 _NEIGHBOR_CACHE = {}
 
 
+def sort_by_angle(pixel_positions, center_idx: int, neighbor_indices: list[int]) -> list[int]:
+    """Resorting indices geometrically, by calculating angle that is always the same."""
+    center_pos = pixel_positions[center_idx]
+
+    neighbor_angles = [
+        np.arctan2(
+            pixel_positions[n][1] - center_pos[1],  # y
+            pixel_positions[n][0] - center_pos[0]  # x
+        ) for n in neighbor_indices
+    ]
+
+    # Sort neighbors by angle (clockwise from top)
+    return [n for _, n in sorted(zip(neighbor_angles, neighbor_indices))]
+
+
 def _get_neighbor_indices() -> list[list[int]]:
-    """Returns a list of 1039 lists, that has the index of neighbours of each idx"""
+    """Returns a list of Geometrically sorted neighbor indices
+       Geometric starts top left and goes clockwise"""
     f = str(files("ctapipe_io_magic").joinpath("resources/MAGICCam.camgeom.fits.gz"))
-    Provenance().add_input_file(f, role="CameraGeometry")
-    return CameraGeometry.from_table(f).neighbors
+    geom = CameraGeometry.from_table(f)
+
+    pixel_positions = np.column_stack([geom.pix_x, geom.pix_y])
+    neighbors = geom.neighbors
+
+    sorted_neighbors = [
+        sort_by_angle(pixel_positions, i, neighbor_list)
+        for i, neighbor_list in enumerate(neighbors)
+    ]
+
+    return sorted_neighbors
 
 
 def _get_neighbor_list_by_kernel(kernel_size: int) -> list[list[int]]:
@@ -69,3 +95,7 @@ def get_neighbor_tensor(kernel_size: int) -> NeighborInfo:
         _NEIGHBOR_CACHE[kernel_size] = NeighborInfo(tensor, max_neighbors)
 
     return _NEIGHBOR_CACHE[kernel_size]
+
+
+if __name__ == "__main__":
+    print(_get_neighbor_indices()[45])

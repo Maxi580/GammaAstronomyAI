@@ -175,8 +175,8 @@ class MagicDataset(Dataset):
         return {"total_samples": total_samples, "distribution": label_counts}
 
 
-if __name__ == '__main__':
+"""if __name__ == '__main__':
     mg = MagicDataset("magic_protons_full")
     print(f"Distribution: {mg.get_distribution()}")
     print(f"Labels: {mg.detect_labels()}")
-    print(f"Sample: {mg[0]}")
+    print(f"Sample: {mg[0]}")"""

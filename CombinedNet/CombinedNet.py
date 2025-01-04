@@ -3,7 +3,7 @@ import torch.nn as nn
 from CNN.ConvolutionLayers.ConvHex import ConvHex
 
 NUM_OF_HEXAGONS = 1183
-CNN_REDUCE_OUTPUT_FEATURES = 2048
+CNN_REDUCE_OUTPUT_FEATURES = 4096
 NON_IMAGE_FEATURES = 59
 
 
