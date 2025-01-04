@@ -74,6 +74,11 @@ class ResultsWriter:
         xlim, xticks, xlabel = plot_config["x_axis"]
         ylim, yticks, ylabel = plot_config["y_axis"]
 
+        # Add small padding if distance is too small (e.g. only one epoch)
+        if xlim[0] == xlim[1]:
+            padding = 0.5
+            xlim = (xlim[0] - padding, xlim[1] + padding)
+
         ax.set(xlim=xlim, ylim=ylim)
         if xticks is not None: ax.set_xticks(xticks)
         if yticks is not None: ax.set_yticks(yticks)

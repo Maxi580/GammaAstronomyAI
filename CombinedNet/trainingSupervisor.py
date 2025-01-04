@@ -14,11 +14,9 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
-
-from CNN.CNNArchitectures import HexCNN
-from SimulatedData.shapeDataset import ShapeDataset
-from CNN.CNNArchitectures import BasicCNN
-from SimulatedData.resultsWriter import ResultsWriter
+from CombinedNet.CombinedNet import CombinedNet
+from CombinedNet.magicDataset import MagicDataset
+from CombinedNet.resultsWriter import ResultsWriter
 
 MetricsDict = TypedDict(
     "MetricsDict",
@@ -32,45 +30,48 @@ MetricsDict = TypedDict(
         "fp": float,
         "fn": float,
         "tp": float,
-        "label_0": str,
-        "label_1": str
     },
 )
 
 
-def print_metrics(metrics: MetricsDict):
-    print(f"\nModel Performance Metrics:")
-    print(f"{'Accuracy:':<12} {metrics['accuracy']:>6.2f}%")
-    print(f"{'Precision:':<12} {metrics['precision']:>6.2f}%")
-    print(f"{'Recall:':<12} {metrics['recall']:>6.2f}%")
-    print(f"{'F1-Score:':<12} {metrics['f1']:>6.2f}%")
-    print(f"{'Loss:':<12} {metrics['loss']:>6.4f}")
+def calc_metrics(y_pred, y_true, loss):
+    accuracy = 100.0 * accuracy_score(y_true, y_pred)
+    precision = 100.0 * precision_score(y_true, y_pred, zero_division=0)
+    recall = 100.0 * recall_score(y_true, y_pred, zero_division=0)
+    f1 = 100.0 * f1_score(y_true, y_pred, zero_division=0)
 
-    print("\nConfusion Matrix:")
-    print("─" * 45)
-    print(f"│              │      Predicted      │")
-    print(f"│              │   0-{metrics['label_0']}  1-{metrics['label_1']}   │")
-    print(f"├──────────────┼───────────────────┤")
-    print(f"│ Actual    0  │    {metrics['tn']:4.0f}      {metrics['fp']:4.0f}    │")
-    print(f"│ {metrics['label_0']:<10}  │                   │")
-    print(f"│ Actual    1  │    {metrics['fn']:4.0f}      {metrics['tp']:4.0f}    │")
-    print(f"│ {metrics['label_1']:<10}  │                   │")
-    print("─" * 45)
+    cm = confusion_matrix(y_pred, y_true, labels=[0, 1])
+
+    tn, fp, fn, tp = cm.ravel()
+
+    metrics = {
+        "loss": loss,
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+        "tn": float(tn),
+        "fp": float(fp),
+        "fn": float(fn),
+        "tp": float(tp),
+    }
+
+    return metrics
 
 
 class TrainingSupervisor:
     DATA_TEST_SPLIT: float = 0.3
-    BATCH_SIZE: int = 32
-    LEARNING_RATE: float = 1e-3
-    ADAM_BETA_1: float = 0.9
-    ADAM_BETA_2: float = 0.999
+    BATCH_SIZE: int = 16
+    LEARNING_RATE: float = 0.004362359948002615
+    ADAM_BETA_1: float = 0.8666112052644459
+    ADAM_BETA_2: float = 0.9559910148600463
     ADAM_EPSILON: float = 1e-8
-    WEIGHT_DECAY: float = 1e-2
-    SCHEDULER_MIN_LR: float = 1e-4
-    SCHEDULER_MAX_LR: float = 1e-3
+    WEIGHT_DECAY: float = 0.0020743152186914865
+    SCHEDULER_MIN_LR: float = 8.603675064364842e-05
+    SCHEDULER_MAX_LR: float = 0.00010192925124725547
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
-    GRAD_CLIP_NORM: float = 1
+    GRAD_CLIP_NORM: float = 4.260615936053168
 
     def __init__(self, model_name: str, input_dir: str, output_dir: str, debug_info: bool = True,
                  save_model: bool = True) -> None:
@@ -94,11 +95,11 @@ class TrainingSupervisor:
 
         self.output_dir = output_dir
 
-    def load_training_data(self) -> tuple[ShapeDataset, Subset, Subset, DataLoader, DataLoader]:
+    def load_training_data(self) -> tuple[MagicDataset, Subset, Subset, DataLoader, DataLoader]:
         if self.debug_info:
             print("Loading Training Data...\n")
 
-        dataset = ShapeDataset(self.input_dir)
+        dataset = MagicDataset(self.input_dir)
 
         if self.debug_info:
             data_distribution = dataset.get_distribution()
@@ -112,7 +113,7 @@ class TrainingSupervisor:
         # Stratified splitting using sklearn
         # Use 70% of data for training and 30% for validation
         labels = torch.tensor(
-            [dataset[i][1] for i in range(len(dataset))]
+            [dataset[i][3] for i in range(len(dataset))]
         )
 
         train_indices, val_indices = train_test_split(
@@ -159,10 +160,8 @@ class TrainingSupervisor:
 
     def load_model(self):
         match self.model_name.lower():
-            case "hexcnn":
-                model = HexCNN()
-            case "basiccnn":
-                model = BasicCNN()
+            case "combinednet":
+                model = CombinedNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
@@ -204,15 +203,15 @@ class TrainingSupervisor:
 
             train_metrics = self._training_step(optimizer, criterion)
             if self.debug_info:
-                print(f"Training Metrics of epoch: {epoch}: \n")
-                print_metrics(train_metrics)
+                print(f"\nTraining Metrics of epoch: {epoch}: \n")
+                self.print_metrics(train_metrics)
 
             self.model.eval()
 
             val_metrics = self._validation_step(scheduler, criterion)
             if self.debug_info:
-                print(f"Validation Metrics of epoch: {epoch}: \n")
-                print_metrics(val_metrics)
+                print(f"\nValidation Metrics of epoch: {epoch}: \n")
+                self.print_metrics(val_metrics)
                 print("-" * 50)
 
             if val_metrics['accuracy'] > best_validation_accuracy:
@@ -231,11 +230,16 @@ class TrainingSupervisor:
         train_preds = []
         train_labels = []
         train_loss = 0
-        for inputs, labels in self.training_data_loader:
-            inputs, labels = inputs.to(self.device), labels.to(self.device)
+        for batch in self.training_data_loader:
+            m1_images, m2_images, features, labels = batch
+
+            m1_images = m1_images.to(self.device)
+            m2_images = m2_images.to(self.device)
+            features = features.to(self.device)
+            labels = labels.to(self.device)
 
             optimizer.zero_grad()
-            outputs = self.model(inputs)
+            outputs = self.model(m1_images, m2_images, features)
             loss = criterion(outputs, labels)
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.GRAD_CLIP_NORM)
             loss.backward()
@@ -246,7 +250,7 @@ class TrainingSupervisor:
             train_labels.extend(labels.cpu().numpy())
             train_loss += loss.item()
 
-        metrics = self.calc_metrics(
+        metrics = calc_metrics(
             train_labels,
             train_preds,
             train_loss / len(self.training_data_loader),
@@ -261,9 +265,15 @@ class TrainingSupervisor:
         val_preds = []
         val_labels = []
         with torch.no_grad():
-            for inputs, labels in self.val_data_loader:
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-                outputs = self.model(inputs)
+            for batch in self.val_data_loader:
+                m1_images, m2_images, features, labels = batch
+
+                m1_images = m1_images.to(self.device)
+                m2_images = m2_images.to(self.device)
+                features = features.to(self.device)
+                labels = labels.to(self.device)
+
+                outputs = self.model(m1_images, m2_images, features)
                 loss = criterion(outputs, labels)
 
                 _, predicted = outputs.max(1)
@@ -272,8 +282,7 @@ class TrainingSupervisor:
                 val_loss += loss.item()
         scheduler.step()
 
-        # Calculate metrics on validation data for current epoch
-        metrics = self.calc_metrics(
+        metrics = calc_metrics(
             val_labels,
             val_preds,
             val_loss / len(self.val_data_loader),
@@ -282,39 +291,26 @@ class TrainingSupervisor:
         self.validation_metrics.append(metrics)
         return metrics
 
-    def calc_metrics(self, y_pred, y_true, loss):
-        print(f"Unique values in y_true: {np.unique(y_true, return_counts=True)}")
-        print(f"Unique values in y_pred: {np.unique(y_pred, return_counts=True)}")
-        accuracy = 100.0 * accuracy_score(y_true, y_pred)
-        precision = 100.0 * precision_score(y_true, y_pred, zero_division=0)
-        recall = 100.0 * recall_score(y_true, y_pred)
-        f1 = 100.0 * f1_score(y_true, y_pred)
+    def print_metrics(self, metrics: MetricsDict):
+        print(f"Model Performance Metrics:")
+        print(f"{'Accuracy:':<12} {metrics['accuracy']:>6.2f}%")
+        print(f"{'Precision:':<12} {metrics['precision']:>6.2f}%")
+        print(f"{'Recall:':<12} {metrics['recall']:>6.2f}%")
+        print(f"{'F1-Score:':<12} {metrics['f1']:>6.2f}%")
+        print(f"{'Loss:':<12} {metrics['loss']:>6.4f}")
 
+        print("\nConfusion Matrix:")
+        print("─" * 45)
+        print(f"│              │      Predicted    │")
+        print(f"│              │          0      1 │")
+        print(f"├──────────────┼───────────────────┤")
+        print(f"│ Actual    0  │    {metrics['tn']:4.0f}      {metrics['fp']:4.0f}│")
+        print(f"│              │                   │")
+        print(f"│ Actual    1  │    {metrics['fn']:4.0f}      {metrics['tp']:4.0f}│")
+        print(f"│              │")
+        print("─" * 45)
         # Get label mapping (which actual label is 0 and which is 1)
-        label_to_idx = self.dataset.labels
-        idx_to_label = {v: k for k, v in label_to_idx.items()}
-        print(f"Label mapping: {label_to_idx}")
-
-        cm = confusion_matrix(y_pred, y_true, labels=[0, 1])
-        print(f"Raw confusion matrix:\n{cm}")
-
-        tn, fp, fn, tp = cm.ravel()
-
-        metrics = {
-            "loss": loss,
-            "accuracy": accuracy,
-            "precision": precision,
-            "recall": recall,
-            "f1": f1,
-            "tn": float(tn),
-            "fp": float(fp),
-            "fn": float(fn),
-            "tp": float(tp),
-            "label_0": idx_to_label[0],
-            "label_1": idx_to_label[1]
-        }
-
-        return metrics
+        print(f"Label mapping: {self.dataset.labels}")
 
     def _get_model_structure(self):
         model_structure = {}

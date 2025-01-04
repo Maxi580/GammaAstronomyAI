@@ -2,9 +2,14 @@ import torch
 import torch.nn as nn
 from CNN.ConvolutionLayers.ConvHex import ConvHex
 
-NUM_OF_HEXAGONS = 1183
+NUM_OF_HEXAGONS = 1039
 CNN_REDUCE_OUTPUT_FEATURES = 4096
 NON_IMAGE_FEATURES = 59
+
+
+def resize_input(image):
+    """Truncates the input image to the first NUM_OF_HEXAGONS elements."""
+    return image[:, :, :NUM_OF_HEXAGONS]
 
 
 class CombinedNet(nn.Module):
@@ -47,15 +52,23 @@ class CombinedNet(nn.Module):
             nn.Linear(16, 2)
         )
 
-    def forward(self, m1_image, m2_image, features):
-        # Process images
-        m1_features = self.cnn_reducer(self.cnn_features(m1_image))
-        m2_features = self.cnn_reducer(self.cnn_features(m2_image))
+    def forward(self, m1_image, m2_image, other_features):
+        # TODO: Understand why we have 1183 elements and not only 1039, workaround should work ok i think
+        # First add channel dimension
+        m1_image = m1_image.unsqueeze(1)  # Shape becomes [batch_size, 1, num_hexagons]
+        m2_image = m2_image.unsqueeze(1)
 
-        # Process numerical features
-        feature_output = self.feature_net(features)
+        # Resize to 1039 hexagons and throw away the rest
+        m1_image = resize_input(m1_image)
+        m2_image = resize_input(m2_image)
+
+        # Process images
+        m1_cnn_features = self.cnn_features(m1_image)
+        m2_cnn_features = self.cnn_features(m2_image)
+        m1_features = self.cnn_reducer(m1_cnn_features)
+        m2_features = self.cnn_reducer(m2_cnn_features)
 
         # Combine all features
-        combined = torch.cat([m1_features, m2_features, feature_output], dim=1)
+        combined = torch.cat([m1_features, m2_features, other_features], dim=1)
 
         return self.classifier(combined)

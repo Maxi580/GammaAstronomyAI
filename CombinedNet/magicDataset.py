@@ -135,9 +135,13 @@ class MagicDataset(Dataset):
         with open(data_path, "r") as f:
             data = json.load(f)
 
-        m1_raw = torch.tensor(data["images"]["raw"]["m1"], dtype=torch.float32)
-        m2_raw = torch.tensor(data["images"]["raw"]["m2"], dtype=torch.float32)
-        features = _extract_features(data["features"])
+        try:
+            m1_raw = torch.tensor(data["images"]["raw"]["m1"], dtype=torch.float32)
+            m2_raw = torch.tensor(data["images"]["raw"]["m2"], dtype=torch.float32)
+            features = _extract_features(data["features"])
+        except Exception as e:
+            print(f"Source: {data_path}")
+            raise e
 
         return m1_raw, m2_raw, features, self.labels[label]
 

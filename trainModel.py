@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 import time
-from SimulatedData.trainingSupervisor import TrainingSupervisor
+from CombinedNet.trainingSupervisor import TrainingSupervisor
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
@@ -48,4 +48,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[1:])"""
 
-    main("HexCNN", "DebugSet", 1)
+    main("CombinedNet", "magic_protons_full", 1)
