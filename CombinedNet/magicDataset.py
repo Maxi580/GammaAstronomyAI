@@ -85,19 +85,19 @@ class MagicDataset(Dataset):
     GAMMA_LABEL: str = 'gamma'
     PROTON_LABEL: str = 'proton'
 
-    def __init__(self, proton_file: str, gamma_file: str, debug_info: bool = True):
+    def __init__(self, proton_filename: str, gamma_filename: str, debug_info: bool = True):
         self.debug_info = debug_info
 
         if self.debug_info:
             print(f"Initializing dataset from:")
-            print(f"Proton file: {proton_file}")
-            print(f"Gamma file: {gamma_file}")
+            print(f"Proton file: {proton_filename}")
+            print(f"Gamma file: {gamma_filename}")
 
-        self.proton_file = proton_file
-        self.gamma_file = gamma_file
+        self.proton_data = pd.read_parquet(proton_filename)
+        self.gamma_data = pd.read_parquet(gamma_filename)
 
-        self.proton_metadata = pq.read_metadata(proton_file)
-        self.gamma_metadata = pq.read_metadata(gamma_file)
+        self.proton_metadata = pq.read_metadata(proton_filename)
+        self.gamma_metadata = pq.read_metadata(gamma_filename)
 
         self.n_protons = self.proton_metadata.num_rows
         self.n_gammas = self.gamma_metadata.num_rows
@@ -116,26 +116,19 @@ class MagicDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
         if idx < self.n_protons:
-            file_path = self.proton_file
-            file_idx = idx
+            row = self.proton_data.iloc[idx]
             label = self.PROTON_LABEL
         else:
-            file_path = self.gamma_file
-            file_idx = idx - self.n_protons
+            row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
-
-        parquet_file = pq.ParquetFile(file_path)
-        row = next(parquet_file.iter_batches(batch_size=1)).to_pandas().iloc[0]
 
         m1_raw = torch.tensor(row['image_m1'], dtype=torch.float32)
         m2_raw = torch.tensor(row['image_m2'], dtype=torch.float32)
-
         features = extract_features(row)
 
         return m1_raw, m2_raw, features, self.labels[label]
 
     def get_distribution(self) -> Dict[str, Any]:
-        """Get the distribution of labels in the dataset"""
         total_samples = self.length
 
         distribution = {
@@ -155,7 +148,15 @@ class MagicDataset(Dataset):
         }
 
 
-"""if __name__ == '__main__':
-    dataset = MagicDataset('magic-protons.parquet', 'magic-gammas.parquet')
+if __name__ == '__main__':
+    dataset = MagicDataset('../magic-protons.parquet', '../magic-gammas.parquet')
+    print(f"Loading Finished")
+
     print(dataset.get_distribution())
-    print(dataset[125174])"""
+    import time
+
+    print(f"Start reading")
+    start = time.time()
+    print(dataset[0])
+    end = time.time()
+    print(end - start)

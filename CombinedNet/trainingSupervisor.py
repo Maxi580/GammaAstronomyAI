@@ -113,22 +113,16 @@ class TrainingSupervisor:
 
         # Stratified splitting using sklearn
         # Use 70% of data for training and 30% for validation
-        if self.debug_info:
-            print("\nCollecting labels for stratified split...")
-
-        # Create labels array without loading data
-        if self.debug_info:
-            print("\nPreparing train-test split...")
-
         # Create labels array directly from metadata
         n_protons = dataset.n_protons
         n_gammas = dataset.n_gammas
 
-        # Create hardcoded labels array
-        labels = np.full(n_protons + n_gammas, dataset.labels[dataset.PROTON_LABEL])  # Fill with proton label
-        labels[n_protons:] = dataset.labels[dataset.GAMMA_LABEL]  # Set gamma labels
+        # First n_protons items are proton labels (Logic is mirrored magicDataset)
+        labels = np.full(n_protons + n_gammas, dataset.labels[dataset.PROTON_LABEL])
+        # Last n_gammas items are gamma labels
+        labels[n_protons:] = dataset.labels[dataset.GAMMA_LABEL]
 
-        # Stratified splitting using sklearn
+        # Stratified splitting using sklearn (shuffles indices)
         train_indices, val_indices = train_test_split(
             np.arange(len(dataset)),
             test_size=self.DATA_TEST_SPLIT,
