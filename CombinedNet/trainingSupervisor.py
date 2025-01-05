@@ -140,7 +140,7 @@ class TrainingSupervisor:
             print("\nAfter split label distribution:")
             print("Training set:")
             train_labels = labels[train_indices]
-            unique, counts = np.unique(train_labels.numpy(), return_counts=True)
+            unique, counts = np.unique(train_labels, return_counts=True)
             for label, count in zip(unique, counts):
                 idx_to_label = {v: k for k, v in dataset.labels.items()}
                 label_name = idx_to_label[label]
@@ -148,7 +148,7 @@ class TrainingSupervisor:
 
             print("\nValidation set:")
             val_labels = labels[val_indices]
-            unique, counts = np.unique(val_labels.numpy(), return_counts=True)
+            unique, counts = np.unique(val_labels, return_counts=True)
             for label, count in zip(unique, counts):
                 idx_to_label = {v: k for k, v in dataset.labels.items()}
                 label_name = idx_to_label[label]
