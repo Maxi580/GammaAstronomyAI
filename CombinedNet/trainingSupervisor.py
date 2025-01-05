@@ -105,10 +105,13 @@ class TrainingSupervisor:
         if self.debug_info:
             data_distribution = dataset.get_distribution()
             print("Full Dataset Overview:")
-            print(f"Total number of samples: {data_distribution["total_samples"]}\n")
+            str1 = data_distribution["total_samples"]
+            print(f"Total number of samples: {str1}\n")
             print("Class Distribution:")
             for label, info in data_distribution["distribution"].items():
-                print(f"{label}: {info["count"]} samples ({info["percentage"]:.2f}%)")
+                str2 = info["count"]
+                str3 = info["percentage"]
+                print(f"{label}: {str2} samples ({str3:.2f}%)")
             print("\n")
 
         # Stratified splitting using sklearn
@@ -240,21 +243,46 @@ class TrainingSupervisor:
             self.write_results(epochs)
 
     def _training_step(self, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
-        # Test accuracy on training data for current epoch
         train_preds = []
         train_labels = []
         train_loss = 0
-        for batch in self.training_data_loader:
+        total_batches = len(self.training_data_loader)
+
+        for batch_idx, batch in enumerate(self.training_data_loader):
+            if self.debug_info:
+                print(f"\rBatch {batch_idx + 1}/{total_batches}", end="")
+
             m1_images, m2_images, features, labels = batch
 
+            # Move to device
             m1_images = m1_images.to(self.device)
             m2_images = m2_images.to(self.device)
             features = features.to(self.device)
             labels = labels.to(self.device)
 
+            # Check for invalid inputs before forward pass
+            if (
+                    torch.isnan(m1_images).any() or torch.isinf(m1_images).any() or
+                    torch.isnan(m2_images).any() or torch.isinf(m2_images).any() or
+                    torch.isnan(features).any() or torch.isinf(features).any()
+            ):
+                if self.debug_info:
+                    print("\n[Warning] NaN/Inf detected; setting inputs to 0.\n")
+                m1_images = torch.nan_to_num(m1_images, nan=0.0, posinf=0.0, neginf=0.0)
+                m2_images = torch.nan_to_num(m2_images, nan=0.0, posinf=0.0, neginf=0.0)
+                features = torch.nan_to_num(features, nan=0.0, posinf=0.0, neginf=0.0)
+
             optimizer.zero_grad()
             outputs = self.model(m1_images, m2_images, features)
             loss = criterion(outputs, labels)
+
+            # Check for invalid loss
+            if torch.isnan(loss) or torch.isinf(loss):
+                if self.debug_info:
+                    print("\n[Warning] NaN/Inf detected in loss; skipping batch.\n")
+                continue
+
+            # Clip gradients to avoid exploding values
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.GRAD_CLIP_NORM)
             loss.backward()
             optimizer.step()
