@@ -113,7 +113,6 @@ class TrainingSupervisor:
 
         # Stratified splitting using sklearn
         # Use 70% of data for training and 30% for validation
-        total = len(dataset)
         if self.debug_info:
             print("\nCollecting labels for stratified split...")
 
