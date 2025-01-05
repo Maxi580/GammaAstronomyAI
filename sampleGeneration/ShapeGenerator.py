@@ -1,4 +1,7 @@
+from functools import lru_cache
 from typing import List, Tuple
+
+import numpy as np
 from shapely.geometry import Polygon
 from PIL import ImageDraw
 import random

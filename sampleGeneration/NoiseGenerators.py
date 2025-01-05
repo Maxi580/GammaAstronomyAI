@@ -44,8 +44,16 @@ class SpikyNoiseGenerator(INoiseGenerator):
         for x in range(num_pixels):
             rand = random.randint(0, 100)
             if rand < 90:
-                noise_values[x] = random.uniform(self.min_noise, (self.max_noise+self.max_noise)/2)
+                noise_values[x] = round(random.uniform(self.min_noise, (self.max_noise + self.max_noise) / 2), 2)
             else:
-                noise_values[x] = random.uniform((self.max_noise+self.max_noise)/2, self.max_noise*1.8)
+                noise_values[x] = round(random.uniform((self.max_noise + self.max_noise) / 2, self.max_noise * 1.8), 2)
 
         return noise_values
+
+
+class NoNoiseGenerator(INoiseGenerator):
+    def __init__(self, min_noise: float = 0.2, max_noise: float = 0.4, seed: int = None):
+        super().__init__(min_noise, max_noise)
+
+    def generate_noise(self, num_pixels: int) -> List[float]:
+        return [0 for _ in range(num_pixels)]

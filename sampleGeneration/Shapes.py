@@ -5,14 +5,29 @@ from IShape import IShape  # Relative import
 
 
 class Ellipse(IShape):
-    def __init__(self, min_size: float = 0.2, max_size: float = 0.4):
+    def __init__(self, min_size: float = 0.2, max_size: float = 0.4, center_bias: float = 7.0):
         super().__init__(min_size, max_size)
+        self.center_bias = center_bias
 
     def generate_polygon(self, center_x: float, center_y: float, outer_radius: float) -> Polygon:
-        # Width and height are scaled based on min_size and max_size
+        plane_center_x = center_x - (center_x - outer_radius)
+        plane_center_y = center_y - (center_y - outer_radius)
+
+        dx = plane_center_x - center_x
+        dy = plane_center_y - center_y
+        angle_to_center = atan2(dy, dx)
+
+        base_rotation = angle_to_center + (pi * random.choice([0, 1]))
+
+        if self.center_bias == 0:
+            rotation = random.uniform(0, 2 * pi)
+        else:
+            max_deviation = pi / (2 * self.center_bias)  # Smaller when bias is higher
+            rotation = base_rotation + random.uniform(-max_deviation, max_deviation)
+
         width = random.uniform(outer_radius * self.min_size, outer_radius * self.max_size)
-        height = random.uniform(outer_radius * self.min_size, outer_radius * self.max_size * random.uniform(0.1, 0.8))
-        rotation = random.uniform(0, pi / 2)
+        height = random.uniform(outer_radius * self.min_size, outer_radius * self.max_size * random.uniform(0.2, 0.6))
+
         num_points = 64
         points = [
             (

@@ -6,6 +6,11 @@ from IPlaneGenerator import IPlaneGenerator
 from IShape import IShape
 from ShapeGenerator import ShapeGenerator
 import json
+from functools import lru_cache
+import numpy as np
+from shapely.prepared import prep
+from shapely.geometry import Polygon  # Add this import
+
 
 from sampleGeneration.PlaneGeneratorUtils import PlaneGeneratorUtils
 from sampleGeneration.PlaneGenerators import HexagonPlaneGenerator
@@ -70,7 +75,7 @@ class SampleGenerator:
                     intersection_area = shape_polygon.intersection(hex_polygon).area
                     hex_area = hex_polygon.area
                     overlap_ratio = intersection_area / hex_area
-                    pixel_array[idx] = min(1.0, overlap_ratio)  # Ensure ratio doesn't exceed 1
+                    pixel_array[idx] = round(min(1.0, overlap_ratio),2)  # Ensure ratio doesn't exceed 1
 
                     # Update image based on overlap ratio
                     color_value = int(255 * overlap_ratio)
@@ -98,7 +103,9 @@ class SampleGenerator:
             # Combine pixel_array and noise_values into a single data structure
             data = {
                 "pixel_array": pixel_array,
-                "noise": noise_values
+                "noise": noise_values,
+                "combined": [round(min(1.0, x + y), 2) for x, y in zip(pixel_array, noise_values)]
+                #"combined": [x + y for x, y in zip(pixel_array, noise_values)]
             }
 
             # Save the image

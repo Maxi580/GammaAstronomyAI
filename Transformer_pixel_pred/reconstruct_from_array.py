@@ -7,6 +7,7 @@ from PlaneGenerators import HexagonPlaneGenerator
 from shapely.geometry import Polygon
 from math import cos, sin, pi
 
+
 def create_hexagon_points(center_x, center_y, radius):
     """Get the 6 defining Points of hexagons of position and radius"""
     points = []
@@ -40,9 +41,8 @@ def reconstruct_image(array_path: str, hexagons: List[Tuple[float, float]], hex_
         data = json.load(f)
 
     pixel_array = data.get("pixel_array", [])
-    noise_array = data.get("noise", [])
 
-    if not pixel_array or not noise_array:
+    if not pixel_array:
         print(f"Missing data in {array_path}, skipping.")
         return
 
@@ -58,29 +58,22 @@ def reconstruct_image(array_path: str, hexagons: List[Tuple[float, float]], hex_
 
     # Iterate over hexagons and their corresponding array values
     for idx, (hex_center_x, hex_center_y) in enumerate(hexagons):
-        if idx >= len(pixel_array) or idx >= len(noise_array):
+        if idx >= len(pixel_array):
             print(f"Index {idx} out of range for {array_path}, skipping hexagon.")
             continue
 
-        overlap_ratio = pixel_array[idx]
-        noise_value = noise_array[idx]
+        combined_value = pixel_array[idx]
 
-        # Combine overlap_ratio with noise_value
-        # Example: average the two
-        combined_value = (overlap_ratio + noise_value) / 2
-        combined_value = min(1.0, combined_value)  # Ensure it doesn't exceed 1
-
-        # Determine the color based on the combined value
-        # You can customize how noise affects the color. Here, we'll blend red noise with grayscale.
         grayscale = int(255 * combined_value)
-        noise_intensity = int(255 * noise_value)
+        noise_intensity = 0
         # Example blending: weighted average between grayscale and noise (red channel)
-        blended_color = (
-            int((grayscale * 0.7) + (noise_intensity * 0.3)),  # Red channel
-            int((grayscale * 0.7)),                            # Green channel
-            int((grayscale * 0.7)),                            # Blue channel
-            255  # Alpha channel
-        )
+        #blended_color = (
+        #    int((grayscale * 0.7) + (noise_intensity * 0.3)),  # Red channel
+        #    int((grayscale * 0.7)),                            # Green channel
+        #    int((grayscale * 0.7)),                            # Blue channel
+        #    255  # Alpha channel
+        #)
+        blended_color = (grayscale, grayscale, grayscale, 255)
 
         points = create_hexagon_points(hex_center_x, hex_center_y, hex_radius)
         draw.polygon(points, fill=blended_color, outline=outline_color)
@@ -97,7 +90,7 @@ def reconstruct_image(array_path: str, hexagons: List[Tuple[float, float]], hex_
         text_y = hex_center_y - text_height / 2
 
         # Draw the text
-        draw.text((text_x, text_y), text, fill=text_color, font=font)
+        # draw.text((text_x, text_y), text, fill=text_color, font=font)
 
     return image
 
@@ -125,9 +118,7 @@ def load_hexagons(array_dir: str) -> Tuple[List[Tuple[float, float]], float]:
     hex_radius = circle_info[2]
     return hexagons, hex_radius
 
-def main_reconstruct():
-    array_dir = '../simulated_data/arrays'
-    output_dir = 'reconstructed_images'
+def main_reconstruct(array_dir='./pixel_results/arrays', output_dir='reconstructed_images'):
     os.makedirs(output_dir, exist_ok=True)
 
     hexagons, hex_radius = load_hexagons(array_dir)
