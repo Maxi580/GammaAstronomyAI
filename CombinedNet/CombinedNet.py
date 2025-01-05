@@ -45,10 +45,10 @@ class CombinedNet(nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(CNN_REDUCE_OUTPUT_FEATURES * 2 + NON_IMAGE_FEATURES, 64),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.1),
             nn.Linear(64, 16),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.1),
             nn.Linear(16, 2)
         )
 

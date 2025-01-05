@@ -40,7 +40,7 @@ def calc_metrics(y_pred, y_true, loss):
     recall = 100.0 * recall_score(y_true, y_pred, zero_division=0)
     f1 = 100.0 * f1_score(y_true, y_pred, zero_division=0)
 
-    cm = confusion_matrix(y_pred, y_true, labels=[0, 1])
+    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
 
     tn, fp, fn, tp = cm.ravel()
 
@@ -61,7 +61,7 @@ def calc_metrics(y_pred, y_true, loss):
 
 class TrainingSupervisor:
     DATA_TEST_SPLIT: float = 0.3
-    BATCH_SIZE: int = 16
+    BATCH_SIZE: int = 32
     LEARNING_RATE: float = 0.004362359948002615
     ADAM_BETA_1: float = 0.8666112052644459
     ADAM_BETA_2: float = 0.9559910148600463
@@ -178,7 +178,14 @@ class TrainingSupervisor:
         return model.to(self.device)
 
     def train_model(self, epochs: int):
-        criterion = nn.CrossEntropyLoss()
+        total_samples = len(self.dataset)
+        n_protons = self.dataset.n_protons
+        n_gammas = self.dataset.n_gammas
+        weight_proton = total_samples / (2 * n_protons)
+        weight_gamma = total_samples / (2 * n_gammas)
+        class_weights = torch.tensor([weight_proton, weight_gamma]).to(self.device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
+
         optimizer = optim.AdamW(
             self.model.parameters(),
             lr=self.LEARNING_RATE,
@@ -332,7 +339,6 @@ class TrainingSupervisor:
     def write_results(self, epochs):
         training_data = {
             "dataset": {
-                "directory": self.input_dir,
                 "distribution": self.dataset.get_distribution(),
             },
             "epochs": epochs,

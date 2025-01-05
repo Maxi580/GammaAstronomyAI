@@ -146,17 +146,3 @@ class MagicDataset(Dataset):
             'total_samples': total_samples,
             'distribution': distribution
         }
-
-
-if __name__ == '__main__':
-    dataset = MagicDataset('../magic-protons.parquet', '../magic-gammas.parquet')
-    print(f"Loading Finished")
-
-    print(dataset.get_distribution())
-    import time
-
-    print(f"Start reading")
-    start = time.time()
-    print(dataset[0])
-    end = time.time()
-    print(end - start)
