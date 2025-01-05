@@ -3,7 +3,7 @@ import torch.nn as nn
 from CNN.ConvolutionLayers.ConvHex import ConvHex
 
 NUM_OF_HEXAGONS = 1039
-CNN_REDUCE_OUTPUT_FEATURES = 4096
+CNN_REDUCE_OUTPUT_FEATURES = 2048
 NON_IMAGE_FEATURES = 59
 
 
@@ -36,9 +36,14 @@ class CombinedNet(nn.Module):
 
         self.cnn_reducer = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(32 * NUM_OF_HEXAGONS, CNN_REDUCE_OUTPUT_FEATURES),
+            nn.Linear(32 * NUM_OF_HEXAGONS, 8192),
+            nn.BatchNorm1d(8192),
             nn.ReLU(),
-            nn.Dropout(0.2)
+            nn.Dropout(0.1),
+            nn.Linear(8192, CNN_REDUCE_OUTPUT_FEATURES),
+            nn.BatchNorm1d(CNN_REDUCE_OUTPUT_FEATURES),
+            nn.ReLU(),
+            nn.Dropout(0.1)
         )
 
         # Combine all features
