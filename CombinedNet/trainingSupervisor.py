@@ -73,7 +73,7 @@ class TrainingSupervisor:
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     GRAD_CLIP_NORM: float = 4.260615936053168
 
-    def __init__(self, model_name: str, input_dir: str, output_dir: str, debug_info: bool = True,
+    def __init__(self, model_name: str, proton_file: str, gamma_file: str, output_dir: str, debug_info: bool = True,
                  save_model: bool = True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.debug_info = debug_info
@@ -89,7 +89,8 @@ class TrainingSupervisor:
         self.validation_metrics = []
         self.train_metrics = []
 
-        self.input_dir = input_dir
+        self.proton_file = proton_file
+        self.gamma_file = gamma_file
         self.dataset, self.train_dataset, self.val_dataset, self.training_data_loader, self.val_data_loader \
             = self.load_training_data()
 
@@ -99,7 +100,7 @@ class TrainingSupervisor:
         if self.debug_info:
             print("Loading Training Data...\n")
 
-        dataset = MagicDataset(self.input_dir)
+        dataset = MagicDataset(self.proton_file, self.gamma_file)
 
         if self.debug_info:
             data_distribution = dataset.get_distribution()
@@ -112,9 +113,16 @@ class TrainingSupervisor:
 
         # Stratified splitting using sklearn
         # Use 70% of data for training and 30% for validation
-        labels = torch.tensor(
-            [dataset[i][3] for i in range(len(dataset))]
-        )
+        total = len(dataset)
+        if self.debug_info:
+            print("\nCollecting labels for stratified split...")
+
+        labels = []
+        for i in range(len(dataset)):
+            if self.debug_info and i % 10000 == 0:
+                print(f"Processing {i}/{total} ({(i / total) * 100:.1f}%)")
+            labels.append(dataset[i][3])
+        labels = torch.tensor(labels)
 
         train_indices, val_indices = train_test_split(
             np.arange(len(dataset)),

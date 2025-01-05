@@ -1,186 +1,161 @@
-import json
-import os
-from typing import Dict, Tuple, Any
-
 import torch
 from torch.utils.data import Dataset
+import pandas as pd
+from typing import Dict, Tuple, Any
+import pyarrow.parquet as pq
 
 
-def _extract_features(features_data: Dict[str, Dict[str, Any]]) -> torch.Tensor:
+def extract_features(row: pd.Series) -> torch.Tensor:
     features = []
 
-    true_params = features_data["true_parameters"]
     features.extend([
-        true_params["energy"],
-        true_params["theta"],
-        true_params["phi"],
-        true_params["telescope_theta"],
-        true_params["telescope_phi"],
-        true_params["first_interaction_height"],
-        true_params["impact_m1"],
-        true_params["impact_m2"]
+        float(row['true_energy']),
+        float(row['true_theta']),
+        float(row['true_phi']),
+        float(row['true_telescope_theta']),
+        float(row['true_telescope_phi']),
+        float(row['true_first_interaction_height']),
+        float(row['true_impact_m1']),
+        float(row['true_impact_m2'])
     ])
 
-    hillas_m1 = features_data["hillas_m1"]
     features.extend([
-        hillas_m1["length"],
-        hillas_m1["width"],
-        hillas_m1["delta"],
-        hillas_m1["size"],
-        hillas_m1["cog_x"],
-        hillas_m1["cog_y"],
-        hillas_m1["sin_delta"],
-        hillas_m1["cos_delta"]
+        float(row['hillas_length_m1']),
+        float(row['hillas_width_m1']),
+        float(row['hillas_delta_m1']),
+        float(row['hillas_size_m1']),
+        float(row['hillas_cog_x_m1']),
+        float(row['hillas_cog_y_m1']),
+        float(row['hillas_sin_delta_m1']),
+        float(row['hillas_cos_delta_m1'])
     ])
 
-    hillas_m2 = features_data["hillas_m2"]
     features.extend([
-        hillas_m2["length"],
-        hillas_m2["width"],
-        hillas_m2["delta"],
-        hillas_m2["size"],
-        hillas_m2["cog_x"],
-        hillas_m2["cog_y"],
-        hillas_m2["sin_delta"],
-        hillas_m2["cos_delta"]
+        float(row['hillas_length_m2']),
+        float(row['hillas_width_m2']),
+        float(row['hillas_delta_m2']),
+        float(row['hillas_size_m2']),
+        float(row['hillas_cog_x_m2']),
+        float(row['hillas_cog_y_m2']),
+        float(row['hillas_sin_delta_m2']),
+        float(row['hillas_cos_delta_m2'])
     ])
 
-    stereo = features_data["stereo"]
+    stereo_features = [
+        'stereo_direction_x', 'stereo_direction_y', 'stereo_zenith',
+        'stereo_azimuth', 'stereo_dec', 'stereo_ra', 'stereo_theta2',
+        'stereo_core_x', 'stereo_core_y', 'stereo_impact_m1',
+        'stereo_impact_m2', 'stereo_impact_azimuth_m1',
+        'stereo_impact_azimuth_m2', 'stereo_shower_max_height',
+        'stereo_xmax', 'stereo_cherenkov_radius',
+        'stereo_cherenkov_density', 'stereo_baseline_phi_m1',
+        'stereo_baseline_phi_m2', 'stereo_image_angle',
+        'stereo_cos_between_shower'
+    ]
+    features.extend([float(row[col]) for col in stereo_features])
+
     features.extend([
-        stereo["direction_x"],
-        stereo["direction_y"],
-        stereo["zenith"],
-        stereo["azimuth"],
-        stereo["dec"],
-        stereo["ra"],
-        stereo["theta2"],
-        stereo["core_x"],
-        stereo["core_y"],
-        stereo["impact_m1"],
-        stereo["impact_m2"],
-        stereo["impact_azimuth_m1"],
-        stereo["impact_azimuth_m2"],
-        stereo["shower_max_height"],
-        stereo["xmax"],
-        stereo["cherenkov_radius"],
-        stereo["cherenkov_density"],
-        stereo["baseline_phi_m1"],
-        stereo["baseline_phi_m2"],
-        stereo["image_angle"],
-        stereo["cos_between_shower"]
+        float(row['pointing_zenith']),
+        float(row['pointing_azimuth'])
     ])
 
-    pointing = features_data["pointing"]
     features.extend([
-        pointing["zenith"],
-        pointing["azimuth"]
+        float(row['time_gradient_m1']),
+        float(row['time_gradient_m2'])
     ])
 
-    time_gradient = features_data["time_gradient"]
-    features.extend([
-        time_gradient["m1"],
-        time_gradient["m2"]
-    ])
+    source_m1_features = [
+        'source_alpha_m1', 'source_dist_m1',
+        'source_cos_delta_alpha_m1', 'source_dca_m1',
+        'source_dca_delta_m1'
+    ]
+    features.extend([float(row[col]) for col in source_m1_features])
 
-    source_m1 = features_data["source_m1"]
-    features.extend([
-        source_m1["alpha"],
-        source_m1["dist"],
-        source_m1["cos_delta_alpha"],
-        source_m1["dca"],
-        source_m1["dca_delta"]
-    ])
-
-    source_m2 = features_data["source_m2"]
-    features.extend([
-        source_m2["alpha"],
-        source_m2["dist"],
-        source_m2["cos_delta_alpha"],
-        source_m2["dca"],
-        source_m2["dca_delta"]
-    ])
+    source_m2_features = [
+        'source_alpha_m2', 'source_dist_m2',
+        'source_cos_delta_alpha_m2', 'source_dca_m2',
+        'source_dca_delta_m2'
+    ]
+    features.extend([float(row[col]) for col in source_m2_features])
 
     return torch.tensor(features, dtype=torch.float32)
 
 
 class MagicDataset(Dataset):
-    def __init__(self, testdata_dir: str):
-        if not os.path.isdir(testdata_dir):
-            raise Exception(f"Directory not found: '{testdata_dir}'")
+    GAMMA_LABEL: str = 'gamma'
+    PROTON_LABEL: str = 'proton'
 
-        self.data_dir = os.path.join(testdata_dir, "arrays")
-        self.annotation_dir = os.path.join(testdata_dir, "annotations")
+    def __init__(self, proton_file: str, gamma_file: str, debug_info: bool = True):
+        self.debug_info = debug_info
 
-        if not os.path.isdir(self.data_dir):
-            raise Exception(f"Directory not found: '{self.data_dir}'")
+        if self.debug_info:
+            print(f"Initializing dataset from:")
+            print(f"Proton file: {proton_file}")
+            print(f"Gamma file: {gamma_file}")
 
-        if not os.path.isdir(self.annotation_dir):
-            raise Exception(f"Directory not found: '{self.annotation_dir}'")
+        self.proton_file = proton_file
+        self.gamma_file = gamma_file
 
-        self.arrays = sorted(os.listdir(self.data_dir))
-        self.labels = self.detect_labels()
+        self.proton_metadata = pq.read_metadata(proton_file)
+        self.gamma_metadata = pq.read_metadata(gamma_file)
+
+        self.n_protons = self.proton_metadata.num_rows
+        self.n_gammas = self.gamma_metadata.num_rows
+        self.length = self.n_protons + self.n_gammas
+
+        self.labels = {self.PROTON_LABEL: 0, self.GAMMA_LABEL: 1}
+
+        if self.debug_info:
+            print(f"\nDataset initialized with {self.length} total samples:")
+            print(f"Protons: {self.n_protons}")
+            print(f"Gammas: {self.n_gammas}")
+            print(f"Label mapping: {self.labels}")
 
     def __len__(self):
-        return len(self.arrays)
+        return self.length
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
-        data_path = os.path.join(self.data_dir, self.arrays[idx])
-        label_path = os.path.join(
-            self.annotation_dir, self.arrays[idx].replace(".json", ".txt")
-        )
+        if idx < self.n_protons:
+            file_path = self.proton_file
+            file_idx = idx
+            label = self.PROTON_LABEL
+        else:
+            file_path = self.gamma_file
+            file_idx = idx - self.n_protons
+            label = self.GAMMA_LABEL
 
-        with open(label_path, "r") as f:
-            label = f.read().strip()
+        parquet_file = pq.ParquetFile(file_path)
+        row = next(parquet_file.iter_batches(batch_size=1)).to_pandas().iloc[0]
 
-        with open(data_path, "r") as f:
-            data = json.load(f)
+        m1_raw = torch.tensor(row['image_m1'], dtype=torch.float32)
+        m2_raw = torch.tensor(row['image_m2'], dtype=torch.float32)
 
-        try:
-            m1_raw = torch.tensor(data["images"]["raw"]["m1"], dtype=torch.float32)
-            m2_raw = torch.tensor(data["images"]["raw"]["m2"], dtype=torch.float32)
-            features = _extract_features(data["features"])
-        except Exception as e:
-            print(f"Source: {data_path}")
-            raise e
+        features = extract_features(row)
 
         return m1_raw, m2_raw, features, self.labels[label]
 
-    def detect_labels(self) -> Dict[str, int]:
-        unique_labels = set()
-        for array_file in self.arrays:
-            label_path = os.path.join(
-                self.annotation_dir, array_file.replace(".json", ".txt")
-            )
-            with open(label_path, "r") as f:
-                label = f.read().strip()
-            unique_labels.add(label)
-
-        sorted_labels = sorted(list(unique_labels))
-
-        return {label: idx for idx, label in enumerate(sorted_labels)}
-
     def get_distribution(self) -> Dict[str, Any]:
-        all_labels = []
-        for array_file in self.arrays:
-            label_path = os.path.join(
-                self.annotation_dir, array_file.replace(".json", ".txt")
-            )
-            with open(label_path, "r") as f:
-                label = f.read().strip()
-            all_labels.append(self.labels[label])
+        """Get the distribution of labels in the dataset"""
+        total_samples = self.length
 
-        total_samples = len(all_labels)
-        label_counts = {}
-        for label_name, label_idx in self.labels.items():
-            count = all_labels.count(label_idx)
-            percentage = (count / total_samples) * 100
-            label_counts[label_name] = {"count": count, "percentage": percentage}
+        distribution = {
+            'proton': {
+                'count': self.n_protons,
+                'percentage': (self.n_protons / total_samples) * 100
+            },
+            'gamma': {
+                'count': self.n_gammas,
+                'percentage': (self.n_gammas / total_samples) * 100
+            }
+        }
 
-        return {"total_samples": total_samples, "distribution": label_counts}
+        return {
+            'total_samples': total_samples,
+            'distribution': distribution
+        }
 
 
 """if __name__ == '__main__':
-    mg = MagicDataset("magic_protons_full")
-    print(f"Distribution: {mg.get_distribution()}")
-    print(f"Labels: {mg.detect_labels()}")
-    print(f"Sample: {mg[0]}")"""
+    dataset = MagicDataset('magic-protons.parquet', 'magic-gammas.parquet')
+    print(dataset.get_distribution())
+    print(dataset[125174])"""
