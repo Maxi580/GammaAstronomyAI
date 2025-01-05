@@ -108,23 +108,23 @@ class MagicDataset(Dataset):
         if not os.path.isdir(testdata_dir):
             raise Exception(f"Directory not found: '{testdata_dir}'")
 
-        self.array_dir = os.path.join(testdata_dir, "arrays")
+        self.data_dir = os.path.join(testdata_dir, "arrays")
         self.annotation_dir = os.path.join(testdata_dir, "annotations")
 
-        if not os.path.isdir(self.array_dir):
-            raise Exception(f"Directory not found: '{self.array_dir}'")
+        if not os.path.isdir(self.data_dir):
+            raise Exception(f"Directory not found: '{self.data_dir}'")
 
         if not os.path.isdir(self.annotation_dir):
             raise Exception(f"Directory not found: '{self.annotation_dir}'")
 
-        self.arrays = sorted(os.listdir(self.array_dir))
+        self.arrays = sorted(os.listdir(self.data_dir))
         self.labels = self.detect_labels()
 
     def __len__(self):
         return len(self.arrays)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
-        data_path = os.path.join(self.array_dir, self.arrays[idx])
+        data_path = os.path.join(self.data_dir, self.arrays[idx])
         label_path = os.path.join(
             self.annotation_dir, self.arrays[idx].replace(".json", ".txt")
         )

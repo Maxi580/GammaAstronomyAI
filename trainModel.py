@@ -48,4 +48,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[1:])"""
 
-    main("CombinedNet", "magic_protons_full", 1)
+    main("CombinedNet", "magic_protons", 1)
