@@ -117,17 +117,23 @@ class TrainingSupervisor:
         if self.debug_info:
             print("\nCollecting labels for stratified split...")
 
-        labels = []
-        for i in range(len(dataset)):
-            if self.debug_info and i % 10000 == 0:
-                print(f"Processing {i}/{total} ({(i / total) * 100:.1f}%)")
-            labels.append(dataset[i][3])
-        labels = torch.tensor(labels)
+        # Create labels array without loading data
+        if self.debug_info:
+            print("\nPreparing train-test split...")
 
+        # Create labels array directly from metadata
+        n_protons = dataset.n_protons
+        n_gammas = dataset.n_gammas
+
+        # Create hardcoded labels array
+        labels = np.full(n_protons + n_gammas, dataset.labels[dataset.PROTON_LABEL])  # Fill with proton label
+        labels[n_protons:] = dataset.labels[dataset.GAMMA_LABEL]  # Set gamma labels
+
+        # Stratified splitting using sklearn
         train_indices, val_indices = train_test_split(
             np.arange(len(dataset)),
             test_size=self.DATA_TEST_SPLIT,
-            stratify=labels.numpy(),
+            stratify=labels,
             random_state=42,
         )
 
