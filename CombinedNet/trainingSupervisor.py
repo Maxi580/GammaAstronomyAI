@@ -100,7 +100,7 @@ class TrainingSupervisor:
         if self.debug_info:
             print("Loading Training Data...\n")
 
-        dataset = MagicDataset(self.proton_file, self.gamma_file, max_samples=10000)
+        dataset = MagicDataset(self.proton_file, self.gamma_file, max_samples=1000)
 
         if self.debug_info:
             data_distribution = dataset.get_distribution()
@@ -129,6 +129,8 @@ class TrainingSupervisor:
             stratify=labels,
             random_state=42,
         )
+
+        print(f"train_indices: {train_indices}, val_indices: {val_indices}")
 
         if self.debug_info:
             print("\nAfter split label distribution:")
@@ -200,8 +202,8 @@ class TrainingSupervisor:
             base_lr=self.SCHEDULER_MIN_LR,
             max_lr=self.SCHEDULER_MAX_LR,
             step_size_up=2 * steps_per_epoch,
-            mode=self.SCHEDULER_MODE,  # Learning rate policy
-            cycle_momentum=self.SCHEDULER_CYCLE_MOMENTUM  # Don't cycle momentum for Adam
+            mode=self.SCHEDULER_MODE,
+            cycle_momentum=self.SCHEDULER_CYCLE_MOMENTUM
         )
 
         torch.manual_seed(42)
@@ -213,16 +215,14 @@ class TrainingSupervisor:
             if self.debug_info:
                 print(f"Training Epoch {epoch + 1}/{epochs}...")
 
-            self.model.train()
-
             train_metrics = self._training_step(optimizer, criterion)
             if self.debug_info:
                 print(f"\nTraining Metrics of epoch: {epoch}: \n")
                 self.print_metrics(train_metrics)
 
-            self.model.eval()
+            val_metrics = self._validation_step(criterion)
+            scheduler.step()
 
-            val_metrics = self._validation_step(scheduler, criterion)
             if self.debug_info:
                 print(f"\nValidation Metrics of epoch: {epoch}: \n")
                 self.print_metrics(val_metrics)
@@ -239,25 +239,34 @@ class TrainingSupervisor:
         if self.debug_info:
             self.write_results(epochs)
 
+    def _extract_batch(self, batch):
+        m1_images, m2_images, features, labels = batch
+
+        m1_images = m1_images.to(self.device)
+        m2_images = m2_images.to(self.device)
+        features = features.to(self.device)
+        labels = labels.to(self.device)
+
+        if (torch.isnan(m1_images).any() or torch.isinf(m1_images).any() or
+                torch.isnan(m2_images).any() or torch.isinf(m2_images).any() or
+                torch.isnan(features).any() or torch.isinf(features).any()):
+            if self.debug_info:
+                print("\n[Warning] NaN/Inf Input detected\n")
+
+            m1_images = torch.nan_to_num(m1_images, 0.0)
+            m2_images = torch.nan_to_num(m2_images, 0.0)
+            features = torch.nan_to_num(features, 0.0)
+
+        return m1_images, m2_images, features, labels
+
     def _training_step(self, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
         train_preds = []
         train_labels = []
         train_loss = 0
 
+        self.model.train()
         for batch in self.training_data_loader:
-            m1_images, m2_images, features, labels = batch
-
-            m1_images = m1_images.to(self.device)
-            m2_images = m2_images.to(self.device)
-            features = features.to(self.device)
-            labels = labels.to(self.device)
-
-            # Check for invalid inputs before forward pass #ToDO check what we want to do with missing features
-            if (torch.isnan(m1_images).any() or torch.isinf(m1_images).any() or torch.isnan(m2_images).any() or
-                    torch.isinf(m2_images).any() or torch.isnan(features).any() or torch.isinf(features).any()):
-                if self.debug_info:
-                    print("\n[Warning] NaN/Inf Input detected; skipping;\n")
-                continue
+            m1_images, m2_images, features, labels = self._extract_batch(batch)
 
             optimizer.zero_grad()
             outputs = self.model(m1_images, m2_images, features)
@@ -282,35 +291,23 @@ class TrainingSupervisor:
         self.train_metrics.append(metrics)
         return metrics
 
-    def _validation_step(self, scheduler, criterion) -> dict[str, float]:
-        # Test accuracy on validation data for current epoch
+    def _validation_step(self, criterion) -> dict[str, float]:
         val_loss = 0
         val_preds = []
         val_labels = []
+
+        self.model.eval()
         with torch.no_grad():
             for batch in self.val_data_loader:
-                m1_images, m2_images, features, labels = batch
-
-                m1_images = m1_images.to(self.device)
-                m2_images = m2_images.to(self.device)
-                features = features.to(self.device)
-                labels = labels.to(self.device)
-
-                # Check for invalid inputs before forward pass #ToDO check what we want to do with missing features
-                if (torch.isnan(m1_images).any() or torch.isinf(m1_images).any() or torch.isnan(m2_images).any() or
-                        torch.isinf(m2_images).any() or torch.isnan(features).any() or torch.isinf(features).any()):
-                    if self.debug_info:
-                        print("\n[Warning] NaN/Inf Input detected; skipping;\n")
-                    continue
+                m1_images, m2_images, features, labels = self._extract_batch(batch)
 
                 outputs = self.model(m1_images, m2_images, features)
-                loss = criterion(outputs, labels)
 
+                loss = criterion(outputs, labels)
                 _, predicted = outputs.max(1)
                 val_preds.extend(predicted.cpu().numpy())
                 val_labels.extend(labels.cpu().numpy())
                 val_loss += loss.item()
-        scheduler.step()
 
         metrics = calc_metrics(
             val_labels,
