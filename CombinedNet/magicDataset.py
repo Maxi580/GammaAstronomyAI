@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
 import pandas as pd
-from typing import Dict, Tuple, Any
+from typing import Dict, Tuple, Any, Optional
 import pyarrow.parquet as pq
 
 
@@ -85,7 +85,8 @@ class MagicDataset(Dataset):
     GAMMA_LABEL: str = 'gamma'
     PROTON_LABEL: str = 'proton'
 
-    def __init__(self, proton_filename: str, gamma_filename: str, debug_info: bool = True):
+    def __init__(self, proton_filename: str, gamma_filename: str, max_samples: Optional[int] = None,
+                 debug_info: bool = True):
         self.debug_info = debug_info
 
         if self.debug_info:
@@ -93,16 +94,22 @@ class MagicDataset(Dataset):
             print(f"Proton file: {proton_filename}")
             print(f"Gamma file: {gamma_filename}")
 
-        self.proton_data = pd.read_parquet(proton_filename)
-        self.gamma_data = pd.read_parquet(gamma_filename)
-
         self.proton_metadata = pq.read_metadata(proton_filename)
         self.gamma_metadata = pq.read_metadata(gamma_filename)
 
-        self.n_protons = self.proton_metadata.num_rows
-        self.n_gammas = self.gamma_metadata.num_rows
-        self.length = self.n_protons + self.n_gammas
+        total_samples = self.proton_metadata.num_rows + self.gamma_metadata.num_rows
+        original_proton_ratio = self.proton_metadata.num_rows / total_samples
 
+        if max_samples is not None:
+            self.n_protons = min(int(max_samples * original_proton_ratio), self.proton_metadata.num_rows)
+            self.n_gammas = min(max_samples - self.n_protons, self.gamma_metadata.num_rows)
+        else:
+            self.n_protons = self.proton_metadata.num_rows
+            self.n_gammas = self.gamma_metadata.num_rows
+
+        self.proton_data = pd.read_parquet(proton_filename).iloc[:self.n_protons]
+        self.gamma_data = pd.read_parquet(gamma_filename).iloc[:self.n_gammas]
+        self.length = self.n_protons + self.n_gammas
         self.labels = {self.PROTON_LABEL: 0, self.GAMMA_LABEL: 1}
 
         if self.debug_info:

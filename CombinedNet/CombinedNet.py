@@ -16,24 +16,24 @@ class CombinedNet(nn.Module):
         super().__init__()
 
         self.cnn = nn.Sequential(
-            ConvHex(in_channels=1, out_channels=8, kernel_size=3),
+            ConvHex(in_channels=1, out_channels=4, kernel_size=3),
+            nn.BatchNorm1d(4),
+            nn.ReLU(),
+            nn.Dropout1d(0.1),
+
+            ConvHex(in_channels=4, out_channels=8, kernel_size=2),
             nn.BatchNorm1d(8),
             nn.ReLU(),
             nn.Dropout1d(0.1),
 
-            ConvHex(in_channels=8, out_channels=16, kernel_size=2),
+            ConvHex(in_channels=8, out_channels=16, kernel_size=1),
             nn.BatchNorm1d(16),
-            nn.ReLU(),
-            nn.Dropout1d(0.1),
-
-            ConvHex(in_channels=16, out_channels=32, kernel_size=1),
-            nn.BatchNorm1d(32),
             nn.ReLU(),
             nn.Dropout1d(0.1),
         )
 
         self.cnn_reducer = nn.Sequential(
-            nn.Linear(32 * NUM_OF_HEXAGONS, 4096),
+            nn.Linear(16 * NUM_OF_HEXAGONS, 4096),
             nn.BatchNorm1d(4096),
             nn.ReLU(),
             nn.Dropout(0.1)
@@ -48,12 +48,12 @@ class CombinedNet(nn.Module):
         )
 
     def forward(self, m1_image, m2_image, other_features):
-        # TODO: Understand why we have 1183 elements and not only 1039, workaround should work ok i think
         # First add channel dimension (1 = in_channels)
         m1_image = m1_image.unsqueeze(1)  # Shape becomes [batch_size, 1, num_hexagons]
         m2_image = m2_image.unsqueeze(1)
 
         # Resize to 1039 hexagons and throw away the rest
+        # TODO: Understand why we have 1183 elements and not only 1039, workaround should work ok i think
         m1_image = resize_input(m1_image)
         m2_image = resize_input(m2_image)
 
