@@ -78,14 +78,7 @@ def extract_features(row: pd.Series) -> torch.Tensor:
     ]
     features.extend([float(row[col]) for col in source_m2_features])
 
-    features_tensor = torch.tensor(features, dtype=torch.float32)
-
-    features_mean = features_tensor.mean()
-    features_std = features_tensor.std()
-    features_tensor = (features_tensor - features_mean) / (
-                features_std + 1e-8)
-
-    return features_tensor
+    return torch.tensor(features, dtype=torch.float32)
 
 
 class MagicDataset(Dataset):
@@ -112,11 +105,6 @@ class MagicDataset(Dataset):
 
         self.labels = {self.PROTON_LABEL: 0, self.GAMMA_LABEL: 1}
 
-        self.m1_mean = torch.mean(torch.stack([torch.tensor(x['image_m1']) for _, x in self.proton_data.iterrows()]))
-        self.m1_std = torch.std(torch.stack([torch.tensor(x['image_m1']) for _, x in self.proton_data.iterrows()]))
-        self.m2_mean = torch.mean(torch.stack([torch.tensor(x['image_m2']) for _, x in self.gamma_data.iterrows()]))
-        self.m2_std = torch.std(torch.stack([torch.tensor(x['image_m2']) for _, x in self.gamma_data.iterrows()]))
-
         if self.debug_info:
             print(f"\nDataset initialized with {self.length} total samples:")
             print(f"Protons: {self.n_protons}")
@@ -134,8 +122,8 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        m1_raw = (torch.tensor(row['image_m1'], dtype=torch.float32) - self.m1_mean) / self.m1_std
-        m2_raw = (torch.tensor(row['image_m2'], dtype=torch.float32) - self.m2_mean) / self.m2_std
+        m1_raw = torch.tensor(row['image_m1'], dtype=torch.float32)
+        m2_raw = torch.tensor(row['image_m2'], dtype=torch.float32)
         features = extract_features(row)
 
         return m1_raw, m2_raw, features, self.labels[label]
@@ -154,24 +142,4 @@ class MagicDataset(Dataset):
             }
         }
 
-        return {
-            'total_samples': total_samples,
-            'distribution': distribution
-        }
-
-
-if __name__ == '__main__':
-    dataset = MagicDataset('../magic-protons.parquet', '../magic-gammas.parquet')
-    print(f"Loading Finished")
-
-    print(dataset.get_distribution())
-    import time
-
-    print(f"Start reading")
-    start = time.time()
-    print(dataset[0])
-    print(dataset.__getitem__(1))
-    print(dataset.__getitem__(200000))
-    print(dataset.__getitem__(400000))
-    end = time.time()
-    print(end - start)
+        return {'total_samples': total_samples, 'distribution': distribution}
