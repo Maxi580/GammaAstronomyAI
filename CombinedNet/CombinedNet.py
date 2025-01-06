@@ -33,6 +33,7 @@ class CombinedNet(nn.Module):
         )
 
         self.cnn_reducer = nn.Sequential(
+            nn.Flatten(),
             nn.Linear(16 * NUM_OF_HEXAGONS, 4096),
             nn.BatchNorm1d(4096),
             nn.ReLU(),

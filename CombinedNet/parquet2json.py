@@ -141,5 +141,5 @@ def convert_parquet_to_json_txt(parquet_file: str, output_dir: str, label: str) 
 
 
 if __name__ == "__main__":
-    inspect_parquet("magic-protons.parquet")
-    # convert_parquet_to_json_txt("magic-protons.parquet", "../datasets/magic_protons", PROTON_LABEL)
+    # inspect_parquet("magic-protons.parquet")
+    convert_parquet_to_json_txt("../magic-protons.parquet", "../datasets/magic_protons", PROTON_LABEL)
