@@ -296,6 +296,13 @@ class TrainingSupervisor:
                 features = features.to(self.device)
                 labels = labels.to(self.device)
 
+                # Check for invalid inputs before forward pass #ToDO check what we want to do with missing features
+                if (torch.isnan(m1_images).any() or torch.isinf(m1_images).any() or torch.isnan(m2_images).any() or
+                        torch.isinf(m2_images).any() or torch.isnan(features).any() or torch.isinf(features).any()):
+                    if self.debug_info:
+                        print("\n[Warning] NaN/Inf Input detected; skipping;\n")
+                    continue
+
                 outputs = self.model(m1_images, m2_images, features)
                 loss = criterion(outputs, labels)
 
