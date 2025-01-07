@@ -100,7 +100,7 @@ class TrainingSupervisor:
         if self.debug_info:
             print("Loading Training Data...\n")
 
-        dataset = MagicDataset(self.proton_file, self.gamma_file, max_samples=1000)
+        dataset = MagicDataset(self.proton_file, self.gamma_file)
 
         if self.debug_info:
             data_distribution = dataset.get_distribution()
@@ -128,7 +128,7 @@ class TrainingSupervisor:
             test_size=self.DATA_TEST_SPLIT,
             stratify=labels,
             shuffle=True,
-            random_state=42,
+            random_state=1234,
         )
 
         if self.debug_info:

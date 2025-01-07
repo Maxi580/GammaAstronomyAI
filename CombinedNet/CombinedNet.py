@@ -37,7 +37,7 @@ class CombinedNet(nn.Module):
             nn.BatchNorm1d(4096),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(4096 * 2, 1024),
+            nn.Linear(4096, 1024),
             nn.BatchNorm1d(1024),
             nn.ReLU(),
             nn.Dropout(0.1),
