@@ -62,7 +62,7 @@ def calc_metrics(y_pred, y_true, loss):
 class TrainingSupervisor:
     DATA_TEST_SPLIT: float = 0.3
     BATCH_SIZE: int = 32
-    LEARNING_RATE: float = 0.004362359948002615
+    LEARNING_RATE: float = 0.0001
     ADAM_BETA_1: float = 0.8666112052644459
     ADAM_BETA_2: float = 0.9559910148600463
     ADAM_EPSILON: float = 1e-8
@@ -127,10 +127,9 @@ class TrainingSupervisor:
             np.arange(len(dataset)),
             test_size=self.DATA_TEST_SPLIT,
             stratify=labels,
+            shuffle=True,
             random_state=42,
         )
-
-        print(f"train_indices: {train_indices}, val_indices: {val_indices}")
 
         if self.debug_info:
             print("\nAfter split label distribution:")

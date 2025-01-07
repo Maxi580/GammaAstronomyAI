@@ -15,9 +15,8 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
 from CombinedNet.CombinedNet import CombinedNet
-from CombinedNet.magicDataset import MagicDataset
 from CombinedNet.resultsWriter import ResultsWriter
-from CombinedNet.jsonDataset import jsonDataset
+from CombinedNet.jsonStuff.jsonDataset import jsonDataset
 
 MetricsDict = TypedDict(
     "MetricsDict",

@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 import time
-from CombinedNet.jsonTrainingSupervisor import jsonTrainingSupervisor
+from CombinedNet.TrainingSupervisor import TrainingSupervisor
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
@@ -18,7 +18,7 @@ def main(model_name: str, data_dir: str, epochs: int):
     print(f"\t- Epochs = {epochs}")
     print(f"\t- Output = {output_dir}\n")
 
-    supervisor = jsonTrainingSupervisor(model_name, data_dir, output_dir)
+    supervisor = TrainingSupervisor(model_name, data_dir, output_dir)
     supervisor.train_model(epochs)
 
 
