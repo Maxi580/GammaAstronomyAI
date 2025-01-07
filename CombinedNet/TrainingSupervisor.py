@@ -34,7 +34,7 @@ MetricsDict = TypedDict(
 )
 
 
-def calc_metrics(y_pred, y_true, loss):
+def calc_metrics(y_true, y_pred, loss):
     accuracy = 100.0 * accuracy_score(y_true, y_pred)
     precision = 100.0 * precision_score(y_true, y_pred, zero_division=0)
     recall = 100.0 * recall_score(y_true, y_pred, zero_division=0)
@@ -76,7 +76,7 @@ class TrainingSupervisor:
     def __init__(self, model_name: str, proton_file: str, gamma_file: str, output_dir: str, debug_info: bool = True,
                  save_model: bool = True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
-        else "cpu")
+                                    else "cpu")
         self.debug_info = debug_info
         self.save_model = save_model
 
@@ -253,8 +253,7 @@ class TrainingSupervisor:
         train_loss = 0
 
         self.model.train()
-        batch_cntr = 1
-        total_batches = len(self.training_data_loader)
+
         for batch in self.training_data_loader:
             m1_images, m2_images, labels = self._extract_batch(batch)
 
@@ -273,15 +272,6 @@ class TrainingSupervisor:
             train_loss += loss.item()
 
             scheduler.step()
-
-            if batch_cntr % 10 == 0:
-                current_metrics = calc_metrics(
-                    train_labels,
-                    train_preds,
-                    train_loss / batch_cntr
-                )
-                print(f"\nTraining Batch {batch_cntr} of {total_batches} metrics:")
-                self.print_metrics(current_metrics)
 
         metrics = calc_metrics(
             train_labels,
