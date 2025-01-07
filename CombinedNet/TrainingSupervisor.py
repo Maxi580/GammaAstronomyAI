@@ -215,13 +215,12 @@ class TrainingSupervisor:
             if self.debug_info:
                 print(f"Training Epoch {epoch + 1}/{epochs}...")
 
-            train_metrics = self._training_step(optimizer, criterion)
+            train_metrics = self._training_step(scheduler, optimizer, criterion)
             if self.debug_info:
                 print(f"\nTraining Metrics of epoch: {epoch}: \n")
                 self.print_metrics(train_metrics)
 
             val_metrics = self._validation_step(criterion)
-            scheduler.step()
 
             if self.debug_info:
                 print(f"\nValidation Metrics of epoch: {epoch}: \n")
@@ -248,7 +247,7 @@ class TrainingSupervisor:
 
         return m1_images, m2_images, labels
 
-    def _training_step(self, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
+    def _training_step(self, scheduler, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
         train_preds = []
         train_labels = []
         train_loss = 0
@@ -272,6 +271,8 @@ class TrainingSupervisor:
             train_preds.extend(predicted.cpu().numpy())
             train_labels.extend(labels.cpu().numpy())
             train_loss += loss.item()
+
+            scheduler.step()
 
             if batch_cntr % 10 == 0:
                 current_metrics = calc_metrics(
