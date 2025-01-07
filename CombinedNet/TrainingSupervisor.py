@@ -239,24 +239,13 @@ class TrainingSupervisor:
             self.write_results(epochs)
 
     def _extract_batch(self, batch):
-        m1_images, m2_images, features, labels = batch
+        m1_images, m2_images, labels = batch
 
         m1_images = m1_images.to(self.device)
         m2_images = m2_images.to(self.device)
-        features = features.to(self.device)
         labels = labels.to(self.device)
 
-        if (torch.isnan(m1_images).any() or torch.isinf(m1_images).any() or
-                torch.isnan(m2_images).any() or torch.isinf(m2_images).any() or
-                torch.isnan(features).any() or torch.isinf(features).any()):
-            if self.debug_info:
-                print("\n[Warning] NaN/Inf Input detected\n")
-
-            m1_images = torch.nan_to_num(m1_images, 0.0)
-            m2_images = torch.nan_to_num(m2_images, 0.0)
-            features = torch.nan_to_num(features, 0.0)
-
-        return m1_images, m2_images, features, labels
+        return m1_images, m2_images, labels
 
     def _training_step(self, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
         train_preds = []
@@ -265,10 +254,10 @@ class TrainingSupervisor:
 
         self.model.train()
         for batch in self.training_data_loader:
-            m1_images, m2_images, features, labels = self._extract_batch(batch)
+            m1_images, m2_images, labels = self._extract_batch(batch)
 
             optimizer.zero_grad()
-            outputs = self.model(m1_images, m2_images, features)
+            outputs = self.model(m1_images, m2_images)
             loss = criterion(outputs, labels)
 
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.GRAD_CLIP_NORM)
@@ -298,9 +287,9 @@ class TrainingSupervisor:
         self.model.eval()
         with torch.no_grad():
             for batch in self.val_data_loader:
-                m1_images, m2_images, features, labels = self._extract_batch(batch)
+                m1_images, m2_images, labels = self._extract_batch(batch)
 
-                outputs = self.model(m1_images, m2_images, features)
+                outputs = self.model(m1_images, m2_images)
 
                 loss = criterion(outputs, labels)
                 _, predicted = outputs.max(1)

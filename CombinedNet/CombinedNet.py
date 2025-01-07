@@ -4,7 +4,6 @@ from CNN.ConvolutionLayers.ConvHex import ConvHex
 
 NUM_OF_HEXAGONS = 1039
 CNN_REDUCE_OUTPUT_FEATURES = 2048
-NON_IMAGE_FEATURES = 59
 
 
 def resize_input(image):
@@ -32,23 +31,20 @@ class CombinedNet(nn.Module):
             nn.Dropout1d(0.1),
         )
 
-        self.cnn_reducer = nn.Sequential(
+        self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(16 * NUM_OF_HEXAGONS, 4096),
+            nn.Linear(16 * NUM_OF_HEXAGONS * 2, 4096),
             nn.BatchNorm1d(4096),
             nn.ReLU(),
-            nn.Dropout(0.1)
-        )
-
-        self.classifier = nn.Sequential(
-            nn.Linear(4096 * 2 + NON_IMAGE_FEATURES, 1024),
+            nn.Dropout(0.1),
+            nn.Linear(4096 * 2, 1024),
             nn.BatchNorm1d(1024),
             nn.ReLU(),
             nn.Dropout(0.1),
             nn.Linear(1024, 2)
         )
 
-    def forward(self, m1_image, m2_image, other_features):
+    def forward(self, m1_image, m2_image):
         # First add channel dimension (1 = in_channels)
         m1_image = m1_image.unsqueeze(1)  # Shape becomes [batch_size, 1, num_hexagons]
         m2_image = m2_image.unsqueeze(1)
@@ -59,11 +55,9 @@ class CombinedNet(nn.Module):
         m2_image = resize_input(m2_image)
 
         # Process images
-        m1_cnn_features = self.cnn(m1_image)
-        m2_cnn_features = self.cnn(m2_image)
-        m1_features = self.cnn_reducer(m1_cnn_features)
-        m2_features = self.cnn_reducer(m2_cnn_features)
+        m1_features = self.cnn(m1_image)
+        m2_features = self.cnn(m2_image)
 
-        combined = torch.cat([m1_features, m2_features, other_features], dim=1)
+        combined = torch.cat([m1_features, m2_features], dim=1)
 
         return self.classifier(combined)
