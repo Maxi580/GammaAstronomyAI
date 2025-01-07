@@ -75,7 +75,8 @@ class TrainingSupervisor:
 
     def __init__(self, model_name: str, proton_file: str, gamma_file: str, output_dir: str, debug_info: bool = True,
                  save_model: bool = True) -> None:
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
+        else "cpu")
         self.debug_info = debug_info
         self.save_model = save_model
 
@@ -128,7 +129,7 @@ class TrainingSupervisor:
             test_size=self.DATA_TEST_SPLIT,
             stratify=labels,
             shuffle=True,
-            random_state=1234,
+            random_state=42,
         )
 
         if self.debug_info:
@@ -253,6 +254,8 @@ class TrainingSupervisor:
         train_loss = 0
 
         self.model.train()
+        batch_cntr = 1
+        total_batches = len(self.training_data_loader)
         for batch in self.training_data_loader:
             m1_images, m2_images, labels = self._extract_batch(batch)
 
@@ -269,6 +272,15 @@ class TrainingSupervisor:
             train_preds.extend(predicted.cpu().numpy())
             train_labels.extend(labels.cpu().numpy())
             train_loss += loss.item()
+
+            if batch_cntr % 10 == 0:
+                current_metrics = calc_metrics(
+                    train_labels,
+                    train_preds,
+                    train_loss / batch_cntr
+                )
+                print(f"\nTraining Batch {batch_cntr} of {total_batches} metrics:")
+                self.print_metrics(current_metrics)
 
         metrics = calc_metrics(
             train_labels,

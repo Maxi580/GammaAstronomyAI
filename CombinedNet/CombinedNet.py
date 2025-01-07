@@ -18,29 +18,29 @@ class CombinedNet(nn.Module):
             ConvHex(in_channels=1, out_channels=4, kernel_size=3),
             nn.BatchNorm1d(4),
             nn.ReLU(),
-            nn.Dropout1d(0.1),
+            nn.Dropout1d(0.2),
 
             ConvHex(in_channels=4, out_channels=8, kernel_size=2),
             nn.BatchNorm1d(8),
             nn.ReLU(),
-            nn.Dropout1d(0.1),
+            nn.Dropout1d(0.2),
 
             ConvHex(in_channels=8, out_channels=16, kernel_size=1),
             nn.BatchNorm1d(16),
             nn.ReLU(),
-            nn.Dropout1d(0.1),
+            nn.Dropout1d(0.2),
         )
 
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(16 * NUM_OF_HEXAGONS * 2, 4096),
-            nn.BatchNorm1d(4096),
+            nn.Linear(16 * NUM_OF_HEXAGONS * 2, 2048),
+            nn.BatchNorm1d(2048),
             nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(4096, 1024),
+            nn.Dropout(0.3),
+            nn.Linear(2048, 1024),
             nn.BatchNorm1d(1024),
             nn.ReLU(),
-            nn.Dropout(0.1),
+            nn.Dropout(0.3),
             nn.Linear(1024, 2)
         )
 
