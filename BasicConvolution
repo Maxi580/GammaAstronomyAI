@@ -1,0 +1,514 @@
+C:\Users\maxie\AppData\Local\Programs\Python\Python312\python.exe C:\Users\maxie\Desktop\GammaAstronomyAI\trainModel.py
+Starting Training with settings:
+	- Model = CombinedNet
+	- Data = ('C:\\Users\\maxie\\Desktop\\GammaAstronomyAI\\magic-protons.parquet', 'C:\\Users\\maxie\\Desktop\\GammaAstronomyAI\\magic-gammas.parquet')
+	- Epochs = 10
+	- Output = C:\Users\maxie\Desktop\GammaAstronomyAI\trained_models\CombinedNet__2025-01-08_16-57-44
+
+Training on Device: cpu
+Model loaded.
+Loading Training Data...
+
+Initializing dataset from:
+Proton file: C:\Users\maxie\Desktop\GammaAstronomyAI\magic-protons.parquet
+Gamma file: C:\Users\maxie\Desktop\GammaAstronomyAI\magic-gammas.parquet
+Original Number of Protons: 105174
+Original Number of Gammas: 374069
+Calculated Number of Protons: 105174
+Calculated Number of Protons: 374069
+
+Dataset initialized with 479243 total samples:
+Protons: 105174
+Gammas: 374069
+Label mapping: {'proton': 0, 'gamma': 1}
+Full Dataset Overview:
+Total number of samples: 479243
+
+Class Distribution:
+proton: 105174 samples (21.95%)
+gamma: 374069 samples (78.05%)
+
+
+
+After split label distribution:
+Training set:
+proton (label 0): 73622 samples (21.95%)
+gamma (label 1): 261848 samples (78.05%)
+
+Validation set:
+proton (label 0): 15776 samples (21.95%)
+gamma (label 1): 56110 samples (78.05%)
+
+
+
+Test set:
+proton (label 0): 15776 samples (21.95%)
+gamma (label 1): 56111 samples (78.05%)
+
+
+Dataset loaded.
+
+
+Training Epoch 1/10...
+
+Training Metrics of epoch: 1:
+
+Model Performance Metrics:
+Accuracy:     64.83%
+Precision:    88.69%
+Recall:       62.97%
+F1-Score:     73.65%
+Loss:        0.6715
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    52596      21026│
+│              │                   │
+│ Actual    1  │    96962      164886│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Validation Metrics of epoch: 1:
+
+Model Performance Metrics:
+Accuracy:     92.67%
+Precision:    98.63%
+Recall:       91.89%
+F1-Score:     95.14%
+Loss:        0.6141
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15058       718│
+│              │                   │
+│ Actual    1  │    4550      51560│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+--------------------------------------------------
+Training Epoch 2/10...
+
+Training Metrics of epoch: 2:
+
+Model Performance Metrics:
+Accuracy:     80.26%
+Precision:    95.75%
+Recall:       78.19%
+F1-Score:     86.08%
+Loss:        0.5598
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    64526      9096│
+│              │                   │
+│ Actual    1  │    57119      204729│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Validation Metrics of epoch: 2:
+
+Model Performance Metrics:
+Accuracy:     95.47%
+Precision:    98.72%
+Recall:       95.43%
+F1-Score:     97.05%
+Loss:        0.4885
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15083       693│
+│              │                   │
+│ Actual    1  │    2563      53547│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+--------------------------------------------------
+Training Epoch 3/10...
+
+Training Metrics of epoch: 3:
+
+Model Performance Metrics:
+Accuracy:     87.37%
+Precision:    97.38%
+Recall:       86.13%
+F1-Score:     91.41%
+Loss:        0.4789
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    67562      6060│
+│              │                   │
+│ Actual    1  │    36311      225537│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Validation Metrics of epoch: 3:
+
+Model Performance Metrics:
+Accuracy:     93.57%
+Precision:    99.08%
+Recall:       92.63%
+F1-Score:     95.74%
+Loss:        0.4218
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15294       482│
+│              │                   │
+│ Actual    1  │    4138      51972│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+--------------------------------------------------
+Training Epoch 4/10...
+
+Training Metrics of epoch: 4:
+
+Model Performance Metrics:
+Accuracy:     90.88%
+Precision:    97.79%
+Recall:       90.36%
+F1-Score:     93.93%
+Loss:        0.4367
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    68285      5337│
+│              │                   │
+│ Actual    1  │    25245      236603│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Validation Metrics of epoch: 4:
+
+Model Performance Metrics:
+Accuracy:     97.31%
+Precision:    99.03%
+Recall:       97.51%
+F1-Score:     98.27%
+Loss:        0.3786
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15240       536│
+│              │                   │
+│ Actual    1  │    1395      54715│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+--------------------------------------------------
+Training Epoch 5/10...
+
+Training Metrics of epoch: 5:
+
+Model Performance Metrics:
+Accuracy:     92.76%
+Precision:    97.95%
+Recall:       92.66%
+F1-Score:     95.23%
+Loss:        0.4137
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    68540      5082│
+│              │                   │
+│ Actual    1  │    19209      242639│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Validation Metrics of epoch: 5:
+
+Model Performance Metrics:
+Accuracy:     97.68%
+Precision:    99.16%
+Recall:       97.85%
+F1-Score:     98.50%
+Loss:        0.3508
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15310       466│
+│              │                   │
+│ Actual    1  │    1204      54906│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+--------------------------------------------------
+Training Epoch 6/10...
+
+Training Metrics of epoch: 6:
+
+Model Performance Metrics:
+Accuracy:     93.95%
+Precision:    98.14%
+Recall:       94.04%
+F1-Score:     96.04%
+Loss:        0.3990
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    68959      4663│
+│              │                   │
+│ Actual    1  │    15618      246230│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Validation Metrics of epoch: 6:
+
+Model Performance Metrics:
+Accuracy:     97.20%
+Precision:    99.44%
+Recall:       96.95%
+F1-Score:     98.18%
+Loss:        0.3431
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15472       304│
+│              │                   │
+│ Actual    1  │    1712      54398│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+--------------------------------------------------
+Training Epoch 7/10...
+
+Training Metrics of epoch: 7:
+
+Model Performance Metrics:
+Accuracy:     94.69%
+Precision:    98.23%
+Recall:       94.91%
+F1-Score:     96.54%
+Loss:        0.3893
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    69147      4475│
+│              │                   │
+│ Actual    1  │    13328      248520│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Validation Metrics of epoch: 7:
+
+Model Performance Metrics:
+Accuracy:     98.22%
+Precision:    99.31%
+Recall:       98.40%
+F1-Score:     98.85%
+Loss:        0.3371
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15390       386│
+│              │                   │
+│ Actual    1  │     896      55214│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+--------------------------------------------------
+Training Epoch 8/10...
+
+Training Metrics of epoch: 8:
+
+Model Performance Metrics:
+Accuracy:     95.23%
+Precision:    98.33%
+Recall:       95.51%
+F1-Score:     96.90%
+Loss:        0.3821
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    69369      4253│
+│              │                   │
+│ Actual    1  │    11764      250084│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Validation Metrics of epoch: 8:
+
+Model Performance Metrics:
+Accuracy:     98.43%
+Precision:    99.37%
+Recall:       98.61%
+F1-Score:     98.99%
+Loss:        0.3346
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15427       349│
+│              │                   │
+│ Actual    1  │     780      55330│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+--------------------------------------------------
+Training Epoch 9/10...
+
+Training Metrics of epoch: 9:
+
+Model Performance Metrics:
+Accuracy:     95.64%
+Precision:    98.45%
+Recall:       95.93%
+F1-Score:     97.17%
+Loss:        0.3756
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    69671      3951│
+│              │                   │
+│ Actual    1  │    10661      251187│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Validation Metrics of epoch: 9:
+
+Model Performance Metrics:
+Accuracy:     98.57%
+Precision:    99.41%
+Recall:       98.75%
+F1-Score:     99.08%
+Loss:        0.3296
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15449       327│
+│              │                   │
+│ Actual    1  │     704      55406│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+--------------------------------------------------
+Training Epoch 10/10...
+
+Training Metrics of epoch: 10:
+
+Model Performance Metrics:
+Accuracy:     96.06%
+Precision:    98.55%
+Recall:       96.37%
+F1-Score:     97.45%
+Loss:        0.3703
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    69900      3722│
+│              │                   │
+│ Actual    1  │    9503      252345│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Validation Metrics of epoch: 10:
+
+Model Performance Metrics:
+Accuracy:     98.95%
+Precision:    99.47%
+Recall:       99.19%
+F1-Score:     99.33%
+Loss:        0.3269
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15477       299│
+│              │                   │
+│ Actual    1  │     454      55656│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+--------------------------------------------------
+Running Inference on Test Sample
+Evaluating model on device: cpu
+Total batches to process: 2247
+Model Performance Metrics:
+Accuracy:     98.95%
+Precision:    99.50%
+Recall:       99.15%
+F1-Score:     99.33%
+Loss:        0.2445
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15497       279│
+│              │                   │
+│ Actual    1  │     477      55634│
+│              │
+─────────────────────────────────────────────
+Label mapping: tensor([1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1])
+
+Process finished with exit code 0

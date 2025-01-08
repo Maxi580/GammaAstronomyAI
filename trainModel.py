@@ -1,6 +1,4 @@
-import argparse
 import os
-import sys
 import time
 from CombinedNet.TrainingSupervisor import TrainingSupervisor
 
@@ -49,4 +47,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[1:])"""
 
-    main("CombinedNet", "magic-protons.parquet", "magic-gammas.parquet", 1)
+    main("CombinedNet", "magic-protons.parquet", "magic-gammas.parquet", 10)

@@ -5,6 +5,82 @@ from typing import Dict, Tuple, Any, Optional
 import pyarrow.parquet as pq
 
 
+def extract_features(row: pd.Series) -> torch.Tensor:
+    features = []
+
+    features.extend([
+        float(row['true_energy']),
+        float(row['true_theta']),
+        float(row['true_phi']),
+        float(row['true_telescope_theta']),
+        float(row['true_telescope_phi']),
+        float(row['true_first_interaction_height']),
+        float(row['true_impact_m1']),
+        float(row['true_impact_m2'])
+    ])
+
+    features.extend([
+        float(row['hillas_length_m1']),
+        float(row['hillas_width_m1']),
+        float(row['hillas_delta_m1']),
+        float(row['hillas_size_m1']),
+        float(row['hillas_cog_x_m1']),
+        float(row['hillas_cog_y_m1']),
+        float(row['hillas_sin_delta_m1']),
+        float(row['hillas_cos_delta_m1'])
+    ])
+
+    features.extend([
+        float(row['hillas_length_m2']),
+        float(row['hillas_width_m2']),
+        float(row['hillas_delta_m2']),
+        float(row['hillas_size_m2']),
+        float(row['hillas_cog_x_m2']),
+        float(row['hillas_cog_y_m2']),
+        float(row['hillas_sin_delta_m2']),
+        float(row['hillas_cos_delta_m2'])
+    ])
+
+    stereo_features = [
+        'stereo_direction_x', 'stereo_direction_y', 'stereo_zenith',
+        'stereo_azimuth', 'stereo_dec', 'stereo_ra', 'stereo_theta2',
+        'stereo_core_x', 'stereo_core_y', 'stereo_impact_m1',
+        'stereo_impact_m2', 'stereo_impact_azimuth_m1',
+        'stereo_impact_azimuth_m2', 'stereo_shower_max_height',
+        'stereo_xmax', 'stereo_cherenkov_radius',
+        'stereo_cherenkov_density', 'stereo_baseline_phi_m1',
+        'stereo_baseline_phi_m2', 'stereo_image_angle',
+        'stereo_cos_between_shower'
+    ]
+    features.extend([float(row[col]) for col in stereo_features])
+
+    features.extend([
+        float(row['pointing_zenith']),
+        float(row['pointing_azimuth'])
+    ])
+
+    features.extend([
+        float(row['time_gradient_m1']),
+        float(row['time_gradient_m2'])
+    ])
+
+    source_m1_features = [
+        'source_alpha_m1', 'source_dist_m1',
+        'source_cos_delta_alpha_m1', 'source_dca_m1',
+        'source_dca_delta_m1'
+    ]
+    features.extend([float(row[col]) for col in source_m1_features])
+
+    source_m2_features = [
+        'source_alpha_m2', 'source_dist_m2',
+        'source_cos_delta_alpha_m2', 'source_dca_m2',
+        'source_dca_delta_m2'
+    ]
+    features.extend([float(row[col]) for col in source_m2_features])
+
+    return torch.tensor(features, dtype=torch.float32)
+
+
 class MagicDataset(Dataset):
     GAMMA_LABEL: str = 'gamma'
     PROTON_LABEL: str = 'proton'
@@ -30,6 +106,11 @@ class MagicDataset(Dataset):
         else:
             self.n_protons = self.proton_metadata.num_rows
             self.n_gammas = self.gamma_metadata.num_rows
+
+        print(f"Original Number of Protons: {self.proton_metadata.num_rows}")
+        print(f"Original Number of Gammas: {self.gamma_metadata.num_rows}")
+        print(f"Calculated Number of Protons: {self.n_protons}")
+        print(f"Calculated Number of Protons: {self.n_gammas}")
 
         self.proton_data = pd.read_parquet(proton_filename).iloc[:self.n_protons]
         self.gamma_data = pd.read_parquet(gamma_filename).iloc[:self.n_gammas]

@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
 
-def evaluate_saved_model(model_path, proton_file, gamma_file, batch_size=32):
+def evaluate_model(model_path, proton_file, gamma_file, batch_size=32):
     # Load the dataset
     dataset = MagicDataset(proton_file, gamma_file)
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
@@ -88,4 +88,4 @@ if __name__ == "__main__":
     PROTON_FILE = "magic-protons.parquet"
     GAMMA_FILE = "magic-gammas.parquet"
 
-    results = evaluate_saved_model(MODEL_PATH, PROTON_FILE, GAMMA_FILE)
+    results = evaluate_model(MODEL_PATH, PROTON_FILE, GAMMA_FILE)
