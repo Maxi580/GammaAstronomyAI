@@ -7,6 +7,7 @@ CNN_REDUCE_OUTPUT_FEATURES = 2048
 
 
 def resize_input(image):
+    """Arrays are 1183 long, however the last 144 are always 0"""
     return image[:, :, :NUM_OF_HEXAGONS]
 
 
@@ -39,8 +40,6 @@ class CombinedNet(nn.Module):
         m1_image = m1_image.unsqueeze(1)  # Shape becomes [batch_size, 1, num_hexagons]
         m2_image = m2_image.unsqueeze(1)
 
-        # Resize to 1039 hexagons and throw away the rest
-        # TODO: Understand why we have 1183 elements and not only 1039, workaround should work ok i think
         m1_image = resize_input(m1_image)
         m2_image = resize_input(m2_image)
 
