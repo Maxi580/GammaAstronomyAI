@@ -18,30 +18,20 @@ class CombinedNet(nn.Module):
             ConvHex(in_channels=1, out_channels=4, kernel_size=3),
             nn.BatchNorm1d(4),
             nn.ReLU(),
-            nn.Dropout1d(0.2),
+            nn.Dropout1d(0.4),
 
             ConvHex(in_channels=4, out_channels=8, kernel_size=2),
             nn.BatchNorm1d(8),
             nn.ReLU(),
-            nn.Dropout1d(0.2),
-
-            ConvHex(in_channels=8, out_channels=16, kernel_size=1),
-            nn.BatchNorm1d(16),
-            nn.ReLU(),
-            nn.Dropout1d(0.2),
+            nn.Dropout1d(0.4),
         )
 
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(16 * NUM_OF_HEXAGONS * 2, 2048),
-            nn.BatchNorm1d(2048),
+            nn.Linear(8 * NUM_OF_HEXAGONS * 2, 512),
             nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(2048, 1024),
-            nn.BatchNorm1d(1024),
-            nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(1024, 2)
+            nn.Dropout(0.5),
+            nn.Linear(512, 2)
         )
 
     def forward(self, m1_image, m2_image):
@@ -61,3 +51,4 @@ class CombinedNet(nn.Module):
         combined = torch.cat([m1_features, m2_features], dim=1)
 
         return self.classifier(combined)
+

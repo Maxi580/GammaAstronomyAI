@@ -71,12 +71,12 @@ class TrainingSupervisor:
     SCHEDULER_MAX_LR: float = 0.00010192925124725547
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
-    GRAD_CLIP_NORM: float = 4.260615936053168
+    GRAD_CLIP_NORM: float = 1
 
     def __init__(self, model_name: str, proton_file: str, gamma_file: str, output_dir: str, debug_info: bool = True,
                  save_model: bool = True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
-                                    else "cpu")
+        else "cpu")
         self.debug_info = debug_info
         self.save_model = save_model
 
@@ -186,7 +186,7 @@ class TrainingSupervisor:
         weight_proton = total_samples / (2 * n_protons)
         weight_gamma = total_samples / (2 * n_gammas)
         class_weights = torch.tensor([weight_proton, weight_gamma]).to(self.device)
-        criterion = nn.CrossEntropyLoss(weight=class_weights)
+        criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
 
         optimizer = optim.AdamW(
             self.model.parameters(),
@@ -215,12 +215,14 @@ class TrainingSupervisor:
             if self.debug_info:
                 print(f"Training Epoch {epoch + 1}/{epochs}...")
 
-            train_metrics = self._training_step(scheduler, optimizer, criterion)
+            train_metrics = self._training_step(optimizer, criterion)
             if self.debug_info:
                 print(f"\nTraining Metrics of epoch: {epoch}: \n")
                 self.print_metrics(train_metrics)
 
             val_metrics = self._validation_step(criterion)
+
+            scheduler.step()
 
             if self.debug_info:
                 print(f"\nValidation Metrics of epoch: {epoch}: \n")
@@ -247,18 +249,21 @@ class TrainingSupervisor:
 
         return m1_images, m2_images, labels
 
-    def _training_step(self, scheduler, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
+    def _training_step(self, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
         train_preds = []
         train_labels = []
         train_loss = 0
 
         self.model.train()
-
+        total_batch_cntr = len(self.dataset) // self.BATCH_SIZE
+        print(f"Total Amount of Training Batches: {total_batch_cntr}")
+        batch_cntr = 1
         for batch in self.training_data_loader:
             m1_images, m2_images, labels = self._extract_batch(batch)
 
             optimizer.zero_grad()
             outputs = self.model(m1_images, m2_images)
+
             loss = criterion(outputs, labels)
 
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.GRAD_CLIP_NORM)
@@ -271,7 +276,16 @@ class TrainingSupervisor:
             train_labels.extend(labels.cpu().numpy())
             train_loss += loss.item()
 
-            scheduler.step()
+            if batch_cntr % 100 == 0:
+                print(f"Training Batch {batch_cntr} of {total_batch_cntr}")
+                current_metrics = calc_metrics(
+                    train_labels,
+                    train_preds,
+                    train_loss / batch_cntr,
+                )
+                self.print_metrics(current_metrics)
+
+            batch_cntr += 1
 
         metrics = calc_metrics(
             train_labels,
@@ -289,6 +303,11 @@ class TrainingSupervisor:
 
         self.model.eval()
         with torch.no_grad():
+
+            total_batch_cntr = (len(self.val_data_loader) // self.BATCH_SIZE)
+            batch_cntr = 1
+            print(f"Total Amount of Validation Batches: {total_batch_cntr}")
+
             for batch in self.val_data_loader:
                 m1_images, m2_images, labels = self._extract_batch(batch)
 
@@ -299,6 +318,17 @@ class TrainingSupervisor:
                 val_preds.extend(predicted.cpu().numpy())
                 val_labels.extend(labels.cpu().numpy())
                 val_loss += loss.item()
+
+                if batch_cntr % 100 == 0:
+                    print(f"Validation Batch {batch_cntr} of {total_batch_cntr}")
+                    current_metrics = calc_metrics(
+                        val_labels,
+                        val_preds,
+                        val_loss / batch_cntr
+                    )
+                    self.print_metrics(current_metrics)
+
+                batch_cntr += 1
 
         metrics = calc_metrics(
             val_labels,

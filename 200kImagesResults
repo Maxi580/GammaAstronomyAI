@@ -1,0 +1,1260 @@
+C:\Users\maxie\AppData\Local\Programs\Python\Python312\python.exe C:\Users\maxie\Desktop\GammaAstronomyAI\trainModel.py
+Starting Training with settings:
+	- Model = CombinedNet
+	- Data = ('C:\\Users\\maxie\\Desktop\\GammaAstronomyAI\\magic-protons.parquet', 'C:\\Users\\maxie\\Desktop\\GammaAstronomyAI\\magic-gammas.parquet')
+	- Epochs = 1
+	- Output = C:\Users\maxie\Desktop\GammaAstronomyAI\trained_models\CombinedNet__2025-01-08_02-42-32
+
+Training on Device: cpu
+Model loaded.
+Loading Training Data...
+
+Initializing dataset from:
+Proton file: C:\Users\maxie\Desktop\GammaAstronomyAI\magic-protons.parquet
+Gamma file: C:\Users\maxie\Desktop\GammaAstronomyAI\magic-gammas.parquet
+
+Dataset initialized with 200000 total samples:
+Protons: 43891
+Gammas: 156109
+Label mapping: {'proton': 0, 'gamma': 1}
+Full Dataset Overview:
+Total number of samples: 200000
+
+Class Distribution:
+proton: 43891 samples (21.95%)
+gamma: 156109 samples (78.05%)
+
+
+
+After split label distribution:
+Training set:
+proton (label 0): 30724 samples (21.95%)
+gamma (label 1): 109276 samples (78.05%)
+
+Validation set:
+proton (label 0): 13167 samples (21.95%)
+gamma (label 1): 46833 samples (78.05%)
+
+
+Dataset loaded.
+
+
+C:\Users\maxie\AppData\Local\Programs\Python\Python312\Lib\site-packages\torch\optim\lr_scheduler.py:62: UserWarning: The verbose parameter is deprecated. Please use get_last_lr() to access the learning rate.
+  warnings.warn(
+Training Epoch 1/1...
+Total Amount of Training Batches: 4375
+Training Batch 100 of 4375
+Model Performance Metrics:
+Accuracy:     78.22%
+Precision:    78.51%
+Recall:       99.44%
+F1-Score:     87.74%
+Loss:        0.5450
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │       8       683│
+│              │                   │
+│ Actual    1  │      14      2495│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 200 of 4375
+Model Performance Metrics:
+Accuracy:     78.42%
+Precision:    78.64%
+Recall:       99.18%
+F1-Score:     87.72%
+Loss:        0.5333
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │      86      1340│
+│              │                   │
+│ Actual    1  │      41      4933│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 300 of 4375
+Model Performance Metrics:
+Accuracy:     79.23%
+Precision:    79.41%
+Recall:       99.02%
+F1-Score:     88.14%
+Loss:        0.5230
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │     197      1921│
+│              │                   │
+│ Actual    1  │      73      7409│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 400 of 4375
+Model Performance Metrics:
+Accuracy:     79.75%
+Precision:    79.96%
+Recall:       98.84%
+F1-Score:     88.41%
+Loss:        0.5148
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │     326      2476│
+│              │                   │
+│ Actual    1  │     116      9882│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 500 of 4375
+Model Performance Metrics:
+Accuracy:     80.29%
+Precision:    80.51%
+Recall:       98.76%
+F1-Score:     88.70%
+Loss:        0.5077
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │     468      2997│
+│              │                   │
+│ Actual    1  │     156      12379│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 600 of 4375
+Model Performance Metrics:
+Accuracy:     80.66%
+Precision:    80.81%
+Recall:       98.76%
+F1-Score:     88.89%
+Loss:        0.5039
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │     630      3528│
+│              │                   │
+│ Actual    1  │     186      14856│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 700 of 4375
+Model Performance Metrics:
+Accuracy:     81.00%
+Precision:    81.15%
+Recall:       98.65%
+F1-Score:     89.05%
+Loss:        0.5008
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │     833      4021│
+│              │                   │
+│ Actual    1  │     236      17310│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 800 of 4375
+Model Performance Metrics:
+Accuracy:     81.24%
+Precision:    81.45%
+Recall:       98.46%
+F1-Score:     89.15%
+Loss:        0.4987
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    1068      4494│
+│              │                   │
+│ Actual    1  │     309      19729│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 900 of 4375
+Model Performance Metrics:
+Accuracy:     81.56%
+Precision:    81.79%
+Recall:       98.42%
+F1-Score:     89.33%
+Loss:        0.4938
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    1242      4954│
+│              │                   │
+│ Actual    1  │     358      22246│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 1000 of 4375
+Model Performance Metrics:
+Accuracy:     81.67%
+Precision:    81.88%
+Recall:       98.35%
+F1-Score:     89.37%
+Loss:        0.4927
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    1480      5454│
+│              │                   │
+│ Actual    1  │     413      24653│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 1100 of 4375
+Model Performance Metrics:
+Accuracy:     81.83%
+Precision:    82.03%
+Recall:       98.32%
+F1-Score:     89.44%
+Loss:        0.4907
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    1727      5932│
+│              │                   │
+│ Actual    1  │     463      27078│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 1200 of 4375
+Model Performance Metrics:
+Accuracy:     82.09%
+Precision:    82.34%
+Recall:       98.18%
+F1-Score:     89.57%
+Loss:        0.4883
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    1999      6332│
+│              │                   │
+│ Actual    1  │     546      29523│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 1300 of 4375
+Model Performance Metrics:
+Accuracy:     82.27%
+Precision:    82.52%
+Recall:       98.14%
+F1-Score:     89.66%
+Loss:        0.4860
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    2265      6768│
+│              │                   │
+│ Actual    1  │     606      31961│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 1400 of 4375
+Model Performance Metrics:
+Accuracy:     82.50%
+Precision:    82.77%
+Recall:       98.06%
+F1-Score:     89.77%
+Loss:        0.4828
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    2581      7159│
+│              │                   │
+│ Actual    1  │     680      34380│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 1500 of 4375
+Model Performance Metrics:
+Accuracy:     82.75%
+Precision:    82.99%
+Recall:       98.06%
+F1-Score:     89.90%
+Loss:        0.4800
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    2884      7551│
+│              │                   │
+│ Actual    1  │     728      36837│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 1600 of 4375
+Model Performance Metrics:
+Accuracy:     83.00%
+Precision:    83.22%
+Recall:       98.05%
+F1-Score:     90.03%
+Loss:        0.4769
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    3197      7923│
+│              │                   │
+│ Actual    1  │     783      39297│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 1700 of 4375
+Model Performance Metrics:
+Accuracy:     83.20%
+Precision:    83.42%
+Recall:       98.02%
+F1-Score:     90.13%
+Loss:        0.4741
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    3536      8293│
+│              │                   │
+│ Actual    1  │     845      41726│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 1800 of 4375
+Model Performance Metrics:
+Accuracy:     83.36%
+Precision:    83.60%
+Recall:       97.95%
+F1-Score:     90.21%
+Loss:        0.4725
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    3879      8659│
+│              │                   │
+│ Actual    1  │     925      44137│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 1900 of 4375
+Model Performance Metrics:
+Accuracy:     83.58%
+Precision:    83.81%
+Recall:       97.94%
+F1-Score:     90.33%
+Loss:        0.4692
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    4204      9005│
+│              │                   │
+│ Actual    1  │     979      46612│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 2000 of 4375
+Model Performance Metrics:
+Accuracy:     83.70%
+Precision:    83.93%
+Recall:       97.90%
+F1-Score:     90.38%
+Loss:        0.4680
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    4570      9382│
+│              │                   │
+│ Actual    1  │    1050      48998│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 2100 of 4375
+Model Performance Metrics:
+Accuracy:     83.88%
+Precision:    84.12%
+Recall:       97.86%
+F1-Score:     90.47%
+Loss:        0.4662
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    4962      9706│
+│              │                   │
+│ Actual    1  │    1124      51408│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 2200 of 4375
+Model Performance Metrics:
+Accuracy:     84.11%
+Precision:    84.34%
+Recall:       97.82%
+F1-Score:     90.58%
+Loss:        0.4636
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    5408      9990│
+│              │                   │
+│ Actual    1  │    1200      53802│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 2300 of 4375
+Model Performance Metrics:
+Accuracy:     84.29%
+Precision:    84.52%
+Recall:       97.77%
+F1-Score:     90.66%
+Loss:        0.4616
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    5877      10286│
+│              │                   │
+│ Actual    1  │    1279      56158│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 2400 of 4375
+Model Performance Metrics:
+Accuracy:     84.45%
+Precision:    84.67%
+Recall:       97.77%
+F1-Score:     90.75%
+Loss:        0.4594
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    6261      10608│
+│              │                   │
+│ Actual    1  │    1338      58593│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 2500 of 4375
+Model Performance Metrics:
+Accuracy:     84.61%
+Precision:    84.85%
+Recall:       97.74%
+F1-Score:     90.84%
+Loss:        0.4574
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    6646      10900│
+│              │                   │
+│ Actual    1  │    1410      61044│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 2600 of 4375
+Model Performance Metrics:
+Accuracy:     84.81%
+Precision:    85.03%
+Recall:       97.75%
+F1-Score:     90.95%
+Loss:        0.4552
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    7060      11179│
+│              │                   │
+│ Actual    1  │    1462      63499│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 2700 of 4375
+Model Performance Metrics:
+Accuracy:     84.98%
+Precision:    85.19%
+Recall:       97.74%
+F1-Score:     91.03%
+Loss:        0.4530
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    7528      11457│
+│              │                   │
+│ Actual    1  │    1523      65892│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 2800 of 4375
+Model Performance Metrics:
+Accuracy:     85.15%
+Precision:    85.35%
+Recall:       97.73%
+F1-Score:     91.12%
+Loss:        0.4510
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    7986      11724│
+│              │                   │
+│ Actual    1  │    1586      68304│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 2900 of 4375
+Model Performance Metrics:
+Accuracy:     85.31%
+Precision:    85.53%
+Recall:       97.72%
+F1-Score:     91.22%
+Loss:        0.4491
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    8404      11975│
+│              │                   │
+│ Actual    1  │    1653      70768│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 3000 of 4375
+Model Performance Metrics:
+Accuracy:     85.48%
+Precision:    85.68%
+Recall:       97.72%
+F1-Score:     91.31%
+Loss:        0.4468
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    8848      12232│
+│              │                   │
+│ Actual    1  │    1711      73209│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 3100 of 4375
+Model Performance Metrics:
+Accuracy:     85.61%
+Precision:    85.80%
+Recall:       97.72%
+F1-Score:     91.37%
+Loss:        0.4451
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    9294      12516│
+│              │                   │
+│ Actual    1  │    1762      75628│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 3200 of 4375
+Model Performance Metrics:
+Accuracy:     85.80%
+Precision:    85.98%
+Recall:       97.74%
+F1-Score:     91.48%
+Loss:        0.4427
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    9753      12738│
+│              │                   │
+│ Actual    1  │    1807      78102│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 3300 of 4375
+Model Performance Metrics:
+Accuracy:     85.97%
+Precision:    86.16%
+Recall:       97.72%
+F1-Score:     91.58%
+Loss:        0.4405
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    10257      12940│
+│              │                   │
+│ Actual    1  │    1875      80528│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 3400 of 4375
+Model Performance Metrics:
+Accuracy:     86.10%
+Precision:    86.28%
+Recall:       97.72%
+F1-Score:     91.64%
+Loss:        0.4388
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    10740      13189│
+│              │                   │
+│ Actual    1  │    1934      82937│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 3500 of 4375
+Model Performance Metrics:
+Accuracy:     86.23%
+Precision:    86.40%
+Recall:       97.72%
+F1-Score:     91.72%
+Loss:        0.4372
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    11217      13434│
+│              │                   │
+│ Actual    1  │    1988      85361│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 3600 of 4375
+Model Performance Metrics:
+Accuracy:     86.37%
+Precision:    86.54%
+Recall:       97.72%
+F1-Score:     91.79%
+Loss:        0.4355
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    11698      13654│
+│              │                   │
+│ Actual    1  │    2049      87799│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 3700 of 4375
+Model Performance Metrics:
+Accuracy:     86.49%
+Precision:    86.67%
+Recall:       97.70%
+F1-Score:     91.86%
+Loss:        0.4341
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    12157      13881│
+│              │                   │
+│ Actual    1  │    2120      90242│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 3800 of 4375
+Model Performance Metrics:
+Accuracy:     86.62%
+Precision:    86.80%
+Recall:       97.70%
+F1-Score:     91.93%
+Loss:        0.4326
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    12679      14085│
+│              │                   │
+│ Actual    1  │    2179      92657│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 3900 of 4375
+Model Performance Metrics:
+Accuracy:     86.76%
+Precision:    86.94%
+Recall:       97.69%
+F1-Score:     92.00%
+Loss:        0.4310
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    13200      14276│
+│              │                   │
+│ Actual    1  │    2250      95074│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 4000 of 4375
+Model Performance Metrics:
+Accuracy:     86.87%
+Precision:    87.05%
+Recall:       97.70%
+F1-Score:     92.07%
+Loss:        0.4295
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    13668      14506│
+│              │                   │
+│ Actual    1  │    2300      97526│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 4100 of 4375
+Model Performance Metrics:
+Accuracy:     87.01%
+Precision:    87.18%
+Recall:       97.71%
+F1-Score:     92.15%
+Loss:        0.4277
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    14177      14699│
+│              │                   │
+│ Actual    1  │    2346      99978│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 4200 of 4375
+Model Performance Metrics:
+Accuracy:     87.09%
+Precision:    87.28%
+Recall:       97.68%
+F1-Score:     92.19%
+Loss:        0.4265
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    14651      14926│
+│              │                   │
+│ Actual    1  │    2427      102396│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Training Batch 4300 of 4375
+Model Performance Metrics:
+Accuracy:     87.22%
+Precision:    87.40%
+Recall:       97.70%
+F1-Score:     92.26%
+Loss:        0.4245
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15136      15114│
+│              │                   │
+│ Actual    1  │    2472      104878│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Training Metrics of epoch: 0:
+
+Model Performance Metrics:
+Accuracy:     87.33%
+Precision:    87.51%
+Recall:       97.71%
+F1-Score:     92.33%
+Loss:        0.4231
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    15488      15236│
+│              │                   │
+│ Actual    1  │    2504      106772│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Total Amount of Validation Batches: 58
+Validation Batch 100 of 58
+Model Performance Metrics:
+Accuracy:     98.25%
+Precision:    98.43%
+Recall:       99.37%
+F1-Score:     98.90%
+Loss:        0.3113
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │     634        40│
+│              │                   │
+│ Actual    1  │      16      2510│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 200 of 58
+Model Performance Metrics:
+Accuracy:     98.25%
+Precision:    98.39%
+Recall:       99.40%
+F1-Score:     98.89%
+Loss:        0.3139
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    1291        82│
+│              │                   │
+│ Actual    1  │      30      4997│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 300 of 58
+Model Performance Metrics:
+Accuracy:     98.25%
+Precision:    98.35%
+Recall:       99.44%
+F1-Score:     98.89%
+Loss:        0.3142
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    1929       126│
+│              │                   │
+│ Actual    1  │      42      7503│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 400 of 58
+Model Performance Metrics:
+Accuracy:     98.27%
+Precision:    98.35%
+Recall:       99.46%
+F1-Score:     98.90%
+Loss:        0.3137
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    2559       168│
+│              │                   │
+│ Actual    1  │      54      10019│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 500 of 58
+Model Performance Metrics:
+Accuracy:     98.27%
+Precision:    98.35%
+Recall:       99.48%
+F1-Score:     98.91%
+Loss:        0.3138
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    3181       211│
+│              │                   │
+│ Actual    1  │      66      12542│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 600 of 58
+Model Performance Metrics:
+Accuracy:     98.25%
+Precision:    98.29%
+Recall:       99.50%
+F1-Score:     98.89%
+Loss:        0.3137
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    3888       261│
+│              │                   │
+│ Actual    1  │      75      14976│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 700 of 58
+Model Performance Metrics:
+Accuracy:     98.25%
+Precision:    98.28%
+Recall:       99.50%
+F1-Score:     98.88%
+Loss:        0.3142
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    4595       305│
+│              │                   │
+│ Actual    1  │      88      17412│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 800 of 58
+Model Performance Metrics:
+Accuracy:     98.25%
+Precision:    98.27%
+Recall:       99.50%
+F1-Score:     98.88%
+Loss:        0.3139
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    5268       350│
+│              │                   │
+│ Actual    1  │      99      19883│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 900 of 58
+Model Performance Metrics:
+Accuracy:     98.29%
+Precision:    98.31%
+Recall:       99.52%
+F1-Score:     98.91%
+Loss:        0.3133
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    5908       385│
+│              │                   │
+│ Actual    1  │     108      22399│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 1000 of 58
+Model Performance Metrics:
+Accuracy:     98.30%
+Precision:    98.34%
+Recall:       99.50%
+F1-Score:     98.92%
+Loss:        0.3136
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    6564       419│
+│              │                   │
+│ Actual    1  │     124      24893│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 1100 of 58
+Model Performance Metrics:
+Accuracy:     98.32%
+Precision:    98.35%
+Recall:       99.52%
+F1-Score:     98.93%
+Loss:        0.3133
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    7213       461│
+│              │                   │
+│ Actual    1  │     131      27395│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 1200 of 58
+Model Performance Metrics:
+Accuracy:     98.34%
+Precision:    98.35%
+Recall:       99.54%
+F1-Score:     98.94%
+Loss:        0.3131
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    7866       500│
+│              │                   │
+│ Actual    1  │     139      29895│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 1300 of 58
+Model Performance Metrics:
+Accuracy:     98.29%
+Precision:    98.30%
+Recall:       99.54%
+F1-Score:     98.92%
+Loss:        0.3134
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    8491       559│
+│              │                   │
+│ Actual    1  │     151      32399│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 1400 of 58
+Model Performance Metrics:
+Accuracy:     98.26%
+Precision:    98.27%
+Recall:       99.53%
+F1-Score:     98.89%
+Loss:        0.3135
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    9166       615│
+│              │                   │
+│ Actual    1  │     164      34855│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 1500 of 58
+Model Performance Metrics:
+Accuracy:     98.27%
+Precision:    98.29%
+Recall:       99.52%
+F1-Score:     98.90%
+Loss:        0.3134
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    9823       651│
+│              │                   │
+│ Actual    1  │     181      37345│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 1600 of 58
+Model Performance Metrics:
+Accuracy:     98.28%
+Precision:    98.31%
+Recall:       99.51%
+F1-Score:     98.91%
+Loss:        0.3134
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    10516       683│
+│              │                   │
+│ Actual    1  │     196      39805│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 1700 of 58
+Model Performance Metrics:
+Accuracy:     98.29%
+Precision:    98.32%
+Recall:       99.52%
+F1-Score:     98.91%
+Loss:        0.3133
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    11160       725│
+│              │                   │
+│ Actual    1  │     205      42310│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+Validation Batch 1800 of 58
+Model Performance Metrics:
+Accuracy:     98.28%
+Precision:    98.31%
+Recall:       99.51%
+F1-Score:     98.90%
+Loss:        0.3135
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    11828       771│
+│              │                   │
+│ Actual    1  │     222      44779│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+
+Validation Metrics of epoch: 0:
+
+Model Performance Metrics:
+Accuracy:     98.26%
+Precision:    98.29%
+Recall:       99.50%
+F1-Score:     98.89%
+Loss:        0.3137
+
+Confusion Matrix:
+─────────────────────────────────────────────
+│              │      Predicted    │
+│              │          0      1 │
+├──────────────┼───────────────────┤
+│ Actual    0  │    12355       812│
+│              │                   │
+│ Actual    1  │     234      46599│
+│              │
+─────────────────────────────────────────────
+Label mapping: {'proton': 0, 'gamma': 1}
+--------------------------------------------------
+
+Process finished with exit code 0
+
+
+Evaluation on whole Dataset:
+
+Evaluation Results:
+Average Loss: 0.2294
+Accuracy: 98.35%
+Precision: 98.39%
+Recall: 99.52%
+F1-Score: 98.95%
