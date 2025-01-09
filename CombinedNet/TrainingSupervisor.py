@@ -169,10 +169,13 @@ class TrainingSupervisor:
         if self.debug_info:
             data_distribution = dataset.get_distribution()
             print("Full Dataset Overview:")
-            print(f"Total number of samples: {data_distribution["total_samples"]}\n")
+            total_samples = data_distribution["total_samples"]
+            print(f"Total number of samples: {total_samples}\n")
             print("Class Distribution:")
             for label, info in data_distribution["distribution"].items():
-                print(f"{label}: {info["count"]} samples ({info["percentage"]:.2f}%)")
+                count = info["count"]
+                percentage = info["percentage"]
+                print(f"{label}: {count} samples ({percentage}%)")
             print("\n")
 
         # Stratified splitting using sklearn
@@ -351,6 +354,8 @@ class TrainingSupervisor:
         train_loss = 0
 
         self.model.train()
+        batch_cntr = 1
+        total_batches = len(self.training_data_loader)
         for batch in self.training_data_loader:
             m1_images, m2_images, features, labels = self._extract_batch(batch)
 
@@ -368,6 +373,11 @@ class TrainingSupervisor:
             train_preds.extend(predicted.cpu().numpy())
             train_labels.extend(labels.cpu().numpy())
             train_loss += loss.item()
+
+            if batch_cntr % 1000 == 0:
+                current_accuracy = 100.0 * accuracy_score(train_labels, train_preds)
+                print(f"       Accuracy for batch {batch_cntr} of {total_batches}: {current_accuracy} ")
+            batch_cntr += 1
 
         metrics = calc_metrics(
             train_labels,
