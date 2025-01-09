@@ -5,41 +5,39 @@ from typing import Dict, Tuple, Any, Optional
 import pyarrow.parquet as pq
 
 
+def replace_nan(value):
+    """Replace missing Values with 0"""
+    try:
+        val = float(value)
+        return 0.0 if pd.isna(val) else val
+    except (ValueError, TypeError):
+        return 0.0
+
+
 def extract_features(row: pd.Series) -> torch.Tensor:
     features = []
 
-    features.extend([
-        float(row['true_energy']),
-        float(row['true_theta']),
-        float(row['true_phi']),
-        float(row['true_telescope_theta']),
-        float(row['true_telescope_phi']),
-        float(row['true_first_interaction_height']),
-        float(row['true_impact_m1']),
-        float(row['true_impact_m2'])
-    ])
+    true_features = [
+        'true_energy', 'true_theta', 'true_phi',
+        'true_telescope_theta', 'true_telescope_phi',
+        'true_first_interaction_height',
+        'true_impact_m1', 'true_impact_m2'
+    ]
+    features.extend([replace_nan(row[col]) for col in true_features])
 
-    features.extend([
-        float(row['hillas_length_m1']),
-        float(row['hillas_width_m1']),
-        float(row['hillas_delta_m1']),
-        float(row['hillas_size_m1']),
-        float(row['hillas_cog_x_m1']),
-        float(row['hillas_cog_y_m1']),
-        float(row['hillas_sin_delta_m1']),
-        float(row['hillas_cos_delta_m1'])
-    ])
+    hillas_m1_features = [
+        'hillas_length_m1', 'hillas_width_m1', 'hillas_delta_m1',
+        'hillas_size_m1', 'hillas_cog_x_m1', 'hillas_cog_y_m1',
+        'hillas_sin_delta_m1', 'hillas_cos_delta_m1'
+    ]
+    features.extend([replace_nan(row[col]) for col in hillas_m1_features])
 
-    features.extend([
-        float(row['hillas_length_m2']),
-        float(row['hillas_width_m2']),
-        float(row['hillas_delta_m2']),
-        float(row['hillas_size_m2']),
-        float(row['hillas_cog_x_m2']),
-        float(row['hillas_cog_y_m2']),
-        float(row['hillas_sin_delta_m2']),
-        float(row['hillas_cos_delta_m2'])
-    ])
+    hillas_m2_features = [
+        'hillas_length_m2', 'hillas_width_m2', 'hillas_delta_m2',
+        'hillas_size_m2', 'hillas_cog_x_m2', 'hillas_cog_y_m2',
+        'hillas_sin_delta_m2', 'hillas_cos_delta_m2'
+    ]
+    features.extend([replace_nan(row[col]) for col in hillas_m2_features])
 
     stereo_features = [
         'stereo_direction_x', 'stereo_direction_y', 'stereo_zenith',
@@ -52,16 +50,16 @@ def extract_features(row: pd.Series) -> torch.Tensor:
         'stereo_baseline_phi_m2', 'stereo_image_angle',
         'stereo_cos_between_shower'
     ]
-    features.extend([float(row[col]) for col in stereo_features])
+    features.extend([replace_nan(row[col]) for col in stereo_features])
 
     features.extend([
-        float(row['pointing_zenith']),
-        float(row['pointing_azimuth'])
+        replace_nan(row['pointing_zenith']),
+        replace_nan(row['pointing_azimuth'])
     ])
 
     features.extend([
-        float(row['time_gradient_m1']),
-        float(row['time_gradient_m2'])
+        replace_nan(row['time_gradient_m1']),
+        replace_nan(row['time_gradient_m2'])
     ])
 
     source_m1_features = [
@@ -69,14 +67,16 @@ def extract_features(row: pd.Series) -> torch.Tensor:
         'source_cos_delta_alpha_m1', 'source_dca_m1',
         'source_dca_delta_m1'
     ]
-    features.extend([float(row[col]) for col in source_m1_features])
+    features.extend([replace_nan(row[col]) for col in source_m1_features])
 
     source_m2_features = [
         'source_alpha_m2', 'source_dist_m2',
         'source_cos_delta_alpha_m2', 'source_dca_m2',
         'source_dca_delta_m2'
     ]
-    features.extend([float(row[col]) for col in source_m2_features])
+    features.extend([replace_nan(row[col]) for col in source_m2_features])
+
+    assert len(features) == 59, "Total features count mismatch"
 
     return torch.tensor(features, dtype=torch.float32)
 
@@ -126,7 +126,7 @@ class MagicDataset(Dataset):
     def __len__(self):
         return self.length
 
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, int]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
         if idx < self.n_protons:
             row = self.proton_data.iloc[idx]
             label = self.PROTON_LABEL
@@ -136,8 +136,9 @@ class MagicDataset(Dataset):
 
         m1_raw = torch.tensor(row['image_m1'], dtype=torch.float32)
         m2_raw = torch.tensor(row['image_m2'], dtype=torch.float32)
+        features = extract_features(row)
 
-        return m1_raw, m2_raw, self.labels[label]
+        return m1_raw, m2_raw, features, self.labels[label]
 
     def get_distribution(self) -> Dict[str, Any]:
         total_samples = self.length

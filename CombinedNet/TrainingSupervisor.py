@@ -99,12 +99,13 @@ def inference(data_loader, labels, model_path):
     print(f"Total batches to process: {len(data_loader)}")
 
     with torch.no_grad():
-        for batch_idx, (m1_images, m2_images, labels) in enumerate(data_loader):
+        for batch_idx, (m1_images, m2_images, features, labels) in enumerate(data_loader):
             m1_images = m1_images.to(device)
             m2_images = m2_images.to(device)
+            features = features.to(device)
             labels = labels.to(device)
 
-            outputs = model(m1_images, m2_images)
+            outputs = model(m1_images, m2_images, features)
             loss = criterion(outputs, labels)
             total_loss += loss.item()
 
@@ -335,13 +336,14 @@ class TrainingSupervisor:
         self.inference_metrics.append(metrics)
 
     def _extract_batch(self, batch):
-        m1_images, m2_images, labels = batch
+        m1_images, m2_images, features, labels = batch
 
         m1_images = m1_images.to(self.device)
         m2_images = m2_images.to(self.device)
+        features = features.to(self.device)
         labels = labels.to(self.device)
 
-        return m1_images, m2_images, labels
+        return m1_images, m2_images, features, labels
 
     def _training_step(self, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
         train_preds = []
@@ -350,10 +352,10 @@ class TrainingSupervisor:
 
         self.model.train()
         for batch in self.training_data_loader:
-            m1_images, m2_images, labels = self._extract_batch(batch)
+            m1_images, m2_images, features, labels = self._extract_batch(batch)
 
             optimizer.zero_grad()
-            outputs = self.model(m1_images, m2_images)
+            outputs = self.model(m1_images, m2_images, features)
 
             loss = criterion(outputs, labels)
 
@@ -384,9 +386,9 @@ class TrainingSupervisor:
         self.model.eval()
         with torch.no_grad():
             for batch in self.val_data_loader:
-                m1_images, m2_images, labels = self._extract_batch(batch)
+                m1_images, m2_images, features, labels = self._extract_batch(batch)
 
-                outputs = self.model(m1_images, m2_images)
+                outputs = self.model(m1_images, m2_images, features)
 
                 loss = criterion(outputs, labels)
                 _, predicted = outputs.max(1)
