@@ -6,8 +6,12 @@ from torch.utils.data import Dataset, DataLoader
 class MagicDataset(Dataset):
     def __init__(self, gamma_parquet, proton_parquet):
         df_gamma = pd.read_parquet(gamma_parquet)
+        #df_gamma = df_gamma.iloc[int(0.8 * len(df_gamma)):] # ONLY LAST 20% OF GAMMA DATA
+
         df_gamma["label"] = 0
         df_proton = pd.read_parquet(proton_parquet)
+        #df_proton = df_proton.iloc[int(0.8 * len(df_proton)):] # ONLY LAST 20% OF PROTON DATA
+
         df_proton["label"] = 1
         self.df = pd.concat([df_gamma, df_proton], ignore_index=True)
 
@@ -16,7 +20,7 @@ class MagicDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        x = torch.tensor(row["image_m1"], dtype=torch.float32)
+        x = torch.tensor(row["image_m1"][:1039], dtype=torch.float32)
         y = torch.tensor(row["label"], dtype=torch.long)
         return x, y
 
@@ -48,7 +52,7 @@ class PositionalEncoding(nn.Module):
         return x + self.pe[:x.size(1), :]
 
 class ShapeTransformer(nn.Module):
-    def __init__(self, emb_dim=256, n_heads=8, ff_dim=512, n_layers=4, n_classes=2, max_len=2000):
+    def __init__(self, emb_dim=512, n_heads=8, ff_dim=1024, n_layers=4, n_classes=2, max_len=2000):
         super().__init__()
         self.patch_embedding = PatchEmbedding(in_dim=1039, patch_size=8, emb_dim=emb_dim)
         self.pos_encoder = PositionalEncoding(emb_dim, max_len)
@@ -89,13 +93,13 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Update with your paths:
-    gamma_file = "../magic-gammas.parquet"
-    proton_file = "../magic-protons.parquet"
-    model_path = "best_model_real_data_1.pt"
+    gamma_file = "../magic-gammas_part2.parquet"
+    proton_file = "../magic-protons_part2.parquet"
+    model_path = "best_model_50k.pt"
 
     # Load dataset and model
     full_dataset = MagicDataset(gamma_file, proton_file)
-    full_loader = DataLoader(full_dataset, batch_size=256, shuffle=False)
+    full_loader = DataLoader(full_dataset, batch_size=256, shuffle=True)
 
     model = ShapeTransformer().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device))
