@@ -123,18 +123,15 @@ def inference(data_loader, labels, model_path):
 
 class TrainingSupervisor:
     TEMP_DATA_SPLIT: float = 0.3
-    VAL_DATA_SPLIT: float = 0.5
+    TEST_DATA_SPLIT: float = 0.2
     BATCH_SIZE: int = 32
-    LEARNING_RATE: float = 0.00001
-    ADAM_BETA_1: float = 0.8666112052644459
-    ADAM_BETA_2: float = 0.9559910148600463
-    ADAM_EPSILON: float = 1e-8
-    WEIGHT_DECAY: float = 0.01
+    LEARNING_RATE: float = 0.000005
+    WEIGHT_DECAY: float = 0.05
     SCHEDULER_MIN_LR: float = 8.603675064364842e-05
     SCHEDULER_MAX_LR: float = 0.00010192925124725547
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
-    GRAD_CLIP_NORM: float = 3
+    GRAD_CLIP_NORM: float = 1.0
 
     def __init__(self, model_name: str, proton_file: str, gamma_file: str, output_dir: str, debug_info: bool = True,
                  save_model: bool = True) -> None:
@@ -199,7 +196,7 @@ class TrainingSupervisor:
 
         val_indices, test_indices = train_test_split(
             temp_indices,
-            test_size=self.VAL_DATA_SPLIT,
+            test_size=self.TEST_DATA_SPLIT,
             stratify=labels[temp_indices],
             shuffle=True,
             random_state=42
@@ -266,20 +263,25 @@ class TrainingSupervisor:
 
         return model.to(self.device)
 
-    def train_model(self, epochs: int):
+    def calculate_weight_distribution(self):
         total_samples = len(self.dataset)
         n_protons = self.dataset.n_protons
         n_gammas = self.dataset.n_gammas
-        weight_proton = (total_samples / n_protons) / 2
-        weight_gamma = (total_samples / n_gammas) / 2
+        weight_proton = total_samples / (2 * n_protons)
+        weight_gamma = total_samples / (2 * n_gammas)
+        weights_sum = weight_proton + weight_gamma
+        weight_proton = weight_proton / weights_sum
+        weight_gamma = weight_gamma / weights_sum
+        return weight_proton, weight_gamma
+
+    def train_model(self, epochs: int):
+        weight_proton, weight_gamma = self.calculate_weight_distribution()
         class_weights = torch.tensor([weight_proton, weight_gamma]).to(self.device)
         criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
 
         optimizer = optim.AdamW(
             self.model.parameters(),
             lr=self.LEARNING_RATE,
-            betas=(self.ADAM_BETA_1, self.ADAM_BETA_2),
-            eps=self.ADAM_EPSILON,
             weight_decay=self.WEIGHT_DECAY
         )
 

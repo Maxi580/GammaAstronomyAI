@@ -23,6 +23,8 @@ class ConvHex(nn.Module):
             torch.empty((out_channels, in_channels // groups, total_inputs))
         )
 
+        self.pad_value = nn.Parameter(torch.zeros(in_channels))
+
         if bias:
             self.bias = nn.Parameter(torch.empty(out_channels))
         else:
@@ -50,9 +52,6 @@ class ConvHex(nn.Module):
         if in_channels != self.in_channels:
             raise ValueError(f"Expected {self.in_channels} channels but got {in_channels}")
 
-        # Input normalization
-        x = x / (x.std() + 1e-5)
-
         # Get valid mask and indices (Not all hexagons have max_neighbors, these values are padded)
         valid_mask = (self.neighbors >= 0)
         neighbor_indices = self.neighbors.clamp(min=0)  # Set padded Values to 0
@@ -63,8 +62,10 @@ class ConvHex(nn.Module):
         # Get neighbor values
         neighbor_values = x[:, :, neighbor_indices]
 
-        # Set all padded Values to 0
-        neighbor_values = neighbor_values * valid_mask.unsqueeze(0).unsqueeze(1)
+        # Where mask is False (invalid neighbors), use pad_value
+        mask = valid_mask.unsqueeze(0).unsqueeze(1)
+        expanded_pad = self.pad_value.view(1, -1, 1, 1)
+        neighbor_values = torch.where(mask, neighbor_values, expanded_pad)
 
         # Concatenate center and neighbor values
         all_values = torch.cat([center_values, neighbor_values], dim=3)

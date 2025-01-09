@@ -16,50 +16,34 @@ class CombinedNet(nn.Module):
         super().__init__()
 
         self.m1_cnn = nn.Sequential(
-            ConvHex(1, 8, kernel_size=3),
-            nn.BatchNorm1d(8),
+            ConvHex(1, 2, kernel_size=3),
+            nn.BatchNorm1d(2),
             nn.ReLU(),
-            nn.Dropout1d(0.3),
+            nn.Dropout1d(0.2),
 
-            ConvHex(8, 16, kernel_size=3),
-            nn.BatchNorm1d(16),
+            ConvHex(2, 4, kernel_size=2),
+            nn.BatchNorm1d(4),
             nn.ReLU(),
-            nn.Dropout1d(0.3),
-
-            ConvHex(16, 32, kernel_size=2),
-            nn.BatchNorm1d(32),
-            nn.ReLU(),
-            nn.Dropout1d(0.3),
+            nn.Dropout1d(0.2),
         )
 
         self.m2_cnn = nn.Sequential(
-            ConvHex(1, 8, kernel_size=3),
-            nn.BatchNorm1d(8),
+            ConvHex(1, 2, kernel_size=3),
+            nn.BatchNorm1d(2),
             nn.ReLU(),
-            nn.Dropout1d(0.3),
+            nn.Dropout1d(0.2),
 
-            ConvHex(8, 16, kernel_size=3),
-            nn.BatchNorm1d(16),
+            ConvHex(2, 4, kernel_size=2),
+            nn.BatchNorm1d(4),
             nn.ReLU(),
-            nn.Dropout1d(0.3),
-
-            ConvHex(16, 32, kernel_size=2),
-            nn.BatchNorm1d(32),
-            nn.ReLU(),
-            nn.Dropout1d(0.3),
+            nn.Dropout1d(0.2),
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(32 * NUM_OF_HEXAGONS * 2, 1024),
+            nn.Linear(8 * NUM_OF_HEXAGONS, 128),
             nn.ReLU(),
-            nn.Dropout(0.4),
-            nn.Linear(1024, 256),
-            nn.ReLU(),
-            nn.Dropout(0.4),
-            nn.Linear(256, 64),
-            nn.ReLU(),
-            nn.Dropout(0.4),
-            nn.Linear(64, 2)
+            nn.Dropout(0.2),
+            nn.Linear(128, 2),
         )
 
     def forward(self, m1_image, m2_image):

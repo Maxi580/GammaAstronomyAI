@@ -3,7 +3,7 @@ import os
 import gc
 import time
 import torch
-from SimulatedData.trainingSupervisor import TrainingSupervisor
+from CombinedNet.trainingSupervisor import TrainingSupervisor
 from CNN.HyperparameterTuning import CustomHexCNN
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
