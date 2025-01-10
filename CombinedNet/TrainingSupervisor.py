@@ -126,7 +126,7 @@ class TrainingSupervisor:
     TEMP_DATA_SPLIT: float = 0.3
     TEST_DATA_SPLIT: float = 0.2
     BATCH_SIZE: int = 32
-    LEARNING_RATE: float = 0.000005
+    LEARNING_RATE: float = 0.00001
     WEIGHT_DECAY: float = 0.1
     SCHEDULER_MIN_LR: float = 8.603675064364842e-05
     SCHEDULER_MAX_LR: float = 0.00010192925124725547
