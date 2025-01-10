@@ -124,7 +124,7 @@ def inference(data_loader, labels, model_path):
 
 class TrainingSupervisor:
     TEMP_DATA_SPLIT: float = 0.3
-    TEST_DATA_SPLIT: float = 0.0
+    TEST_DATA_SPLIT: float = 0.1
     BATCH_SIZE: int = 8
     LEARNING_RATE: float = 0.00001
     WEIGHT_DECAY: float = 0.01
@@ -148,13 +148,13 @@ class TrainingSupervisor:
         self.inference_metrics = []
 
         self.dataset = dataset
-        (self.train_dataset, self.val_dataset, self.test_dataset, self.training_data_loader, self.val_data_loader,
-         self.test_data_loader) = self.load_training_data()
+        (self.train_dataset, self.val_dataset, self.training_data_loader, self.val_data_loader) = (
+            self.load_training_data())
 
         self.output_dir = output_dir
         self.model_path = os.path.join(self.output_dir, "trained_model.pth")
 
-    def load_training_data(self) -> tuple[Subset, Subset, Subset, DataLoader, DataLoader, DataLoader]:
+    def load_training_data(self) -> tuple[Subset, Subset, DataLoader, DataLoader]:
         if self.debug_info:
             print("Loading Training Data...\n")
 
@@ -182,7 +182,7 @@ class TrainingSupervisor:
         labels[n_protons:] = self.dataset.labels[self.dataset.GAMMA_LABEL]
 
         # Stratified splitting using sklearn (shuffles indices)
-        train_indices, temp_indices = train_test_split(
+        train_indices, val_indices = train_test_split(
             np.arange(len(self.dataset)),
             test_size=self.TEMP_DATA_SPLIT,
             stratify=labels,
@@ -190,13 +190,13 @@ class TrainingSupervisor:
             random_state=42,
         )
 
-        val_indices, test_indices = train_test_split(
+        """val_indices, test_indices = train_test_split(
             temp_indices,
             test_size=self.TEST_DATA_SPLIT,
             stratify=labels[temp_indices],
             shuffle=True,
             random_state=42
-        )
+        )"""
 
         if self.debug_info:
             print("\nAfter split label distribution:")
@@ -217,18 +217,18 @@ class TrainingSupervisor:
                 print(f"{label_name} (label {label}): {count} samples ({count / len(val_labels) * 100:.2f}%)")
             print("\n")
 
-            print("\nTest set:")
+            """print("\nTest set:")
             test_labels = labels[test_indices]
             unique, counts = np.unique(test_labels, return_counts=True)
             for label, count in zip(unique, counts):
                 idx_to_label = {v: k for k, v in self.dataset.labels.items()}
                 label_name = idx_to_label[label]
                 print(f"{label_name} (label {label}): {count} samples ({count / len(test_labels) * 100:.2f}%)")
-            print("\n")
+            print("\n")"""
 
         train_dataset = Subset(self.dataset, train_indices)
         val_dataset = Subset(self.dataset, val_indices)
-        test_dataset = Subset(self.dataset, test_indices)
+        # test_dataset = Subset(self.dataset, test_indices)
 
         training_data_loader = DataLoader(
             train_dataset, batch_size=self.BATCH_SIZE, shuffle=True
@@ -236,15 +236,15 @@ class TrainingSupervisor:
         val_data_loader = DataLoader(
             val_dataset, batch_size=self.BATCH_SIZE, shuffle=False
         )
-        test_data_loader = DataLoader(
+        """test_data_loader = DataLoader(
             test_dataset, batch_size=self.BATCH_SIZE, shuffle=False
-        )
+        )"""
 
         if self.debug_info:
             print("Dataset loaded.")
             print("\n")
 
-        return train_dataset, val_dataset, test_dataset, training_data_loader, val_data_loader, test_data_loader
+        return train_dataset, val_dataset, training_data_loader, val_data_loader
 
     def load_model(self):
         match self.model_name.lower():
