@@ -124,7 +124,7 @@ def inference(data_loader, labels, model_path):
 
 class TrainingSupervisor:
     TEMP_DATA_SPLIT: float = 0.3
-    TEST_DATA_SPLIT: float = 0
+    TEST_DATA_SPLIT: float = 0.0
     BATCH_SIZE: int = 8
     LEARNING_RATE: float = 0.00001
     WEIGHT_DECAY: float = 0.01
