@@ -44,12 +44,12 @@ class CombinedNet(nn.Module):
             nn.ReLU(),
             nn.Dropout(0.2),
 
-            nn.Linear(2048, 128),
-            nn.BatchNorm1d(128),
+            nn.Linear(2048, 256),
+            nn.BatchNorm1d(256),
             nn.ReLU(),
             nn.Dropout(0.2),
 
-            nn.Linear(128, 2)
+            nn.Linear(256, 2)
         )
 
     def forward(self, m1_image, m2_image, measurement_features):
