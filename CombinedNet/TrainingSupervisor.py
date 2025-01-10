@@ -124,7 +124,7 @@ def inference(data_loader, labels, model_path):
 
 class TrainingSupervisor:
     TEMP_DATA_SPLIT: float = 0.3
-    TEST_DATA_SPLIT: float = 0.2
+    TEST_DATA_SPLIT: float = 0
     BATCH_SIZE: int = 32
     LEARNING_RATE: float = 0.00001
     WEIGHT_DECAY: float = 0.01
@@ -322,10 +322,10 @@ class TrainingSupervisor:
         if self.debug_info:
             self.write_results(epochs)
 
-        if self.debug_info:
+        """if self.debug_info:
             print("Running Inference on Test Sample")
         metrics = inference(self.test_data_loader, self.dataset.labels, self.model_path)
-        self.inference_metrics.append(metrics)
+        self.inference_metrics.append(metrics)"""
 
     def _extract_batch(self, batch):
         m1_images, m2_images, features, labels = batch
