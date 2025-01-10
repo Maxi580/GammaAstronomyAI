@@ -16,13 +16,13 @@ class TelescopeCNN(nn.Module):
         super().__init__()
         self.cnn = nn.Sequential(
             # Output Length = ((Input Length - Kernel Size) / Stride) + 1
-            nn.Conv1d(1, 8, kernel_size=3),
-            nn.BatchNorm1d(8),
+            nn.Conv1d(1, 4, kernel_size=3),
+            nn.BatchNorm1d(4),
             nn.ReLU(),
             nn.Dropout1d(0.2),
 
-            nn.Conv1d(8, 16, kernel_size=2),
-            nn.BatchNorm1d(16),
+            nn.Conv1d(4, 8, kernel_size=2),
+            nn.BatchNorm1d(8),
             nn.ReLU(),
             nn.Dropout1d(0.2),
         )
@@ -39,11 +39,13 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(33211, 2048),  # 16 * 65 * 2 + 59
+            nn.Linear(16635, 2048),  # 2*8288 + 59
+            nn.BatchNorm1d(2048),
             nn.ReLU(),
             nn.Dropout(0.2),
 
             nn.Linear(2048, 128),
+            nn.BatchNorm1d(128),
             nn.ReLU(),
             nn.Dropout(0.2),
 

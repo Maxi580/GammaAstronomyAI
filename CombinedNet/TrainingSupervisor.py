@@ -127,12 +127,12 @@ class TrainingSupervisor:
     TEST_DATA_SPLIT: float = 0.2
     BATCH_SIZE: int = 32
     LEARNING_RATE: float = 0.000005
-    WEIGHT_DECAY: float = 0.05
+    WEIGHT_DECAY: float = 0.1
     SCHEDULER_MIN_LR: float = 8.603675064364842e-05
     SCHEDULER_MAX_LR: float = 0.00010192925124725547
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
-    GRAD_CLIP_NORM: float = 1.0
+    GRAD_CLIP_NORM: float = 5.0
 
     def __init__(self, model_name: str, proton_file: str, gamma_file: str, output_dir: str, debug_info: bool = True,
                  save_model: bool = True) -> None:
@@ -292,13 +292,11 @@ class TrainingSupervisor:
         steps_per_epoch = len(self.training_data_loader)
         scheduler = optim.lr_scheduler.OneCycleLR(
             optimizer,
-            max_lr=self.LEARNING_RATE * 5,  # Peak learning rate
+            max_lr=self.LEARNING_RATE * 2,
             epochs=epochs,
             steps_per_epoch=steps_per_epoch,
-            pct_start=0.4,  # Spend 30% of time warming up
-            div_factor=10,  # Initial learning rate is max_lr/25
-            final_div_factor=1e3,  # Final learning rate is max_lr/10000
-            anneal_strategy='cos'  # Use cosine annealing
+            pct_start=0.3,
+            div_factor=5,
         )
 
         torch.manual_seed(42)
