@@ -132,7 +132,7 @@ class TrainingSupervisor:
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     GRAD_CLIP_NORM: float = 5.0
 
-    def __init__(self, model_name: str, proton_file: str, gamma_file: str, output_dir: str, debug_info: bool = True,
+    def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
                  save_model: bool = True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
                                    else "cpu")
@@ -150,22 +150,19 @@ class TrainingSupervisor:
         self.train_metrics = []
         self.inference_metrics = []
 
-        self.proton_file = proton_file
-        self.gamma_file = gamma_file
-        (self.dataset, self.train_dataset, self.val_dataset, self.test_dataset, self.training_data_loader,
-         self.val_data_loader, self.test_data_loader) = self.load_training_data()
+        self.dataset = dataset
+        (self.train_dataset, self.val_dataset, self.test_dataset, self.training_data_loader, self.val_data_loader,
+         self.test_data_loader) = self.load_training_data()
 
         self.output_dir = output_dir
         self.model_path = os.path.join(self.output_dir, "trained_model.pth")
 
-    def load_training_data(self) -> tuple[MagicDataset, Subset, Subset, Subset, DataLoader, DataLoader, DataLoader]:
+    def load_training_data(self) -> tuple[Subset, Subset, Subset, DataLoader, DataLoader, DataLoader]:
         if self.debug_info:
             print("Loading Training Data...\n")
 
-        dataset = MagicDataset(self.proton_file, self.gamma_file, debug_info=self.debug_info)
-
         if self.debug_info:
-            data_distribution = dataset.get_distribution()
+            data_distribution = self.dataset.get_distribution()
             print("Full Dataset Overview:")
             total_samples = data_distribution["total_samples"]
             print(f"Total number of samples: {total_samples}\n")
@@ -179,17 +176,17 @@ class TrainingSupervisor:
         # Stratified splitting using sklearn
         # Use 70% of data for training and 30% for validation
         # Create labels array directly from metadata
-        n_protons = dataset.n_protons
-        n_gammas = dataset.n_gammas
+        n_protons = self.dataset.n_protons
+        n_gammas = self.dataset.n_gammas
 
         # First n_protons items are proton labels (Logic is mirrored magicDataset)
-        labels = np.full(n_protons + n_gammas, dataset.labels[dataset.PROTON_LABEL])
+        labels = np.full(n_protons + n_gammas, self.dataset.labels[self.dataset.PROTON_LABEL])
         # Last n_gammas items are gamma labels
-        labels[n_protons:] = dataset.labels[dataset.GAMMA_LABEL]
+        labels[n_protons:] = self.dataset.labels[self.dataset.GAMMA_LABEL]
 
         # Stratified splitting using sklearn (shuffles indices)
         train_indices, temp_indices = train_test_split(
-            np.arange(len(dataset)),
+            np.arange(len(self.dataset)),
             test_size=self.TEMP_DATA_SPLIT,
             stratify=labels,
             shuffle=True,
@@ -210,7 +207,7 @@ class TrainingSupervisor:
             train_labels = labels[train_indices]
             unique, counts = np.unique(train_labels, return_counts=True)
             for label, count in zip(unique, counts):
-                idx_to_label = {v: k for k, v in dataset.labels.items()}
+                idx_to_label = {v: k for k, v in self.dataset.labels.items()}
                 label_name = idx_to_label[label]
                 print(f"{label_name} (label {label}): {count} samples ({count / len(train_labels) * 100:.2f}%)")
 
@@ -218,7 +215,7 @@ class TrainingSupervisor:
             val_labels = labels[val_indices]
             unique, counts = np.unique(val_labels, return_counts=True)
             for label, count in zip(unique, counts):
-                idx_to_label = {v: k for k, v in dataset.labels.items()}
+                idx_to_label = {v: k for k, v in self.dataset.labels.items()}
                 label_name = idx_to_label[label]
                 print(f"{label_name} (label {label}): {count} samples ({count / len(val_labels) * 100:.2f}%)")
             print("\n")
@@ -227,14 +224,14 @@ class TrainingSupervisor:
             test_labels = labels[test_indices]
             unique, counts = np.unique(test_labels, return_counts=True)
             for label, count in zip(unique, counts):
-                idx_to_label = {v: k for k, v in dataset.labels.items()}
+                idx_to_label = {v: k for k, v in self.dataset.labels.items()}
                 label_name = idx_to_label[label]
                 print(f"{label_name} (label {label}): {count} samples ({count / len(test_labels) * 100:.2f}%)")
             print("\n")
 
-        train_dataset = Subset(dataset, train_indices)
-        val_dataset = Subset(dataset, val_indices)
-        test_dataset = Subset(dataset, test_indices)
+        train_dataset = Subset(self.dataset, train_indices)
+        val_dataset = Subset(self.dataset, val_indices)
+        test_dataset = Subset(self.dataset, test_indices)
 
         training_data_loader = DataLoader(
             train_dataset, batch_size=self.BATCH_SIZE, shuffle=True
@@ -250,8 +247,7 @@ class TrainingSupervisor:
             print("Dataset loaded.")
             print("\n")
 
-        return (dataset, train_dataset, val_dataset, test_dataset, training_data_loader, val_data_loader,
-                test_data_loader)
+        return train_dataset, val_dataset, test_dataset, training_data_loader, val_data_loader, test_data_loader
 
     def load_model(self):
         match self.model_name.lower():

@@ -6,6 +6,8 @@ import torch
 from CombinedNet.TrainingSupervisor import TrainingSupervisor
 import torch.nn as nn
 
+from CombinedNet.magicDataset import MagicDataset
+
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 NUM_OF_HEXAGONS = 1039
 
@@ -98,8 +100,8 @@ def objective(trial, proton_file: str, gamma_file: str, study_name, epochs: int)
         output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                   f"parameter_tuning/{study_name}", nametag)
 
-        supervisor = TrainingSupervisor("combinednet", proton_file, gamma_file,
-                                        output_dir, debug_info=False, save_model=False)
+        dataset = MagicDataset(proton_file, gamma_file, max_samples=20000, debug_info=False)
+        supervisor = TrainingSupervisor("combinednet", dataset, output_dir, debug_info=False, save_model=False)
 
         supervisor.model = create_model_with_params(trial).to(supervisor.device)
 
@@ -108,15 +110,17 @@ def objective(trial, proton_file: str, gamma_file: str, study_name, epochs: int)
         supervisor.GRAD_CLIP_NORM = trial.suggest_float('grad_clip_norm', 0.1, 5.0)
 
         supervisor.train_model(epochs)
-        accuracy = supervisor.validation_metrics[-1]['accuracy']
 
-        print(f"\nTrial {trial.number} got an accuracy of {accuracy}%")
+        last_n_accuracies = [metrics['accuracy'] for metrics in supervisor.validation_metrics[-3:]]
+        avg_accuracy = sum(last_n_accuracies) / len(last_n_accuracies)
+        print(f"\nTrial {trial.number} got an accuracy of {avg_accuracy}%")
+
         print("Parameters:")
         for param_name, param_value in trial.params.items():
             print(f"  {param_name}: {param_value}")
         print("-" * 50)
 
-        return accuracy
+        return avg_accuracy
 
     except (RuntimeError, torch.cuda.OutOfMemoryError) as e:
         print(f"Trial {trial.number} failed with error: {str(e)}")
@@ -169,6 +173,6 @@ if __name__ == "__main__":
     main(
         proton_file=proton_file,
         gamma_file=gamma_file,
-        epochs=7,
-        n_trials=100
+        epochs=10,
+        n_trials=150
     )
