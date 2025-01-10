@@ -47,4 +47,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[1:])"""
 
-    main("CombinedNet", "magic-protons.parquet", "magic-gammas.parquet", 20)
+    main("CombinedNet", "magic-protons.parquet", "magic-gammas.parquet", 30)
