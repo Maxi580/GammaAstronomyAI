@@ -107,10 +107,11 @@ class MagicDataset(Dataset):
             self.n_protons = self.proton_metadata.num_rows
             self.n_gammas = self.gamma_metadata.num_rows
 
-        print(f"Original Number of Protons: {self.proton_metadata.num_rows}")
-        print(f"Original Number of Gammas: {self.gamma_metadata.num_rows}")
-        print(f"Calculated Number of Protons: {self.n_protons}")
-        print(f"Calculated Number of Protons: {self.n_gammas}")
+        if self.debug_info:
+            print(f"Original Number of Protons: {self.proton_metadata.num_rows}")
+            print(f"Original Number of Gammas: {self.gamma_metadata.num_rows}")
+            print(f"Calculated Number of Protons: {self.n_protons}")
+            print(f"Calculated Number of Protons: {self.n_gammas}")
 
         self.proton_data = pd.read_parquet(proton_filename).iloc[:self.n_protons]
         self.gamma_data = pd.read_parquet(gamma_filename).iloc[:self.n_gammas]

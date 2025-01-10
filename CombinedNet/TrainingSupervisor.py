@@ -162,7 +162,7 @@ class TrainingSupervisor:
         if self.debug_info:
             print("Loading Training Data...\n")
 
-        dataset = MagicDataset(self.proton_file, self.gamma_file)
+        dataset = MagicDataset(self.proton_file, self.gamma_file, debug_info=self.debug_info)
 
         if self.debug_info:
             data_distribution = dataset.get_distribution()
@@ -330,7 +330,8 @@ class TrainingSupervisor:
         if self.debug_info:
             self.write_results(epochs)
 
-        print("Running Inference on Test Sample")
+        if self.debug_info:
+            print("Running Inference on Test Sample")
         metrics = inference(self.test_data_loader, self.dataset.labels, self.model_path)
         self.inference_metrics.append(metrics)
 
@@ -370,7 +371,7 @@ class TrainingSupervisor:
             train_labels.extend(labels.cpu().numpy())
             train_loss += loss.item()
 
-            if batch_cntr % 1000 == 0:
+            if self.debug_info and batch_cntr % 1000 == 0:
                 current_accuracy = 100.0 * accuracy_score(train_labels, train_preds)
                 print(f"       Accuracy for batch {batch_cntr} of {total_batches}: {current_accuracy} ")
             batch_cntr += 1
