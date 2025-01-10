@@ -132,15 +132,12 @@ class TrainingSupervisor:
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     GRAD_CLIP_NORM: float = 5.0
 
-    def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
-                 save_model: bool = True) -> None:
+    def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
                                    else "cpu")
         self.debug_info = debug_info
-        self.save_model = save_model
+        os.makedirs(output_dir, exist_ok=True)
 
-        if debug_info or save_model:
-            os.makedirs(output_dir, exist_ok=True)
         if debug_info:
             print(f"Training on Device: {self.device}")
 
@@ -317,11 +314,10 @@ class TrainingSupervisor:
 
             if val_metrics['accuracy'] > best_validation_accuracy:
                 best_validation_accuracy = val_metrics['accuracy']
-                if self.save_model:
-                    torch.save(
-                        self.model.state_dict(),
-                        self.model_path,
-                    )
+                torch.save(
+                    self.model.state_dict(),
+                    self.model_path,
+                )
 
         if self.debug_info:
             self.write_results(epochs)
