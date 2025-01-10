@@ -125,7 +125,7 @@ def inference(data_loader, labels, model_path):
 class TrainingSupervisor:
     TEMP_DATA_SPLIT: float = 0.3
     TEST_DATA_SPLIT: float = 0
-    BATCH_SIZE: int = 32
+    BATCH_SIZE: int = 8
     LEARNING_RATE: float = 0.00001
     WEIGHT_DECAY: float = 0.01
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
