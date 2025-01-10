@@ -128,8 +128,6 @@ class TrainingSupervisor:
     BATCH_SIZE: int = 32
     LEARNING_RATE: float = 0.00001
     WEIGHT_DECAY: float = 0.01
-    SCHEDULER_MIN_LR: float = 8.603675064364842e-05
-    SCHEDULER_MAX_LR: float = 0.00010192925124725547
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     GRAD_CLIP_NORM: float = 5.0
