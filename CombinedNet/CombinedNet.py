@@ -15,15 +15,15 @@ class TelescopeCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            nn.Conv1d(1, 8, kernel_size=3),
-            nn.BatchNorm1d(8),
+            nn.Conv1d(1, 11, kernel_size=3),
+            nn.BatchNorm1d(11),
             nn.ReLU(),
-            nn.Dropout1d(0.2),
+            nn.Dropout1d(0.2699351062623753),
 
-            nn.Conv1d(8, 16, kernel_size=2),
-            nn.BatchNorm1d(16),
+            nn.Conv1d(11, 32, kernel_size=2),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.Dropout1d(0.2),
+            nn.Dropout1d(0.5939648698906139),
         )
 
     def forward(self, x):
@@ -38,17 +38,17 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(16 * 1036 * 2 + 59, 2048),
-            nn.BatchNorm1d(2048),
+            nn.Linear(16 * 1036 * 2 + 59, 1792),
+            nn.BatchNorm1d(1792),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.09210354957166011),
 
-            nn.Linear(2048, 256),
-            nn.BatchNorm1d(256),
+            nn.Linear(1792, 448),
+            nn.BatchNorm1d(448),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.2126585523934971),
 
-            nn.Linear(256, 2)
+            nn.Linear(448, 2)
         )
 
     def forward(self, m1_image, m2_image, measurement_features):

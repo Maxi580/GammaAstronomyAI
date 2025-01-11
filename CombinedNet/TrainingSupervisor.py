@@ -126,11 +126,11 @@ class TrainingSupervisor:
     TEMP_DATA_SPLIT: float = 0.3
     TEST_DATA_SPLIT: float = 0.1
     BATCH_SIZE: int = 8
-    LEARNING_RATE: float = 0.00001
-    WEIGHT_DECAY: float = 0.01
+    LEARNING_RATE: float = 3.574293219560207e-05
+    WEIGHT_DECAY: float = 0.0029809712800553303
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
-    GRAD_CLIP_NORM: float = 5.0
+    GRAD_CLIP_NORM: float = 4.601326343074392
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
                  save_model: bool = False) -> None:
