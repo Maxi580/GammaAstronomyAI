@@ -38,7 +38,7 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(16 * 1036 * 2 + 59, 1792),
+            nn.Linear(32 * 1036 * 2 + 59, 1792),
             nn.BatchNorm1d(1792),
             nn.ReLU(),
             nn.Dropout(0.09210354957166011),
