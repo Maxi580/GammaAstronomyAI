@@ -58,8 +58,8 @@ def create_model_with_params(trial):
             linear_input_size = channels2 * 1036 * 2 + 59
 
             # Let optuna choose linear layer sizes
-            linear1_size = trial.suggest_int('linear1_size', 512, 4096, step=256)
-            linear2_size = trial.suggest_int('linear2_size', 128, 1024, step=64)
+            linear1_size = trial.suggest_int('linear1_size', 512, 2048, step=256)
+            linear2_size = trial.suggest_int('linear2_size', 128, 512, step=64)
             dropout_linear_1 = trial.suggest_float('dropout_linear_1', 0.05, 0.5)
             dropout_linear_2 = trial.suggest_float('dropout_linear_2', 0.05, 0.5)
 
