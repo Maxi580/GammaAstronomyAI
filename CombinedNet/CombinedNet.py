@@ -15,15 +15,15 @@ class TelescopeCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            nn.Conv1d(1, 11, kernel_size=3),
-            nn.BatchNorm1d(11),
+            nn.Conv1d(1, 4, kernel_size=3),
+            nn.BatchNorm1d(4),
             nn.ReLU(),
-            nn.Dropout1d(0.2699351062623753),
+            nn.Dropout1d(0.2),
 
-            nn.Conv1d(11, 32, kernel_size=2),
-            nn.BatchNorm1d(32),
+            nn.Conv1d(4, 8, kernel_size=2),
+            nn.BatchNorm1d(8),
             nn.ReLU(),
-            nn.Dropout1d(0.5939648698906139),
+            nn.Dropout1d(0.2),
         )
 
     def forward(self, x):
@@ -38,7 +38,7 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(32 * 1036 * 2 + 59, 1792),
+            nn.Linear(8 * 1036 * 2, 1792),
             nn.BatchNorm1d(1792),
             nn.ReLU(),
             nn.Dropout(0.09210354957166011),
@@ -63,6 +63,6 @@ class CombinedNet(nn.Module):
         m1_features = m1_features.flatten(1)
         m2_features = m2_features.flatten(1)
 
-        combined = torch.cat([m1_features, m2_features, measurement_features], dim=1)
+        combined = torch.cat([m1_features, m2_features], dim=1)
 
         return self.classifier(combined)
