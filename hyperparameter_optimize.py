@@ -29,8 +29,8 @@ def create_model_with_params(trial):
             super().__init__()
             channels1 = trial.suggest_int('cnn_channels1', 4, 16)
             channels2 = trial.suggest_int('cnn_channels2', 8, 32)
-            dropout_cnn_1 = trial.suggest_float('dropout_cnn', 0.05, 0.5)
-            dropout_cnn_2 = trial.suggest_float('dropout_cnn', 0.05, 0.5)
+            dropout_cnn_1 = trial.suggest_float('dropout_cnn_1', 0.05, 0.5)
+            dropout_cnn_2 = trial.suggest_float('dropout_cnn_2', 0.05, 0.5)
 
             self.cnn = nn.Sequential(
                 nn.Conv1d(1, channels1, kernel_size=3),
@@ -60,8 +60,8 @@ def create_model_with_params(trial):
             # Let optuna choose linear layer sizes
             linear1_size = trial.suggest_int('linear1_size', 512, 4096, step=256)
             linear2_size = trial.suggest_int('linear2_size', 128, 1024, step=64)
-            dropout_linear_1 = trial.suggest_float('dropout_linear', 0.05, 0.5)
-            dropout_linear_2 = trial.suggest_float('dropout_linear', 0.05, 0.5)
+            dropout_linear_1 = trial.suggest_float('dropout_linear_1', 0.05, 0.5)
+            dropout_linear_2 = trial.suggest_float('dropout_linear_2', 0.05, 0.5)
 
             self.classifier = nn.Sequential(
                 nn.Linear(linear_input_size, linear1_size),
