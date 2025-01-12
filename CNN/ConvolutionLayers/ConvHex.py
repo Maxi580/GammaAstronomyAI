@@ -23,6 +23,11 @@ class ConvHex(nn.Module):
             torch.empty((out_channels, in_channels // groups, total_inputs))
         )
 
+        # When there are not enough neighbors just setting to 0 would be kinda wrong
+        self.padding_values = nn.Parameter(
+            torch.zeros(in_channels)
+        )
+
         if bias:
             self.bias = nn.Parameter(torch.empty(out_channels))
         else:
@@ -37,21 +42,16 @@ class ConvHex(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        fan_in = self.in_channels * self.total_inputs // self.groups
-        bound = 1.0 / math.sqrt(fan_in)
-        init.uniform_(self.weight, -bound, bound)
+        init.kaiming_uniform_(self.weight, mode='fan_in', nonlinearity='relu')
 
         if self.bias is not None:
-            init.uniform_(self.bias, -bound, bound)
+            init.zeros_(self.bias)
 
     def forward(self, x):
         batch_size, in_channels, num_hex = x.shape
 
         if in_channels != self.in_channels:
             raise ValueError(f"Expected {self.in_channels} channels but got {in_channels}")
-
-        # Input normalization
-        x = x / (x.std() + 1e-5)
 
         # Get valid mask and indices (Not all hexagons have max_neighbors, these values are padded)
         valid_mask = (self.neighbors >= 0)
@@ -63,8 +63,12 @@ class ConvHex(nn.Module):
         # Get neighbor values
         neighbor_values = x[:, :, neighbor_indices]
 
-        # Set all padded Values to 0
-        neighbor_values = neighbor_values * valid_mask.unsqueeze(0).unsqueeze(1)
+        padding_values = self.padding_values.view(1, -1, 1, 1)
+        neighbor_values = torch.where(
+            valid_mask.unsqueeze(0).unsqueeze(1),
+            neighbor_values,  # Use actual neighbor values where valid
+            padding_values  # Use learned padding values where invalid
+        )
 
         # Concatenate center and neighbor values
         all_values = torch.cat([center_values, neighbor_values], dim=3)
@@ -77,9 +81,6 @@ class ConvHex(nn.Module):
         # Apply convolution
         out = torch.einsum('bgihk,goik->bgoh', all_values, weight)
         out = out.reshape(batch_size, self.out_channels, num_hex)
-
-        total_valid = valid_mask.sum(dim=1).unsqueeze(0).unsqueeze(1) + 1
-        out = out / (total_valid + 1e-6)
 
         if self.bias is not None:
             out = out + self.bias.view(1, -1, 1)
