@@ -60,7 +60,6 @@ class ConvHex(nn.Module):
 
         # Get neighbor values
         neighbor_values = x[:, :, neighbor_indices]
-
         padding_values = self.padding_values.view(1, -1, 1, 1)
         neighbor_values = torch.where(
             valid_mask.unsqueeze(0).unsqueeze(1),

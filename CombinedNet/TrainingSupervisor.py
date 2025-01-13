@@ -122,11 +122,31 @@ def inference(data_loader, labels, model_path):
     return metrics
 
 
+class EarlyStopping:
+    def __init__(self, patience=5, min_delta=0.0001):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.best_loss = None
+        self.early_stop = False
+
+    def __call__(self, val_loss):
+        if self.best_loss is None:
+            self.best_loss = val_loss
+        elif val_loss > self.best_loss - self.min_delta:
+            self.counter += 1
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_loss = val_loss
+            self.counter = 0
+
+
 class TrainingSupervisor:
     TEMP_DATA_SPLIT: float = 0.3
     TEST_DATA_SPLIT: float = 0.1
     BATCH_SIZE: int = 8
-    LEARNING_RATE: float = 3.574293219560207e-05
+    LEARNING_RATE: float = 1e-3
     WEIGHT_DECAY: float = 0.0029809712800553303
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
@@ -294,6 +314,8 @@ class TrainingSupervisor:
             div_factor=5,
         )
 
+        early_stopping = EarlyStopping(patience=3, min_delta=0.001)
+
         torch.manual_seed(42)
         if torch.cuda.is_available():
             torch.cuda.manual_seed(42)
@@ -323,6 +345,12 @@ class TrainingSupervisor:
                         self.model.state_dict(),
                         self.model_path,
                     )
+
+            early_stopping(val_metrics['loss'])
+            if early_stopping.early_stop:
+                if self.debug_info:
+                    print(f"Early stopping triggered at epoch {epoch + 1}")
+                break
 
         if self.debug_info:
             self.write_results(epochs)
