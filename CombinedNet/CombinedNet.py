@@ -38,17 +38,12 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(32 * 1036 * 2 + 59, 1792),
-            nn.BatchNorm1d(1792),
+            nn.Linear(32 * 1036 * 2, 256),
+            nn.BatchNorm1d(256),
             nn.ReLU(),
-            nn.Dropout(0.09210354957166011),
+            nn.Dropout(0.3),
 
-            nn.Linear(1792, 448),
-            nn.BatchNorm1d(448),
-            nn.ReLU(),
-            nn.Dropout(0.2126585523934971),
-
-            nn.Linear(448, 2)
+            nn.Linear(256, 2)
         )
 
     def forward(self, m1_image, m2_image, measurement_features):
@@ -63,6 +58,6 @@ class CombinedNet(nn.Module):
         m1_features = m1_features.flatten(1)
         m2_features = m2_features.flatten(1)
 
-        combined = torch.cat([m1_features, m2_features, measurement_features], dim=1)
+        combined = torch.cat([m1_features, m2_features], dim=1)
 
         return self.classifier(combined)
