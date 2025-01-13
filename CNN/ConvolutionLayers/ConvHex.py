@@ -1,5 +1,3 @@
-import math
-
 import torch
 import torch.nn as nn
 from torch.nn import init
@@ -57,7 +55,7 @@ class ConvHex(nn.Module):
         valid_mask = (self.neighbors >= 0)
         neighbor_indices = self.neighbors.clamp(min=0)  # Set padded Values to 0
 
-        # Center values
+        # [batch_size, in_channels, num_hex] => [batch_size, in_channels, num_hex, 1]
         center_values = x.unsqueeze(3)
 
         # Get neighbor values
