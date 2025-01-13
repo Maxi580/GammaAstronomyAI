@@ -18,6 +18,8 @@ import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset, DataLoader, random_split
 
+from Transformer.MaxiDataset import MaxiDataset
+
 NUMERIC_COLS = [
     #"event_number",
     #"run_number",
@@ -330,7 +332,8 @@ if __name__ == "__main__":
     full_df = pd.concat([tmp_df_g, tmp_df_p], ignore_index=True)
     mean_dict, std_dict = compute_numeric_stats(full_df)
 
-    dataset = MagicDataset(gamma_file, proton_file, mean_dict, std_dict)
+    #dataset = MagicDataset(gamma_file, proton_file, mean_dict, std_dict)
+    dataset = MaxiDataset(gamma_filename=gamma_file, proton_filename=proton_file, max_samples=10000)
 
     train_size = int(0.7 * len(dataset))
     val_size = len(dataset) - train_size

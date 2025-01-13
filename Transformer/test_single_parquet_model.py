@@ -95,7 +95,7 @@ if __name__ == "__main__":
     # Update with your paths:
     gamma_file = "../magic-gammas_part2.parquet"
     proton_file = "../magic-protons_part2.parquet"
-    model_path = "best_model_50k.pt"
+    model_path = "best_model_single.pt"
 
     # Load dataset and model
     full_dataset = MagicDataset(gamma_file, proton_file)

@@ -208,9 +208,9 @@ if __name__ == "__main__":
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            #torch.save(model.state_dict(), "best_model_50k.pt")
+            torch.save(model.state_dict(), "best_model_single.pt")
 
-    torch.save(model.state_dict(), "trained_shape_transformer_50k.pt")
-    print("Model saved to trained_shape_transformer_50k.pt")
+    torch.save(model.state_dict(), "trained_shape_transformer_single.pt")
+    print("Model saved to trained_shape_transformer_single.pt")
 
     report_misclassified(model, val_dataset, device)
