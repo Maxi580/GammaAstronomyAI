@@ -153,7 +153,7 @@ class TrainingSupervisor:
     GRAD_CLIP_NORM: float = 4.601326343074392
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
-                 save_model: bool = False) -> None:
+                 save_model: bool = True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
                                    else "cpu")
         self.debug_info = debug_info
