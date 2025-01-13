@@ -1,17 +1,12 @@
-(gamaastro) dhbw1@dhbw1:~/environments/ML2024/GammaAstronomie/GammaAstronomyAI$ python trainModel.py
 Starting Training with settings:
         - Model = CombinedNet
         - Data = ('/home/dhbw1/environments/ML2024/GammaAstronomie/GammaAstronomyAI/magic-protons.parquet', '/home/dhbw1/environments/ML2024/GammaAstronomie/GammaAstronomyAI/magic-gammas.parquet')
-        - Epochs = 30
-        - Output = /home/dhbw1/environments/ML2024/GammaAstronomie/GammaAstronomyAI/trained_models/CombinedNet__2025-01-10_13-55-05
-
-Training on Device: cuda
-Model loaded.
-Loading Training Data...
+        - Epochs = 20
+        - Output = /home/dhbw1/environments/ML2024/GammaAstronomie/GammaAstronomyAI/trained_models/CombinedNet__2025-01-13_19-34-14
 
 Initializing dataset from:
-Proton file: /home/dhbw1/environments/ML2024/GammaAstronomie/GammaAstronomyAI/magic-protons.parquet
-Gamma file: /home/dhbw1/environments/ML2024/GammaAstronomie/GammaAstronomyAI/magic-gammas.parquet
+Proton file: magic-protons.parquet
+Gamma file: magic-gammas.parquet
 Original Number of Protons: 105174
 Original Number of Gammas: 374069
 Calculated Number of Protons: 105174
@@ -21,6 +16,10 @@ Dataset initialized with 479243 total samples:
 Protons: 105174
 Gammas: 374069
 Label mapping: {'proton': 0, 'gamma': 1}
+Training on Device: cuda
+Model loaded.
+Loading Training Data...
+
 Full Dataset Overview:
 Total number of samples: 479243
 
@@ -36,48 +35,73 @@ proton (label 0): 73622 samples (21.95%)
 gamma (label 1): 261848 samples (78.05%)
 
 Validation set:
-proton (label 0): 25242 samples (21.95%)
-gamma (label 1): 89776 samples (78.05%)
-
-
-
-Test set:
-proton (label 0): 6310 samples (21.94%)
-gamma (label 1): 22445 samples (78.06%)
+proton (label 0): 31552 samples (21.95%)
+gamma (label 1): 112221 samples (78.05%)
 
 
 Dataset loaded.
 
 
-Training Epoch 1/30...
-       Accuracy for batch 1000 of 10484: 69.15625
-       Accuracy for batch 2000 of 10484: 71.76875
-       Accuracy for batch 3000 of 10484: 73.57291666666667
-       Accuracy for batch 4000 of 10484: 74.84140624999999
-       Accuracy for batch 5000 of 10484: 75.83375
-       Accuracy for batch 6000 of 10484: 76.65885416666667
-       Accuracy for batch 7000 of 10484: 77.20044642857142
-       Accuracy for batch 8000 of 10484: 77.659375
-       Accuracy for batch 9000 of 10484: 78.0951388888889
-       Accuracy for batch 10000 of 10484: 78.42812500000001
+Training Epoch 1/20...
+       Accuracy for batch 1000 of 41934: 53.974999999999994
+       Accuracy for batch 2000 of 41934: 55.10625
+       Accuracy for batch 3000 of 41934: 56.074999999999996
+       Accuracy for batch 4000 of 41934: 57.03125
+       Accuracy for batch 5000 of 41934: 58.0775
+       Accuracy for batch 6000 of 41934: 58.943749999999994
+       Accuracy for batch 7000 of 41934: 59.49464285714286
+       Accuracy for batch 8000 of 41934: 60.017187500000006
+       Accuracy for batch 9000 of 41934: 60.452777777777776
+       Accuracy for batch 10000 of 41934: 60.824999999999996
+       Accuracy for batch 11000 of 41934: 61.157954545454544
+       Accuracy for batch 12000 of 41934: 61.45104166666666
+       Accuracy for batch 13000 of 41934: 61.92307692307693
+       Accuracy for batch 14000 of 41934: 62.22053571428572
+       Accuracy for batch 15000 of 41934: 62.595
+       Accuracy for batch 16000 of 41934: 62.919531250000006
+       Accuracy for batch 17000 of 41934: 63.17573529411765
+       Accuracy for batch 18000 of 41934: 63.39097222222222
+       Accuracy for batch 19000 of 41934: 63.63881578947368
+       Accuracy for batch 20000 of 41934: 63.906875
+       Accuracy for batch 21000 of 41934: 64.1327380952381
+       Accuracy for batch 22000 of 41934: 64.37272727272727
+       Accuracy for batch 23000 of 41934: 64.63478260869564
+       Accuracy for batch 24000 of 41934: 64.87135416666666
+       Accuracy for batch 25000 of 41934: 65.1065
+       Accuracy for batch 26000 of 41934: 65.33173076923077
+       Accuracy for batch 27000 of 41934: 65.5712962962963
+       Accuracy for batch 28000 of 41934: 65.796875
+       Accuracy for batch 29000 of 41934: 66.03405172413794
+       Accuracy for batch 30000 of 41934: 66.26958333333334
+       Accuracy for batch 31000 of 41934: 66.49959677419355
+       Accuracy for batch 32000 of 41934: 66.6734375
+       Accuracy for batch 33000 of 41934: 66.85151515151514
+       Accuracy for batch 34000 of 41934: 67.0485294117647
+       Accuracy for batch 35000 of 41934: 67.25428571428571
+       Accuracy for batch 36000 of 41934: 67.45381944444443
+       Accuracy for batch 37000 of 41934: 67.62195945945946
+       Accuracy for batch 38000 of 41934: 67.80723684210527
+       Accuracy for batch 39000 of 41934: 68.02916666666667
+       Accuracy for batch 40000 of 41934: 68.2359375
+       Accuracy for batch 41000 of 41934: 68.38810975609756
 
 Training Metrics of epoch: 1:
 
 Model Performance Metrics:
-Accuracy:     78.58%
-Precision:    92.75%
-Recall:       78.70%
-F1-Score:     85.15%
-Loss:        0.5604
+Accuracy:     68.56%
+Precision:    89.38%
+Recall:       67.78%
+F1-Score:     77.09%
+Loss:        0.6484
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    57516      16106│
+│ Actual    0  │    52524      21098│
 │              │                   │
-│ Actual    1  │    55765      206083│
+│ Actual    1  │    84368      177480│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
@@ -85,53 +109,84 @@ Label mapping: {'proton': 0, 'gamma': 1}
 Validation Metrics of epoch: 1:
 
 Model Performance Metrics:
-Accuracy:     89.46%
-Precision:    91.43%
-Recall:       95.44%
-F1-Score:     93.39%
-Loss:        0.5509
+Accuracy:     91.74%
+Precision:    94.10%
+Recall:       95.39%
+F1-Score:     94.74%
+Loss:        0.6310
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    17214      8028│
+│ Actual    0  │    24840      6712│
 │              │                   │
-│ Actual    1  │    4094      85682│
+│ Actual    1  │    5169      107052│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
 --------------------------------------------------
-Training Epoch 2/30...
-       Accuracy for batch 1000 of 10484: 81.721875
-       Accuracy for batch 2000 of 10484: 81.92031250000001
-       Accuracy for batch 3000 of 10484: 81.99791666666667
-       Accuracy for batch 4000 of 10484: 81.97187500000001
-       Accuracy for batch 5000 of 10484: 82.015
-       Accuracy for batch 6000 of 10484: 82.10416666666667
-       Accuracy for batch 7000 of 10484: 82.13080357142857
-       Accuracy for batch 8000 of 10484: 82.175
-       Accuracy for batch 9000 of 10484: 82.24305555555556
-       Accuracy for batch 10000 of 10484: 82.325625
+Training Epoch 2/20...
+       Accuracy for batch 1000 of 41934: 76.7
+       Accuracy for batch 2000 of 41934: 76.46875
+       Accuracy for batch 3000 of 41934: 76.78333333333333
+       Accuracy for batch 4000 of 41934: 76.896875
+       Accuracy for batch 5000 of 41934: 76.8525
+       Accuracy for batch 6000 of 41934: 76.86458333333334
+       Accuracy for batch 7000 of 41934: 76.84285714285714
+       Accuracy for batch 8000 of 41934: 76.9328125
+       Accuracy for batch 9000 of 41934: 76.9513888888889
+       Accuracy for batch 10000 of 41934: 77.0575
+       Accuracy for batch 11000 of 41934: 77.11704545454545
+       Accuracy for batch 12000 of 41934: 77.23645833333333
+       Accuracy for batch 13000 of 41934: 77.38365384615385
+       Accuracy for batch 14000 of 41934: 77.48303571428572
+       Accuracy for batch 15000 of 41934: 77.57083333333334
+       Accuracy for batch 16000 of 41934: 77.67578125
+       Accuracy for batch 17000 of 41934: 77.80514705882354
+       Accuracy for batch 18000 of 41934: 77.87430555555555
+       Accuracy for batch 19000 of 41934: 78.00263157894737
+       Accuracy for batch 20000 of 41934: 78.09875
+       Accuracy for batch 21000 of 41934: 78.17738095238094
+       Accuracy for batch 22000 of 41934: 78.25909090909092
+       Accuracy for batch 23000 of 41934: 78.34347826086957
+       Accuracy for batch 24000 of 41934: 78.40885416666666
+       Accuracy for batch 25000 of 41934: 78.483
+       Accuracy for batch 26000 of 41934: 78.54134615384616
+       Accuracy for batch 27000 of 41934: 78.61481481481482
+       Accuracy for batch 28000 of 41934: 78.70580357142856
+       Accuracy for batch 29000 of 41934: 78.78922413793103
+       Accuracy for batch 30000 of 41934: 78.87083333333334
+       Accuracy for batch 31000 of 41934: 78.91411290322581
+       Accuracy for batch 32000 of 41934: 78.9859375
+       Accuracy for batch 33000 of 41934: 79.0409090909091
+       Accuracy for batch 34000 of 41934: 79.11433823529411
+       Accuracy for batch 35000 of 41934: 79.18821428571428
+       Accuracy for batch 36000 of 41934: 79.24479166666667
+       Accuracy for batch 37000 of 41934: 79.32263513513513
+       Accuracy for batch 38000 of 41934: 79.38618421052631
+       Accuracy for batch 39000 of 41934: 79.44935897435897
+       Accuracy for batch 40000 of 41934: 79.5234375
+       Accuracy for batch 41000 of 41934: 79.59237804878049
 
 Training Metrics of epoch: 2:
 
 Model Performance Metrics:
-Accuracy:     82.37%
-Precision:    93.60%
-Recall:       83.10%
-F1-Score:     88.04%
-Loss:        0.5301
+Accuracy:     79.65%
+Precision:    93.35%
+Recall:       79.59%
+F1-Score:     85.92%
+Loss:        0.5605
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    58733      14889│
+│ Actual    0  │    58771      14851│
 │              │                   │
-│ Actual    1  │    44255      217593│
+│ Actual    1  │    53432      208416│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
@@ -139,53 +194,84 @@ Label mapping: {'proton': 0, 'gamma': 1}
 Validation Metrics of epoch: 2:
 
 Model Performance Metrics:
-Accuracy:     89.16%
-Precision:    89.50%
-Recall:       97.55%
-F1-Score:     93.36%
-Loss:        0.5829
+Accuracy:     94.36%
+Precision:    99.57%
+Recall:       93.18%
+F1-Score:     96.27%
+Loss:        0.4655
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    14972      10270│
+│ Actual    0  │    31101       451│
 │              │                   │
-│ Actual    1  │    2196      87580│
+│ Actual    1  │    7655      104566│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
 --------------------------------------------------
-Training Epoch 3/30...
-       Accuracy for batch 1000 of 10484: 83.028125
-       Accuracy for batch 2000 of 10484: 83.246875
-       Accuracy for batch 3000 of 10484: 83.18124999999999
-       Accuracy for batch 4000 of 10484: 83.2609375
-       Accuracy for batch 5000 of 10484: 83.30375
-       Accuracy for batch 6000 of 10484: 83.35208333333334
-       Accuracy for batch 7000 of 10484: 83.41294642857143
-       Accuracy for batch 8000 of 10484: 83.421484375
-       Accuracy for batch 9000 of 10484: 83.49722222222222
-       Accuracy for batch 10000 of 10484: 83.5546875
+Training Epoch 3/20...
+       Accuracy for batch 1000 of 41934: 83.0125
+       Accuracy for batch 2000 of 41934: 82.8625
+       Accuracy for batch 3000 of 41934: 82.64583333333333
+       Accuracy for batch 4000 of 41934: 82.61874999999999
+       Accuracy for batch 5000 of 41934: 82.55749999999999
+       Accuracy for batch 6000 of 41934: 82.69791666666667
+       Accuracy for batch 7000 of 41934: 82.73035714285714
+       Accuracy for batch 8000 of 41934: 82.7328125
+       Accuracy for batch 9000 of 41934: 82.75138888888888
+       Accuracy for batch 10000 of 41934: 82.87375
+       Accuracy for batch 11000 of 41934: 82.91931818181818
+       Accuracy for batch 12000 of 41934: 82.93333333333334
+       Accuracy for batch 13000 of 41934: 82.95576923076922
+       Accuracy for batch 14000 of 41934: 83.00982142857143
+       Accuracy for batch 15000 of 41934: 83.04916666666666
+       Accuracy for batch 16000 of 41934: 83.1140625
+       Accuracy for batch 17000 of 41934: 83.14485294117647
+       Accuracy for batch 18000 of 41934: 83.17083333333333
+       Accuracy for batch 19000 of 41934: 83.1842105263158
+       Accuracy for batch 20000 of 41934: 83.226875
+       Accuracy for batch 21000 of 41934: 83.25178571428572
+       Accuracy for batch 22000 of 41934: 83.26704545454545
+       Accuracy for batch 23000 of 41934: 83.30869565217391
+       Accuracy for batch 24000 of 41934: 83.31614583333334
+       Accuracy for batch 25000 of 41934: 83.33749999999999
+       Accuracy for batch 26000 of 41934: 83.35144230769231
+       Accuracy for batch 27000 of 41934: 83.39722222222223
+       Accuracy for batch 28000 of 41934: 83.4375
+       Accuracy for batch 29000 of 41934: 83.48146551724139
+       Accuracy for batch 30000 of 41934: 83.505
+       Accuracy for batch 31000 of 41934: 83.53790322580646
+       Accuracy for batch 32000 of 41934: 83.59140625
+       Accuracy for batch 33000 of 41934: 83.63560606060607
+       Accuracy for batch 34000 of 41934: 83.66286764705883
+       Accuracy for batch 35000 of 41934: 83.70857142857143
+       Accuracy for batch 36000 of 41934: 83.74513888888889
+       Accuracy for batch 37000 of 41934: 83.79087837837838
+       Accuracy for batch 38000 of 41934: 83.82467105263159
+       Accuracy for batch 39000 of 41934: 83.84455128205128
+       Accuracy for batch 40000 of 41934: 83.883125
+       Accuracy for batch 41000 of 41934: 83.91158536585365
 
 Training Metrics of epoch: 3:
 
 Model Performance Metrics:
-Accuracy:     83.58%
-Precision:    94.11%
-Recall:       84.23%
-F1-Score:     88.90%
-Loss:        0.5163
+Accuracy:     83.94%
+Precision:    94.82%
+Recall:       84.01%
+F1-Score:     89.09%
+Loss:        0.5179
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    59829      13793│
+│ Actual    0  │    61611      12011│
 │              │                   │
-│ Actual    1  │    41287      220561│
+│ Actual    1  │    41861      219987│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
@@ -193,53 +279,84 @@ Label mapping: {'proton': 0, 'gamma': 1}
 Validation Metrics of epoch: 3:
 
 Model Performance Metrics:
-Accuracy:     90.03%
-Precision:    91.20%
-Recall:       96.55%
-F1-Score:     93.80%
-Loss:        0.5458
+Accuracy:     98.80%
+Precision:    99.82%
+Recall:       98.64%
+F1-Score:     99.23%
+Loss:        0.4007
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    16876      8366│
+│ Actual    0  │    31350       202│
 │              │                   │
-│ Actual    1  │    3096      86680│
+│ Actual    1  │    1526      110695│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
 --------------------------------------------------
-Training Epoch 4/30...
-       Accuracy for batch 1000 of 10484: 83.975
-       Accuracy for batch 2000 of 10484: 84.00937499999999
-       Accuracy for batch 3000 of 10484: 83.95520833333333
-       Accuracy for batch 4000 of 10484: 83.99140625
-       Accuracy for batch 5000 of 10484: 84.11625000000001
-       Accuracy for batch 6000 of 10484: 84.1359375
-       Accuracy for batch 7000 of 10484: 84.26205357142858
-       Accuracy for batch 8000 of 10484: 84.35625
-       Accuracy for batch 9000 of 10484: 84.38229166666666
-       Accuracy for batch 10000 of 10484: 84.376875
+Training Epoch 4/20...
+       Accuracy for batch 1000 of 41934: 85.7125
+       Accuracy for batch 2000 of 41934: 85.70625
+       Accuracy for batch 3000 of 41934: 85.76666666666667
+       Accuracy for batch 4000 of 41934: 85.83125
+       Accuracy for batch 5000 of 41934: 85.7725
+       Accuracy for batch 6000 of 41934: 85.78958333333333
+       Accuracy for batch 7000 of 41934: 85.8375
+       Accuracy for batch 8000 of 41934: 85.82499999999999
+       Accuracy for batch 9000 of 41934: 85.80138888888888
+       Accuracy for batch 10000 of 41934: 85.87125
+       Accuracy for batch 11000 of 41934: 85.91250000000001
+       Accuracy for batch 12000 of 41934: 85.91145833333333
+       Accuracy for batch 13000 of 41934: 85.94326923076923
+       Accuracy for batch 14000 of 41934: 85.94017857142858
+       Accuracy for batch 15000 of 41934: 85.91666666666666
+       Accuracy for batch 16000 of 41934: 85.903125
+       Accuracy for batch 17000 of 41934: 85.92720588235294
+       Accuracy for batch 18000 of 41934: 85.98541666666667
+       Accuracy for batch 19000 of 41934: 85.98552631578947
+       Accuracy for batch 20000 of 41934: 86.03375
+       Accuracy for batch 21000 of 41934: 86.04464285714286
+       Accuracy for batch 22000 of 41934: 86.04375
+       Accuracy for batch 23000 of 41934: 86.10271739130435
+       Accuracy for batch 24000 of 41934: 86.09427083333333
+       Accuracy for batch 25000 of 41934: 86.128
+       Accuracy for batch 26000 of 41934: 86.11923076923077
+       Accuracy for batch 27000 of 41934: 86.13101851851852
+       Accuracy for batch 28000 of 41934: 86.15133928571429
+       Accuracy for batch 29000 of 41934: 86.17931034482758
+       Accuracy for batch 30000 of 41934: 86.18083333333333
+       Accuracy for batch 31000 of 41934: 86.2092741935484
+       Accuracy for batch 32000 of 41934: 86.234375
+       Accuracy for batch 33000 of 41934: 86.26212121212122
+       Accuracy for batch 34000 of 41934: 86.28198529411765
+       Accuracy for batch 35000 of 41934: 86.30250000000001
+       Accuracy for batch 36000 of 41934: 86.33333333333333
+       Accuracy for batch 37000 of 41934: 86.36013513513512
+       Accuracy for batch 38000 of 41934: 86.39638157894737
+       Accuracy for batch 39000 of 41934: 86.42339743589743
+       Accuracy for batch 40000 of 41934: 86.43656250000001
+       Accuracy for batch 41000 of 41934: 86.46798780487805
 
 Training Metrics of epoch: 4:
 
 Model Performance Metrics:
-Accuracy:     84.38%
-Precision:    94.59%
-Recall:       84.84%
-F1-Score:     89.45%
-Loss:        0.5048
+Accuracy:     86.48%
+Precision:    95.73%
+Recall:       86.54%
+F1-Score:     90.90%
+Loss:        0.4906
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    60916      12706│
+│ Actual    0  │    63511      10111│
 │              │                   │
-│ Actual    1  │    39707      222141│
+│ Actual    1  │    35243      226605│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
@@ -247,53 +364,84 @@ Label mapping: {'proton': 0, 'gamma': 1}
 Validation Metrics of epoch: 4:
 
 Model Performance Metrics:
-Accuracy:     89.87%
-Precision:    92.63%
-Recall:       94.55%
-F1-Score:     93.58%
-Loss:        0.5186
+Accuracy:     99.04%
+Precision:    99.17%
+Recall:       99.60%
+F1-Score:     99.39%
+Loss:        0.4349
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    18484      6758│
+│ Actual    0  │    30620       932│
 │              │                   │
-│ Actual    1  │    4894      84882│
+│ Actual    1  │     445      111776│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
 --------------------------------------------------
-Training Epoch 5/30...
-       Accuracy for batch 1000 of 10484: 84.675
-       Accuracy for batch 2000 of 10484: 84.753125
-       Accuracy for batch 3000 of 10484: 84.71354166666667
-       Accuracy for batch 4000 of 10484: 84.83984375
-       Accuracy for batch 5000 of 10484: 84.89750000000001
-       Accuracy for batch 6000 of 10484: 84.94166666666668
-       Accuracy for batch 7000 of 10484: 85.00848214285715
-       Accuracy for batch 8000 of 10484: 85.06328125
-       Accuracy for batch 9000 of 10484: 85.13090277777778
-       Accuracy for batch 10000 of 10484: 85.1425
+Training Epoch 5/20...
+       Accuracy for batch 1000 of 41934: 86.6625
+       Accuracy for batch 2000 of 41934: 87.08749999999999
+       Accuracy for batch 3000 of 41934: 87.44583333333334
+       Accuracy for batch 4000 of 41934: 87.36874999999999
+       Accuracy for batch 5000 of 41934: 87.33999999999999
+       Accuracy for batch 6000 of 41934: 87.34375
+       Accuracy for batch 7000 of 41934: 87.45714285714286
+       Accuracy for batch 8000 of 41934: 87.571875
+       Accuracy for batch 9000 of 41934: 87.62222222222222
+       Accuracy for batch 10000 of 41934: 87.64874999999999
+       Accuracy for batch 11000 of 41934: 87.64318181818182
+       Accuracy for batch 12000 of 41934: 87.65104166666666
+       Accuracy for batch 13000 of 41934: 87.68557692307692
+       Accuracy for batch 14000 of 41934: 87.76071428571429
+       Accuracy for batch 15000 of 41934: 87.72999999999999
+       Accuracy for batch 16000 of 41934: 87.74062500000001
+       Accuracy for batch 17000 of 41934: 87.78823529411764
+       Accuracy for batch 18000 of 41934: 87.80555555555556
+       Accuracy for batch 19000 of 41934: 87.84473684210526
+       Accuracy for batch 20000 of 41934: 87.885625
+       Accuracy for batch 21000 of 41934: 87.88630952380953
+       Accuracy for batch 22000 of 41934: 87.89772727272728
+       Accuracy for batch 23000 of 41934: 87.87934782608696
+       Accuracy for batch 24000 of 41934: 87.8953125
+       Accuracy for batch 25000 of 41934: 87.945
+       Accuracy for batch 26000 of 41934: 87.96346153846154
+       Accuracy for batch 27000 of 41934: 87.99074074074073
+       Accuracy for batch 28000 of 41934: 88.00223214285714
+       Accuracy for batch 29000 of 41934: 88.02974137931034
+       Accuracy for batch 30000 of 41934: 88.04666666666667
+       Accuracy for batch 31000 of 41934: 88.04112903225807
+       Accuracy for batch 32000 of 41934: 88.05625
+       Accuracy for batch 33000 of 41934: 88.0780303030303
+       Accuracy for batch 34000 of 41934: 88.12205882352941
+       Accuracy for batch 35000 of 41934: 88.1575
+       Accuracy for batch 36000 of 41934: 88.17708333333333
+       Accuracy for batch 37000 of 41934: 88.20202702702703
+       Accuracy for batch 38000 of 41934: 88.21381578947368
+       Accuracy for batch 39000 of 41934: 88.225
+       Accuracy for batch 40000 of 41934: 88.24375
+       Accuracy for batch 41000 of 41934: 88.27926829268293
 
 Training Metrics of epoch: 5:
 
 Model Performance Metrics:
-Accuracy:     85.13%
-Precision:    95.15%
-Recall:       85.29%
-F1-Score:     89.95%
-Loss:        0.4923
+Accuracy:     88.30%
+Precision:    96.41%
+Recall:       88.29%
+F1-Score:     92.17%
+Loss:        0.4685
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    62230      11392│
+│ Actual    0  │    65010      8612│
 │              │                   │
-│ Actual    1  │    38508      223340│
+│ Actual    1  │    30651      231197│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
@@ -301,53 +449,84 @@ Label mapping: {'proton': 0, 'gamma': 1}
 Validation Metrics of epoch: 5:
 
 Model Performance Metrics:
-Accuracy:     90.22%
-Precision:    93.90%
-Recall:       93.55%
-F1-Score:     93.72%
-Loss:        0.5066
+Accuracy:     75.85%
+Precision:    99.99%
+Recall:       69.07%
+F1-Score:     81.70%
+Loss:        0.4508
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    19782      5460│
+│ Actual    0  │    31545         7│
 │              │                   │
-│ Actual    1  │    5791      83985│
+│ Actual    1  │    34713      77508│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
 --------------------------------------------------
-Training Epoch 6/30...
-       Accuracy for batch 1000 of 10484: 85.25625
-       Accuracy for batch 2000 of 10484: 85.63125000000001
-       Accuracy for batch 3000 of 10484: 85.81354166666667
-       Accuracy for batch 4000 of 10484: 85.81875
-       Accuracy for batch 5000 of 10484: 85.82
-       Accuracy for batch 6000 of 10484: 85.83072916666666
-       Accuracy for batch 7000 of 10484: 85.80803571428571
-       Accuracy for batch 8000 of 10484: 85.820703125
-       Accuracy for batch 9000 of 10484: 85.86284722222223
-       Accuracy for batch 10000 of 10484: 85.934375
+Training Epoch 6/20...
+       Accuracy for batch 1000 of 41934: 89.60000000000001
+       Accuracy for batch 2000 of 41934: 89.3
+       Accuracy for batch 3000 of 41934: 89.24583333333334
+       Accuracy for batch 4000 of 41934: 89.253125
+       Accuracy for batch 5000 of 41934: 89.27000000000001
+       Accuracy for batch 6000 of 41934: 89.25833333333333
+       Accuracy for batch 7000 of 41934: 89.43928571428572
+       Accuracy for batch 8000 of 41934: 89.4671875
+       Accuracy for batch 9000 of 41934: 89.46805555555557
+       Accuracy for batch 10000 of 41934: 89.42999999999999
+       Accuracy for batch 11000 of 41934: 89.42045454545455
+       Accuracy for batch 12000 of 41934: 89.47291666666666
+       Accuracy for batch 13000 of 41934: 89.51153846153846
+       Accuracy for batch 14000 of 41934: 89.52589285714285
+       Accuracy for batch 15000 of 41934: 89.56666666666668
+       Accuracy for batch 16000 of 41934: 89.58906250000001
+       Accuracy for batch 17000 of 41934: 89.6014705882353
+       Accuracy for batch 18000 of 41934: 89.62222222222222
+       Accuracy for batch 19000 of 41934: 89.66973684210527
+       Accuracy for batch 20000 of 41934: 89.685625
+       Accuracy for batch 21000 of 41934: 89.75
+       Accuracy for batch 22000 of 41934: 89.77272727272727
+       Accuracy for batch 23000 of 41934: 89.80380434782609
+       Accuracy for batch 24000 of 41934: 89.8125
+       Accuracy for batch 25000 of 41934: 89.8175
+       Accuracy for batch 26000 of 41934: 89.83990384615385
+       Accuracy for batch 27000 of 41934: 89.85138888888888
+       Accuracy for batch 28000 of 41934: 89.86339285714286
+       Accuracy for batch 29000 of 41934: 89.88318965517242
+       Accuracy for batch 30000 of 41934: 89.90166666666667
+       Accuracy for batch 31000 of 41934: 89.91935483870968
+       Accuracy for batch 32000 of 41934: 89.93984375000001
+       Accuracy for batch 33000 of 41934: 89.95568181818182
+       Accuracy for batch 34000 of 41934: 89.98308823529412
+       Accuracy for batch 35000 of 41934: 90.01
+       Accuracy for batch 36000 of 41934: 90.025
+       Accuracy for batch 37000 of 41934: 90.05540540540541
+       Accuracy for batch 38000 of 41934: 90.08223684210527
+       Accuracy for batch 39000 of 41934: 90.1099358974359
+       Accuracy for batch 40000 of 41934: 90.1421875
+       Accuracy for batch 41000 of 41934: 90.1655487804878
 
 Training Metrics of epoch: 6:
 
 Model Performance Metrics:
-Accuracy:     85.95%
-Precision:    95.76%
-Recall:       85.80%
-F1-Score:     90.51%
-Loss:        0.4791
+Accuracy:     90.19%
+Precision:    97.17%
+Recall:       90.06%
+F1-Score:     93.48%
+Loss:        0.4472
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    63666      9956│
+│ Actual    0  │    66744      6878│
 │              │                   │
-│ Actual    1  │    37175      224673│
+│ Actual    1  │    26017      235831│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
@@ -355,701 +534,21 @@ Label mapping: {'proton': 0, 'gamma': 1}
 Validation Metrics of epoch: 6:
 
 Model Performance Metrics:
-Accuracy:     89.63%
-Precision:    95.57%
-Recall:       90.93%
-F1-Score:     93.19%
-Loss:        0.4772
+Accuracy:     24.38%
+Precision:   100.00%
+Recall:        3.11%
+F1-Score:      6.04%
+Loss:        1.0588
 
 Confusion Matrix:
 ─────────────────────────────────────────────
 │              │      Predicted    │
 │              │          0      1 │
 ├──────────────┼───────────────────┤
-│ Actual    0  │    21457      3785│
+│ Actual    0  │    31552         0│
 │              │                   │
-│ Actual    1  │    8147      81629│
+│ Actual    1  │    108727      3494│
 │              │
 ─────────────────────────────────────────────
 Label mapping: {'proton': 0, 'gamma': 1}
 --------------------------------------------------
-Training Epoch 7/30...
-       Accuracy for batch 1000 of 10484: 86.546875
-       Accuracy for batch 2000 of 10484: 86.5171875
-       Accuracy for batch 3000 of 10484: 86.53020833333333
-       Accuracy for batch 4000 of 10484: 86.5046875
-       Accuracy for batch 5000 of 10484: 86.52437499999999
-       Accuracy for batch 6000 of 10484: 86.53489583333334
-       Accuracy for batch 7000 of 10484: 86.59330357142856
-       Accuracy for batch 8000 of 10484: 86.581640625
-       Accuracy for batch 9000 of 10484: 86.64409722222223
-       Accuracy for batch 10000 of 10484: 86.7003125
-
-Training Metrics of epoch: 7:
-
-Model Performance Metrics:
-Accuracy:     86.75%
-Precision:    96.21%
-Recall:       86.43%
-F1-Score:     91.05%
-Loss:        0.4679
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    64703      8919│
-│              │                   │
-│ Actual    1  │    35545      226303│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 7:
-
-Model Performance Metrics:
-Accuracy:     91.67%
-Precision:    94.84%
-Recall:       94.47%
-F1-Score:     94.66%
-Loss:        0.4729
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    20630      4612│
-│              │                   │
-│ Actual    1  │    4966      84810│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 8/30...
-       Accuracy for batch 1000 of 10484: 87.35625
-       Accuracy for batch 2000 of 10484: 87.346875
-       Accuracy for batch 3000 of 10484: 87.29166666666667
-       Accuracy for batch 4000 of 10484: 87.334375
-       Accuracy for batch 5000 of 10484: 87.41
-       Accuracy for batch 6000 of 10484: 87.46510416666666
-       Accuracy for batch 7000 of 10484: 87.49642857142858
-       Accuracy for batch 8000 of 10484: 87.501171875
-       Accuracy for batch 9000 of 10484: 87.54340277777779
-       Accuracy for batch 10000 of 10484: 87.57374999999999
-
-Training Metrics of epoch: 8:
-
-Model Performance Metrics:
-Accuracy:     87.58%
-Precision:    96.55%
-Recall:       87.21%
-F1-Score:     91.64%
-Loss:        0.4569
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    65454      8168│
-│              │                   │
-│ Actual    1  │    33502      228346│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 8:
-
-Model Performance Metrics:
-Accuracy:     83.02%
-Precision:    82.37%
-Recall:       99.55%
-F1-Score:     90.15%
-Loss:        0.7703
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    6110      19132│
-│              │                   │
-│ Actual    1  │     403      89373│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 9/30...
-       Accuracy for batch 1000 of 10484: 88.00625
-       Accuracy for batch 2000 of 10484: 87.84531249999999
-       Accuracy for batch 3000 of 10484: 87.78333333333333
-       Accuracy for batch 4000 of 10484: 87.92734374999999
-       Accuracy for batch 5000 of 10484: 87.996875
-       Accuracy for batch 6000 of 10484: 88.0734375
-       Accuracy for batch 7000 of 10484: 88.09241071428572
-       Accuracy for batch 8000 of 10484: 88.12890625
-       Accuracy for batch 9000 of 10484: 88.18194444444445
-       Accuracy for batch 10000 of 10484: 88.2103125
-
-Training Metrics of epoch: 9:
-
-Model Performance Metrics:
-Accuracy:     88.22%
-Precision:    96.82%
-Recall:       87.80%
-F1-Score:     92.09%
-Loss:        0.4496
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    66070      7552│
-│              │                   │
-│ Actual    1  │    31951      229897│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 9:
-
-Model Performance Metrics:
-Accuracy:     92.92%
-Precision:    95.38%
-Recall:       95.56%
-F1-Score:     95.47%
-Loss:        0.4528
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    21088      4154│
-│              │                   │
-│ Actual    1  │    3984      85792│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 10/30...
-       Accuracy for batch 1000 of 10484: 88.50312500000001
-       Accuracy for batch 2000 of 10484: 88.4890625
-       Accuracy for batch 3000 of 10484: 88.56666666666668
-       Accuracy for batch 4000 of 10484: 88.55937499999999
-       Accuracy for batch 5000 of 10484: 88.61125
-       Accuracy for batch 6000 of 10484: 88.65364583333334
-       Accuracy for batch 7000 of 10484: 88.67589285714286
-       Accuracy for batch 8000 of 10484: 88.676953125
-       Accuracy for batch 9000 of 10484: 88.72222222222223
-       Accuracy for batch 10000 of 10484: 88.73875
-
-Training Metrics of epoch: 10:
-
-Model Performance Metrics:
-Accuracy:     88.76%
-Precision:    97.00%
-Recall:       88.33%
-F1-Score:     92.46%
-Loss:        0.4434
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    66463      7159│
-│              │                   │
-│ Actual    1  │    30558      231290│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 10:
-
-Model Performance Metrics:
-Accuracy:     92.61%
-Precision:    96.74%
-Recall:       93.69%
-F1-Score:     95.19%
-Loss:        0.4520
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    22408      2834│
-│              │                   │
-│ Actual    1  │    5667      84109│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 11/30...
-       Accuracy for batch 1000 of 10484: 88.965625
-       Accuracy for batch 2000 of 10484: 89.0125
-       Accuracy for batch 3000 of 10484: 89.00208333333333
-       Accuracy for batch 4000 of 10484: 88.92656249999999
-       Accuracy for batch 5000 of 10484: 88.991875
-       Accuracy for batch 6000 of 10484: 89.07135416666667
-       Accuracy for batch 7000 of 10484: 89.12187499999999
-       Accuracy for batch 8000 of 10484: 89.187890625
-       Accuracy for batch 9000 of 10484: 89.21770833333333
-       Accuracy for batch 10000 of 10484: 89.24656250000001
-
-Training Metrics of epoch: 11:
-
-Model Performance Metrics:
-Accuracy:     89.27%
-Precision:    97.17%
-Recall:       88.84%
-F1-Score:     92.82%
-Loss:        0.4387
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    66849      6773│
-│              │                   │
-│ Actual    1  │    29233      232615│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 11:
-
-Model Performance Metrics:
-Accuracy:     92.88%
-Precision:    96.66%
-Recall:       94.13%
-F1-Score:     95.38%
-Loss:        0.4388
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    22325      2917│
-│              │                   │
-│ Actual    1  │    5272      84504│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 12/30...
-       Accuracy for batch 1000 of 10484: 89.55
-       Accuracy for batch 2000 of 10484: 89.446875
-       Accuracy for batch 3000 of 10484: 89.48125
-       Accuracy for batch 4000 of 10484: 89.4359375
-       Accuracy for batch 5000 of 10484: 89.43062499999999
-       Accuracy for batch 6000 of 10484: 89.47864583333333
-       Accuracy for batch 7000 of 10484: 89.48839285714286
-       Accuracy for batch 8000 of 10484: 89.51875
-       Accuracy for batch 9000 of 10484: 89.53159722222223
-       Accuracy for batch 10000 of 10484: 89.51625
-
-Training Metrics of epoch: 12:
-
-Model Performance Metrics:
-Accuracy:     89.52%
-Precision:    97.25%
-Recall:       89.09%
-F1-Score:     92.99%
-Loss:        0.4346
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    67016      6606│
-│              │                   │
-│ Actual    1  │    28558      233290│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 12:
-
-Model Performance Metrics:
-Accuracy:     84.44%
-Precision:    98.71%
-Recall:       81.12%
-F1-Score:     89.06%
-Loss:        0.4545
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    24288       954│
-│              │                   │
-│ Actual    1  │    16946      72830│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 13/30...
-       Accuracy for batch 1000 of 10484: 89.70625
-       Accuracy for batch 2000 of 10484: 89.7265625
-       Accuracy for batch 3000 of 10484: 89.74166666666666
-       Accuracy for batch 4000 of 10484: 89.79453124999999
-       Accuracy for batch 5000 of 10484: 89.8225
-       Accuracy for batch 6000 of 10484: 89.83489583333333
-       Accuracy for batch 7000 of 10484: 89.82410714285714
-       Accuracy for batch 8000 of 10484: 89.84765625
-       Accuracy for batch 9000 of 10484: 89.88680555555555
-       Accuracy for batch 10000 of 10484: 89.9128125
-
-Training Metrics of epoch: 13:
-
-Model Performance Metrics:
-Accuracy:     89.91%
-Precision:    97.37%
-Recall:       89.49%
-F1-Score:     93.26%
-Loss:        0.4294
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    67288      6334│
-│              │                   │
-│ Actual    1  │    27514      234334│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 13:
-
-Model Performance Metrics:
-Accuracy:     79.94%
-Precision:    79.69%
-Recall:       99.71%
-F1-Score:     88.58%
-Loss:        0.9617
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    2423      22819│
-│              │                   │
-│ Actual    1  │     257      89519│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 14/30...
-       Accuracy for batch 1000 of 10484: 89.80625
-       Accuracy for batch 2000 of 10484: 90.00625
-       Accuracy for batch 3000 of 10484: 90.0625
-       Accuracy for batch 4000 of 10484: 90.15859375000001
-       Accuracy for batch 5000 of 10484: 90.28375
-       Accuracy for batch 6000 of 10484: 90.28489583333334
-       Accuracy for batch 7000 of 10484: 90.25669642857143
-       Accuracy for batch 8000 of 10484: 90.26171875
-       Accuracy for batch 9000 of 10484: 90.27569444444444
-       Accuracy for batch 10000 of 10484: 90.3053125
-
-Training Metrics of epoch: 14:
-
-Model Performance Metrics:
-Accuracy:     90.31%
-Precision:    97.51%
-Recall:       89.88%
-F1-Score:     93.54%
-Loss:        0.4252
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    67607      6015│
-│              │                   │
-│ Actual    1  │    26493      235355│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 14:
-
-Model Performance Metrics:
-Accuracy:     84.28%
-Precision:    98.99%
-Recall:       80.68%
-F1-Score:     88.90%
-Loss:        0.4416
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    24501       741│
-│              │                   │
-│ Actual    1  │    17341      72435│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 15/30...
-       Accuracy for batch 1000 of 10484: 90.40312499999999
-       Accuracy for batch 2000 of 10484: 90.3359375
-       Accuracy for batch 3000 of 10484: 90.47395833333334
-       Accuracy for batch 4000 of 10484: 90.48906249999999
-       Accuracy for batch 5000 of 10484: 90.51125
-       Accuracy for batch 6000 of 10484: 90.5015625
-       Accuracy for batch 7000 of 10484: 90.521875
-       Accuracy for batch 8000 of 10484: 90.528515625
-       Accuracy for batch 9000 of 10484: 90.55208333333333
-       Accuracy for batch 10000 of 10484: 90.5628125
-
-Training Metrics of epoch: 15:
-
-Model Performance Metrics:
-Accuracy:     90.58%
-Precision:    97.56%
-Recall:       90.18%
-F1-Score:     93.73%
-Loss:        0.4215
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    67718      5904│
-│              │                   │
-│ Actual    1  │    25714      236134│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 15:
-
-Model Performance Metrics:
-Accuracy:     92.67%
-Precision:    96.80%
-Recall:       93.71%
-F1-Score:     95.23%
-Loss:        0.4321
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    22461      2781│
-│              │                   │
-│ Actual    1  │    5651      84125│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 16/30...
-       Accuracy for batch 1000 of 10484: 90.965625
-       Accuracy for batch 2000 of 10484: 90.896875
-       Accuracy for batch 3000 of 10484: 90.87291666666667
-       Accuracy for batch 4000 of 10484: 90.92890625
-       Accuracy for batch 5000 of 10484: 90.900625
-       Accuracy for batch 6000 of 10484: 90.83229166666666
-       Accuracy for batch 7000 of 10484: 90.83839285714286
-       Accuracy for batch 8000 of 10484: 90.873046875
-       Accuracy for batch 9000 of 10484: 90.88993055555555
-       Accuracy for batch 10000 of 10484: 90.86625000000001
-
-Training Metrics of epoch: 16:
-
-Model Performance Metrics:
-Accuracy:     90.88%
-Precision:    97.67%
-Recall:       90.48%
-F1-Score:     93.94%
-Loss:        0.4183
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    67979      5643│
-│              │                   │
-│ Actual    1  │    24937      236911│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 16:
-
-Model Performance Metrics:
-Accuracy:     89.08%
-Precision:    98.64%
-Recall:       87.22%
-F1-Score:     92.58%
-Loss:        0.4227
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    24163      1079│
-│              │                   │
-│ Actual    1  │    11477      78299│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 17/30...
-       Accuracy for batch 1000 of 10484: 91.36875
-       Accuracy for batch 2000 of 10484: 91.1828125
-       Accuracy for batch 3000 of 10484: 90.9875
-       Accuracy for batch 4000 of 10484: 91.0109375
-       Accuracy for batch 5000 of 10484: 91.0725
-       Accuracy for batch 6000 of 10484: 91.10572916666668
-       Accuracy for batch 7000 of 10484: 91.11116071428572
-       Accuracy for batch 8000 of 10484: 91.112109375
-       Accuracy for batch 9000 of 10484: 91.10486111111112
-       Accuracy for batch 10000 of 10484: 91.126875
-^A^A
-Training Metrics of epoch: 17:
-
-Model Performance Metrics:
-Accuracy:     91.13%
-Precision:    97.71%
-Recall:       90.76%
-F1-Score:     94.11%
-Loss:        0.4153
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    68053      5569│
-│              │                   │
-│ Actual    1  │    24198      237650│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 17:
-
-Model Performance Metrics:
-Accuracy:     93.32%
-Precision:    97.99%
-Recall:       93.36%
-F1-Score:     95.62%
-Loss:        0.4045
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    23521      1721│
-│              │                   │
-│ Actual    1  │    5958      83818│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 18/30...
-       Accuracy for batch 1000 of 10484: 91.23125
-       Accuracy for batch 2000 of 10484: 91.27187500000001
-       Accuracy for batch 3000 of 10484: 91.33229166666666
-       Accuracy for batch 4000 of 10484: 91.36953125000001
-       Accuracy for batch 5000 of 10484: 91.41125
-       Accuracy for batch 6000 of 10484: 91.371875
-       Accuracy for batch 7000 of 10484: 91.34196428571428
-       Accuracy for batch 8000 of 10484: 91.339453125
-       Accuracy for batch 9000 of 10484: 91.31909722222223
-^A       Accuracy for batch 10000 of 10484: 91.30437500000001
-
-Training Metrics of epoch: 18:
-
-Model Performance Metrics:
-Accuracy:     91.31%
-Precision:    97.74%
-Recall:       90.96%
-F1-Score:     94.23%
-Loss:        0.4133
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    68126      5496│
-│              │                   │
-│ Actual    1  │    23662      238186│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
-
-Validation Metrics of epoch: 18:
-
-Model Performance Metrics:
-Accuracy:     81.06%
-Precision:    98.98%
-Recall:       76.52%
-F1-Score:     86.31%
-Loss:        0.4549
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    24537       705│
-│              │                   │
-│ Actual    1  │    21083      68693│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
---------------------------------------------------
-Training Epoch 19/30...
-       Accuracy for batch 1000 of 10484: 91.4625
-       Accuracy for batch 2000 of 10484: 91.40468750000001
-       Accuracy for batch 3000 of 10484: 91.46354166666667
-       Accuracy for batch 4000 of 10484: 91.39921875
-       Accuracy for batch 5000 of 10484: 91.4075
-       Accuracy for batch 6000 of 10484: 91.4484375
-       Accuracy for batch 7000 of 10484: 91.41026785714286
-       Accuracy for batch 8000 of 10484: 91.447265625
-       Accuracy for batch 9000 of 10484: 91.46562499999999
-       Accuracy for batch 10000 of 10484: 91.435625
-^A
-Training Metrics of epoch: 19:
-
-Model Performance Metrics:
-Accuracy:     91.43%
-Precision:    97.77%
-Recall:       91.11%
-F1-Score:     94.32%
-Loss:        0.4119
-
-Confusion Matrix:
-─────────────────────────────────────────────
-│              │      Predicted    │
-│              │          0      1 │
-├──────────────┼───────────────────┤
-│ Actual    0  │    68171      5451│
-│              │                   │
-│ Actual    1  │    23283      238565│
-│              │
-─────────────────────────────────────────────
-Label mapping: {'proton': 0, 'gamma': 1}
