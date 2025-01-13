@@ -1,3 +1,4 @@
+import pandas as pd
 import torch
 import torch.nn as nn
 
@@ -14,22 +15,15 @@ class TelescopeCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            nn.Conv1d(1, 16, kernel_size=7, stride=2, padding=3),
+            # Output Length = ((Input Length - Kernel Size) / Stride) + 1
+            nn.Conv1d(1, 8, kernel_size=3),
+            nn.BatchNorm1d(8),
+            nn.ReLU(),
+            nn.Dropout1d(0.2),
+
+            nn.Conv1d(8, 16, kernel_size=2),
             nn.BatchNorm1d(16),
             nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Dropout1d(0.2),
-
-            nn.Conv1d(16, 32, kernel_size=5, stride=1, padding=2),
-            nn.BatchNorm1d(32),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Dropout1d(0.2),
-
-            nn.Conv1d(32, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm1d(64),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
             nn.Dropout1d(0.2),
         )
 
@@ -45,15 +39,11 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(64 * 65 * 2 + 59, 2048),  # 64 out channels, * 1039 / 2 ** Pooling cnt,
+            nn.Linear(16 * 1039 * 2, 2048),  # 16 * 65 * 2 + 59
             nn.ReLU(),
             nn.Dropout(0.2),
 
-            nn.Linear(2048, 512),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-
-            nn.Linear(512, 128),
+            nn.Linear(2048, 128),
             nn.ReLU(),
             nn.Dropout(0.2),
 
@@ -72,6 +62,6 @@ class CombinedNet(nn.Module):
         m1_features = m1_features.flatten(1)
         m2_features = m2_features.flatten(1)
 
-        combined = torch.cat([m1_features, m2_features, measurement_features], dim=1)
+        combined = torch.cat([m1_features, m2_features], dim=1)
 
         return self.classifier(combined)
