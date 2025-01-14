@@ -15,24 +15,27 @@ class TelescopeCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            ConvHex(1, 2, kernel_size=3),
-            nn.BatchNorm1d(2),
-            nn.ReLU(),
-            nn.Dropout1d(0.4),
-
-            ConvHex(2, 3, kernel_size=3),
-            nn.BatchNorm1d(3),
-            nn.ReLU(),
-            nn.Dropout1d(0.4),
-
-            ConvHex(3, 4, kernel_size=2),
+            ConvHex(1, 4, kernel_size=3),
             nn.BatchNorm1d(4),
             nn.ReLU(),
-            nn.Dropout1d(0.4),
+            nn.Dropout1d(0.3),
+
+            ConvHex(4, 8, kernel_size=3),
+            nn.BatchNorm1d(8),
+            nn.ReLU(),
+            nn.Dropout1d(0.3),
+
+            ConvHex(8, 16, kernel_size=2),
+            nn.BatchNorm1d(16),
+            nn.ReLU(),
+            nn.Dropout1d(0.3),
         )
+        self.pool = nn.AdaptiveAvgPool1d(256)
 
     def forward(self, x):
-        return self.cnn(x)
+        x = self.cnn(x)
+        x = self.pool(x)
+        return x
 
 
 class CombinedNet(nn.Module):
@@ -43,15 +46,15 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(4 * 1039 * 2, 512),
+            nn.Linear(256 * 2, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.4),
 
             nn.Linear(512, 128),
             nn.BatchNorm1d(128),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.4),
 
             nn.Linear(128, 2)
         )
