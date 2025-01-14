@@ -123,7 +123,7 @@ def inference(data_loader, labels, model_path):
 
 
 class EarlyStopping:
-    def __init__(self, patience=2, min_delta=0.0001):
+    def __init__(self, patience=5, min_delta=0.0001):
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
@@ -143,16 +143,17 @@ class EarlyStopping:
 
 
 class TrainingSupervisor:
-    VAL_SPLIT: float = 0.2
-    BATCH_SIZE: int = 16
-    LEARNING_RATE: float = 1e-3
+    TEMP_DATA_SPLIT: float = 0.3
+    TEST_DATA_SPLIT: float = 0.1
+    BATCH_SIZE: int = 8
+    LEARNING_RATE: float = 3.574293219560207e-05
     WEIGHT_DECAY: float = 0.0029809712800553303
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     GRAD_CLIP_NORM: float = 4.601326343074392
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
-                 save_model: bool = True) -> None:
+                 save_model: bool = False) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
                                    else "cpu")
         self.debug_info = debug_info
@@ -207,7 +208,7 @@ class TrainingSupervisor:
         # Stratified splitting using sklearn (shuffles indices)
         train_indices, val_indices = train_test_split(
             np.arange(len(self.dataset)),
-            test_size=self.VAL_SPLIT,
+            test_size=self.TEMP_DATA_SPLIT,
             stratify=labels,
             shuffle=True,
             random_state=42,
@@ -313,7 +314,7 @@ class TrainingSupervisor:
             div_factor=5,
         )
 
-        early_stopping = EarlyStopping(patience=2, min_delta=0.001)
+        early_stopping = EarlyStopping(patience=3, min_delta=0.001)
 
         torch.manual_seed(42)
         if torch.cuda.is_available():
