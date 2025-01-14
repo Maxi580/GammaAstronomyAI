@@ -18,19 +18,19 @@ class TelescopeCNN(nn.Module):
             ConvHex(1, 4, kernel_size=3),
             nn.BatchNorm1d(4),
             nn.ReLU(),
-            nn.Dropout1d(0.3),
+            nn.Dropout1d(0.4),
 
-            ConvHex(4, 8, kernel_size=3),
+            ConvHex(4, 6, kernel_size=3),
+            nn.BatchNorm1d(6),
+            nn.ReLU(),
+            nn.Dropout1d(0.4),
+
+            ConvHex(6, 8, kernel_size=2),
             nn.BatchNorm1d(8),
             nn.ReLU(),
-            nn.Dropout1d(0.3),
-
-            ConvHex(8, 16, kernel_size=2),
-            nn.BatchNorm1d(16),
-            nn.ReLU(),
-            nn.Dropout1d(0.3),
+            nn.Dropout1d(0.4),
         )
-        self.pool = nn.AdaptiveAvgPool1d(128)
+        self.pool = nn.AdaptiveAvgPool1d(64)
 
     def forward(self, x):
         x = self.cnn(x)
@@ -46,7 +46,7 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(16 * 128 * 2, 512),
+            nn.Linear(8 * 64 * 2, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
             nn.Dropout(0.4),
