@@ -135,8 +135,8 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        m1_raw = torch.tensor(row['image_m1'], dtype=torch.float32)
-        m2_raw = torch.tensor(row['image_m2'], dtype=torch.float32)
+        m1_raw = torch.tensor(row['clean_image_m1'], dtype=torch.float32)
+        m2_raw = torch.tensor(row['clean_image_m2'], dtype=torch.float32)
         features = extract_features(row)
 
         return m1_raw, m2_raw, features, self.labels[label]

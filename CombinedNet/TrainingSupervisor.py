@@ -154,9 +154,8 @@ class EarlyStopping:
 
 
 class TrainingSupervisor:
-    TEMP_DATA_SPLIT: float = 0.3
-    TEST_DATA_SPLIT: float = 0.1
-    BATCH_SIZE: int = 16
+    VAL_SPLIT: float = 0.3
+    BATCH_SIZE: int = 8
     LEARNING_RATE: float = 3e-4
     WEIGHT_DECAY: float = 0.01
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
@@ -219,7 +218,7 @@ class TrainingSupervisor:
         # Stratified splitting using sklearn (shuffles indices)
         train_indices, val_indices = train_test_split(
             np.arange(len(self.dataset)),
-            test_size=self.TEMP_DATA_SPLIT,
+            test_size=self.VAL_SPLIT,
             stratify=labels,
             shuffle=True,
             random_state=42,

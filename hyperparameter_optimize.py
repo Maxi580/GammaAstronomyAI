@@ -4,12 +4,14 @@ import time
 import gc
 import torch
 from CombinedNet.TrainingSupervisor import TrainingSupervisor
+from CNN.ConvolutionLayers.ConvHex import ConvHex
 import torch.nn as nn
 
 from CombinedNet.magicDataset import MagicDataset
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 NUM_OF_HEXAGONS = 1039
+
 
 def clean_memory():
     gc.collect()
@@ -27,25 +29,44 @@ def create_model_with_params(trial):
     class TelescopeCNN(nn.Module):
         def __init__(self):
             super().__init__()
-            channels1 = trial.suggest_int('cnn_channels1', 4, 16)
-            channels2 = trial.suggest_int('cnn_channels2', 8, 32)
-            dropout_cnn_1 = trial.suggest_float('dropout_cnn_1', 0.05, 0.5)
-            dropout_cnn_2 = trial.suggest_float('dropout_cnn_2', 0.05, 0.5)
+            kernel_size1 = trial.suggest_int('kernel_size1', 1, 5)
+            kernel_size2 = trial.suggest_int('kernel_size2', 1, 5)
+            kernel_size3 = trial.suggest_int('kernel_size3', 1, 5)
+            channels1 = trial.suggest_int('cnn_channels1', 2, 16)
+            channels2 = trial.suggest_int('cnn_channels2', 2, 32)
+            channels3 = trial.suggest_int('cnn_channels3', 2, 48)
+            dropout_cnn_1 = trial.suggest_float('dropout_cnn_1', 0.05, 0.8)
+            dropout_cnn_2 = trial.suggest_float('dropout_cnn_2', 0.05, 0.8)
+            dropout_cnn_3 = trial.suggest_float('dropout_cnn_3', 0.05, 0.8)
+
+            use_pooling = trial.suggest_categorical('use_pooling', [True, False])
+            pool_size = None
+            if use_pooling:
+                pool_size = trial.suggest_int('average_pool', 16, 520)
 
             self.cnn = nn.Sequential(
-                nn.Conv1d(1, channels1, kernel_size=3),
+                ConvHex(1, channels1, kernel_size=3),
                 nn.BatchNorm1d(channels1),
                 nn.ReLU(),
                 nn.Dropout1d(dropout_cnn_1),
 
-                nn.Conv1d(channels1, channels2, kernel_size=2),
+                ConvHex(channels1, channels2, kernel_size=3),
                 nn.BatchNorm1d(channels2),
                 nn.ReLU(),
                 nn.Dropout1d(dropout_cnn_2),
+
+                ConvHex(channels2, channels3, kernel_size=2),
+                nn.BatchNorm1d(channels3),
+                nn.ReLU(),
+                nn.Dropout1d(dropout_cnn_3),
             )
+            self.pool = nn.AdaptiveAvgPool1d(pool_size) if pool_size else None
 
         def forward(self, x):
-            return self.cnn(x)
+            x = self.cnn(x)
+            if self.pool is not None:
+                x = self.pool(x)
+            return x
 
     class CustomCombinedNet(nn.Module):
         def __init__(self):
@@ -54,10 +75,15 @@ def create_model_with_params(trial):
             self.m1_cnn = TelescopeCNN()
             self.m2_cnn = TelescopeCNN()
 
-            channels2 = trial.params['cnn_channels2']
-            linear_input_size = channels2 * 1036 * 2 + 59
+            use_pooling = trial.params['use_pooling']
+            channels3 = trial.params['cnn_channels3']
 
-            # Let optuna choose linear layer sizes
+            if use_pooling:
+                pool_size = trial.params['average_pool']
+                linear_input_size = channels3 * pool_size * 2
+            else:
+                linear_input_size = channels3 * NUM_OF_HEXAGONS * 2
+
             linear1_size = trial.suggest_int('linear1_size', 512, 2048, step=256)
             linear2_size = trial.suggest_int('linear2_size', 128, 512, step=64)
             dropout_linear_1 = trial.suggest_float('dropout_linear_1', 0.05, 0.5)
@@ -87,7 +113,7 @@ def create_model_with_params(trial):
             m1_features = m1_features.flatten(1)
             m2_features = m2_features.flatten(1)
 
-            combined = torch.cat([m1_features, m2_features, measurement_features], dim=1)
+            combined = torch.cat([m1_features, m2_features], dim=1)
             return self.classifier(combined)
 
     return CustomCombinedNet()

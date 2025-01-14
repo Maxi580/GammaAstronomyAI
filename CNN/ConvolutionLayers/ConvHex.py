@@ -21,11 +21,6 @@ class ConvHex(nn.Module):
             torch.empty((out_channels, in_channels // groups, total_inputs))
         )
 
-        # When there are not enough neighbors just setting to 0 would be kinda wrong
-        self.padding_values = nn.Parameter(
-            torch.zeros(in_channels)
-        )
-
         if bias:
             self.bias = nn.Parameter(torch.empty(out_channels))
         else:
@@ -36,7 +31,6 @@ class ConvHex(nn.Module):
         self.out_channels = out_channels
         self.total_inputs = total_inputs
 
-        self.batch_norm = nn.BatchNorm1d(out_channels)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -60,11 +54,23 @@ class ConvHex(nn.Module):
 
         # Get neighbor values
         neighbor_values = x[:, :, neighbor_indices]
-        padding_values = self.padding_values.view(1, -1, 1, 1)
+
+        # Calculate average Value
+        expanded_mask = valid_mask.unsqueeze(0).unsqueeze(1)
+        valid_sum = torch.where(
+            expanded_mask,
+            neighbor_values,
+            torch.zeros_like(neighbor_values)
+        ).sum(dim=3, keepdim=True)
+        total_sum = valid_sum + center_values
+        valid_count = expanded_mask.sum(dim=3, keepdim=True).float() + 1.0
+        avg_values = total_sum / valid_count
+
+        # Replace padding values with average
         neighbor_values = torch.where(
-            valid_mask.unsqueeze(0).unsqueeze(1),
-            neighbor_values,  # Use actual neighbor values where valid
-            padding_values  # Use learned padding values where invalid
+            expanded_mask,
+            neighbor_values,
+            avg_values.expand(-1, -1, -1, neighbor_values.size(3))
         )
 
         # Concatenate center and neighbor values
