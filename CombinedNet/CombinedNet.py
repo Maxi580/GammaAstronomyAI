@@ -30,7 +30,7 @@ class TelescopeCNN(nn.Module):
             nn.ReLU(),
             nn.Dropout1d(0.3),
         )
-        self.pool = nn.AdaptiveAvgPool1d(256)
+        self.pool = nn.AdaptiveAvgPool1d(128)
 
     def forward(self, x):
         x = self.cnn(x)
@@ -46,7 +46,7 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(256 * 2, 512),
+            nn.Linear(16 * 128 * 2, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
             nn.Dropout(0.4),
