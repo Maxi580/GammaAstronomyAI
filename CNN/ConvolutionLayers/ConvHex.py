@@ -36,6 +36,7 @@ class ConvHex(nn.Module):
         self.out_channels = out_channels
         self.total_inputs = total_inputs
 
+        self.batch_norm = nn.BatchNorm1d(out_channels)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -80,5 +81,7 @@ class ConvHex(nn.Module):
 
         if self.bias is not None:
             out = out + self.bias.view(1, -1, 1)
+
+        out = self.batch_norm(out)
 
         return out
