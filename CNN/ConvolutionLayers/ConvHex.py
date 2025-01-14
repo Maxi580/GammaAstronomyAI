@@ -82,6 +82,4 @@ class ConvHex(nn.Module):
         if self.bias is not None:
             out = out + self.bias.view(1, -1, 1)
 
-        out = self.batch_norm(out)
-
         return out

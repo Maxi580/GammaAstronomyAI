@@ -156,12 +156,12 @@ class EarlyStopping:
 class TrainingSupervisor:
     TEMP_DATA_SPLIT: float = 0.3
     TEST_DATA_SPLIT: float = 0.1
-    BATCH_SIZE: int = 8
-    LEARNING_RATE: float = 3.574293219560207e-05
-    WEIGHT_DECAY: float = 0.0029809712800553303
+    BATCH_SIZE: int = 16
+    LEARNING_RATE: float = 3e-4
+    WEIGHT_DECAY: float = 0.01
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
-    GRAD_CLIP_NORM: float = 4.601326343074392
+    GRAD_CLIP_NORM: float = 3
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
                  save_model: bool = False) -> None:
@@ -321,11 +321,11 @@ class TrainingSupervisor:
         steps_per_epoch = len(self.training_data_loader)
         scheduler = optim.lr_scheduler.OneCycleLR(
             optimizer,
-            max_lr=self.LEARNING_RATE * 2,
+            max_lr=self.LEARNING_RATE * 1.5,
             epochs=epochs,
             steps_per_epoch=steps_per_epoch,
-            pct_start=0.3,
-            div_factor=5,
+            pct_start=0.2,
+            div_factor=10,
         )
 
         early_stopping = EarlyStopping(patience=3, min_delta=0.001)
