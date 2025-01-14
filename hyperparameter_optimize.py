@@ -45,17 +45,17 @@ def create_model_with_params(trial):
                 pool_size = trial.suggest_int('average_pool', 16, 520)
 
             self.cnn = nn.Sequential(
-                ConvHex(1, channels1, kernel_size=3),
+                nn.Conv1d(1, channels1, kernel_size=3, padding='same'),
                 nn.BatchNorm1d(channels1),
                 nn.ReLU(),
                 nn.Dropout1d(dropout_cnn_1),
 
-                ConvHex(channels1, channels2, kernel_size=3),
+                nn.Conv1d(channels1, channels2, kernel_size=3, padding='same'),
                 nn.BatchNorm1d(channels2),
                 nn.ReLU(),
                 nn.Dropout1d(dropout_cnn_2),
 
-                ConvHex(channels2, channels3, kernel_size=2),
+                nn.Conv1d(channels2, channels3, kernel_size=2, padding='same'),
                 nn.BatchNorm1d(channels3),
                 nn.ReLU(),
                 nn.Dropout1d(dropout_cnn_3),
