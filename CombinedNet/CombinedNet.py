@@ -1,4 +1,3 @@
-import pandas as pd
 import torch
 import torch.nn as nn
 from CNN.ConvolutionLayers.ConvHex import ConvHex

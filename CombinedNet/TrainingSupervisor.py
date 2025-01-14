@@ -18,6 +18,13 @@ from CombinedNet.CombinedNet import CombinedNet
 from CombinedNet.magicDataset import MagicDataset
 from CombinedNet.resultsWriter import ResultsWriter
 
+np.random.seed(42)
+torch.manual_seed(42)
+if torch.cuda.is_available():
+    torch.cuda.manual_seed(42)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
 MetricsDict = TypedDict(
     "MetricsDict",
     {
@@ -120,6 +127,10 @@ def inference(data_loader, labels, model_path):
     print_metrics(labels, metrics)
 
     return metrics
+
+
+def worker_init_fn(worker_id):
+    np.random.seed(42 + worker_id)
 
 
 class EarlyStopping:
@@ -254,11 +265,14 @@ class TrainingSupervisor:
         val_dataset = Subset(self.dataset, val_indices)
         # test_dataset = Subset(self.dataset, test_indices)
 
+        generator = torch.Generator()
+        generator.manual_seed(42)
+
         training_data_loader = DataLoader(
-            train_dataset, batch_size=self.BATCH_SIZE, shuffle=True
+            train_dataset, batch_size=self.BATCH_SIZE, shuffle=True, generator=generator, worker_init_fn=worker_init_fn
         )
         val_data_loader = DataLoader(
-            val_dataset, batch_size=self.BATCH_SIZE, shuffle=False
+            val_dataset, batch_size=self.BATCH_SIZE, shuffle=False, generator=generator, worker_init_fn=worker_init_fn
         )
         """test_data_loader = DataLoader(
             test_dataset, batch_size=self.BATCH_SIZE, shuffle=False
