@@ -1,5 +1,4 @@
 from typing import NamedTuple
-from ctapipe.core import Provenance
 from ctapipe.instrument import CameraGeometry
 from importlib.resources import files
 import torch
@@ -14,7 +13,7 @@ class NeighborInfo(NamedTuple):
 _NEIGHBOR_CACHE = {}
 
 
-def sort_by_angle(pixel_positions, center_idx: int, neighbor_indices: list[int]) -> list[int]:
+def _sort_by_angle(pixel_positions, center_idx: int, neighbor_indices: list[int]) -> list[int]:
     """Resorting indices geometrically, by calculating angle that is always the same."""
     center_pos = pixel_positions[center_idx]
 
@@ -29,7 +28,13 @@ def sort_by_angle(pixel_positions, center_idx: int, neighbor_indices: list[int])
     return [n for _, n in sorted(zip(neighbor_angles, neighbor_indices))]
 
 
-def _get_neighbor_indices() -> list[list[int]]:
+def _get_valid_indices_after_pooling(pooling_kernel_size: int, num_pooling_layers: int):
+    stride = pooling_kernel_size ** num_pooling_layers
+    valid_indices = torch.arange(0, 1039, stride)
+    return valid_indices
+
+
+def _get_neighbor_indices(pooled: bool, pooling_kernel_size: int, num_pooling_layers: int) -> list[list[int]]:
     """Returns a list of Geometrically sorted neighbor indices
        Geometric starts top left and goes clockwise"""
     f = str(files("ctapipe_io_magic").joinpath("resources/MAGICCam.camgeom.fits.gz"))
@@ -38,15 +43,27 @@ def _get_neighbor_indices() -> list[list[int]]:
     pixel_positions = np.column_stack([geom.pix_x, geom.pix_y])
     neighbors = geom.neighbors
 
-    sorted_neighbors = [
-        sort_by_angle(pixel_positions, i, neighbor_list)
+    # Sort neighbors
+    neighbors = [
+        _sort_by_angle(pixel_positions, i, neighbor_list)
         for i, neighbor_list in enumerate(neighbors)
     ]
 
-    return sorted_neighbors
+    # Reduce Spatial Size if data was pooled
+    if pooled:
+        pooled_neighbors = []
+        valid_indices = _get_valid_indices_after_pooling(pooling_kernel_size, num_pooling_layers)
+
+        for valid_index in valid_indices:
+            valid_neighbor = neighbors[valid_index]
+            new_neighbors = [n for n in valid_neighbor if n in valid_indices]
+            pooled_neighbors.append(new_neighbors)
+        neighbors = pooled_neighbors
+
+    return neighbors
 
 
-def _get_neighbor_list_by_kernel(kernel_size: int) -> list[list[int]]:
+def _get_neighbor_list_by_kernel(kernel_size: int, pooled: bool, pooling_kernel_size: int, num_pooling_layers: int) -> list[list[int]]:
     """
     Get list of neighbors up to specified kernel size rings away
     kernel_size=1 -> immediate neighbors only (6 neighbors)
@@ -54,7 +71,7 @@ def _get_neighbor_list_by_kernel(kernel_size: int) -> list[list[int]]:
     kernel_size=3 -> three rings (36 neighbors)
     """
     # Get initial immediate neighbors for each hexagon
-    base_neighbors = _get_neighbor_indices()
+    base_neighbors = _get_neighbor_indices(pooled, pooling_kernel_size, num_pooling_layers)
 
     # For each hexagon, build expanded neighbor list
     expanded_neighbors = [[] for _ in range(len(base_neighbors))]
@@ -98,4 +115,4 @@ def get_neighbor_tensor(kernel_size: int) -> NeighborInfo:
 
 
 if __name__ == "__main__":
-    print(_get_neighbor_indices()[45])
+    print(_get_neighbor_indices(True, 2, 1)[45])

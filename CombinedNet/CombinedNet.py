@@ -18,16 +18,19 @@ class TelescopeCNN(nn.Module):
             ConvHex(1, 2, kernel_size=3),
             nn.BatchNorm1d(2),
             nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2),
             nn.Dropout1d(0.4),
 
             ConvHex(2, 4, kernel_size=3),
             nn.BatchNorm1d(4),
             nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2),
             nn.Dropout1d(0.4),
 
             ConvHex(4, 8, kernel_size=2),
             nn.BatchNorm1d(8),
             nn.ReLU(),
+            nn.MaxPool1d(kernel_size=2),
             nn.Dropout1d(0.4),
         )
         self.pool = nn.AdaptiveAvgPool1d(520)
