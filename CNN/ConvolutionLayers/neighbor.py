@@ -28,13 +28,43 @@ def _sort_by_angle(pixel_positions, center_idx: int, neighbor_indices: list[int]
     return [n for _, n in sorted(zip(neighbor_angles, neighbor_indices))]
 
 
-def _get_invalid_indices_after_pooling(pooling_kernel_size: int, num_pooling_layers: int) -> list[int]:
+def _get_valid_indices_after_pooling(pooling_kernel_size: int, num_pooling_layers: int) -> list[int]:
     stride = pooling_kernel_size ** num_pooling_layers
     pooled_size = 1039 // stride  # Size of Array after Pooling
-    all_indices = set(range(1039))
-    valid_indices = set(range(0, pooled_size * stride, stride))
-    invalid_indices = list(all_indices - valid_indices)
-    return invalid_indices
+    valid_indices = list(range(0, pooled_size * stride, stride))
+    return valid_indices
+
+
+def _get_pooled_neighbors(neighbors, pooling_kernel_size, num_pooling_layers, pixel_positions):
+    # Get valid indices after pooling
+    valid_indices = _get_valid_indices_after_pooling(pooling_kernel_size, num_pooling_layers)
+    valid_indices_set = set(valid_indices)
+
+    # Create mapping from original to pooled indices
+    index_mapping = {idx: i for i, idx in enumerate(valid_indices)}
+
+    pooled_neighbors = []
+    for valid_index in valid_indices:
+        current_neighbors = set()
+
+        # Process the kernel region starting at this valid index
+        # to get not only neighbors of the valid, but also of the indices that were pooled with it
+        for i in range(valid_index, min(valid_index + pooling_kernel_size, len(neighbors))):
+            # Get neighbors of current hex in kernel
+            for neighbor in neighbors[i]:
+                if neighbor in valid_indices_set:
+                    # Add the not mapped index at first
+                    current_neighbors.add(neighbor)
+
+        # Center hex cant be a neighbor
+        current_neighbors.discard(valid_index)
+        # Sort the neighbors based on their original positions
+        sorted_neighbors = _sort_by_angle(pixel_positions, valid_index, list(current_neighbors))
+        # After the indices are sorted geometrically, we can map them to their new index
+        pooled_sorted_neighbors = [index_mapping[n] for n in sorted_neighbors]
+        pooled_neighbors.append(pooled_sorted_neighbors)
+
+    return pooled_neighbors
 
 
 def _get_neighbor_indices(pooled: bool, pooling_kernel_size: int, num_pooling_layers: int) -> list[list[int]]:
@@ -46,21 +76,13 @@ def _get_neighbor_indices(pooled: bool, pooling_kernel_size: int, num_pooling_la
     pixel_positions = np.column_stack([geom.pix_x, geom.pix_y])
     neighbors = geom.neighbors
 
-    # Sort neighbors
-    neighbors = [
-        _sort_by_angle(pixel_positions, i, neighbor_list)
-        for i, neighbor_list in enumerate(neighbors)
-    ]
-
-    # Remove all indices that were pooled
     if pooled:
-        invalid_indices = _get_invalid_indices_after_pooling(pooling_kernel_size, num_pooling_layers)
-
-        pooled_neighbors = []
-        for neighbor_index in range(len(neighbors)):
-            if neighbor_index not in invalid_indices:
-                pooled_neighbors.append([n for n in neighbors[neighbor_index] if n not in invalid_indices])
-        neighbors = pooled_neighbors
+        neighbors = _get_pooled_neighbors(neighbors, pooling_kernel_size, num_pooling_layers, pixel_positions)
+    else:
+        neighbors = [
+            _sort_by_angle(pixel_positions, i, neighbor_list)
+            for i, neighbor_list in enumerate(neighbors)
+        ]
 
     return neighbors
 
@@ -119,4 +141,12 @@ def get_neighbor_tensor(kernel_size: int, pooled: bool, pooling_kernel_size: int
 
 
 if __name__ == '__main__':
-    _get_neighbor_indices(True, 2, 1)
+    pooled = _get_neighbor_indices(True, 2, 1)
+    print(f"Poolded: {pooled}")
+    standard = _get_neighbor_indices(False, 2, 1)
+    print(f"Standard: {standard}")
+
+    for ab in pooled:
+        for index in ab:
+            if index > 519:
+                print(f"ALARM: {index}")
