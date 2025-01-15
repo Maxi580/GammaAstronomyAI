@@ -28,10 +28,12 @@ def _sort_by_angle(pixel_positions, center_idx: int, neighbor_indices: list[int]
     return [n for _, n in sorted(zip(neighbor_angles, neighbor_indices))]
 
 
-def _get_valid_indices_after_pooling(pooling_kernel_size: int, num_pooling_layers: int):
+def _get_invalid_indices_after_pooling(pooling_kernel_size: int, num_pooling_layers: int) -> list[int]:
     stride = pooling_kernel_size ** num_pooling_layers
-    valid_indices = torch.arange(0, 1039, stride)
-    return valid_indices
+    all_indices = set(range(1039))
+    valid_indices = set(range(0, 1039, stride))
+    invalid_indices = list(all_indices - valid_indices)
+    return invalid_indices
 
 
 def _get_neighbor_indices(pooled: bool, pooling_kernel_size: int, num_pooling_layers: int) -> list[list[int]]:
@@ -49,16 +51,15 @@ def _get_neighbor_indices(pooled: bool, pooling_kernel_size: int, num_pooling_la
         for i, neighbor_list in enumerate(neighbors)
     ]
 
-    # Reduce Spatial Size if data was pooled
+    # Remove all indices that were pooled
     if pooled:
-        pooled_neighbors = []
-        valid_indices = _get_valid_indices_after_pooling(pooling_kernel_size, num_pooling_layers)
+        invalid_indices = _get_invalid_indices_after_pooling(pooling_kernel_size, num_pooling_layers)
 
-        for valid_index in valid_indices:
-            valid_neighbor = neighbors[valid_index]
-            new_neighbors = [n for n in valid_neighbor if n in valid_indices]
-            pooled_neighbors.append(new_neighbors)
-        neighbors = pooled_neighbors
+        for neighbor_index in range(len(neighbors)):
+            if neighbor_index in invalid_indices:
+                neighbors[neighbor_index] = []
+            else:
+                neighbors[neighbor_index] = [n for n in neighbors[neighbor_index] if n not in invalid_indices]
 
     return neighbors
 
