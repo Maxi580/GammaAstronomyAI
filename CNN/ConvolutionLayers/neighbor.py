@@ -67,7 +67,7 @@ def _get_pooled_neighbors(neighbors, pooling_kernel_size, num_pooling_layers, pi
     return pooled_neighbors
 
 
-def _get_neighbor_indices(pooled: bool, pooling_kernel_size: int, num_pooling_layers: int) -> list[list[int]]:
+def _get_neighbor_indices(pooling: bool, pooling_kernel_size: int, num_pooling_layers: int) -> list[list[int]]:
     """Returns a list of Geometrically sorted neighbor indices
        Geometric starts top left and goes clockwise"""
     f = str(files("ctapipe_io_magic").joinpath("resources/MAGICCam.camgeom.fits.gz"))
@@ -76,7 +76,7 @@ def _get_neighbor_indices(pooled: bool, pooling_kernel_size: int, num_pooling_la
     pixel_positions = np.column_stack([geom.pix_x, geom.pix_y])
     neighbors = geom.neighbors
 
-    if pooled:
+    if pooling:
         neighbors = _get_pooled_neighbors(neighbors, pooling_kernel_size, num_pooling_layers, pixel_positions)
     else:
         neighbors = [
@@ -87,7 +87,7 @@ def _get_neighbor_indices(pooled: bool, pooling_kernel_size: int, num_pooling_la
     return neighbors
 
 
-def _get_neighbor_list_by_kernel(kernel_size: int, pooled: bool, pooling_kernel_size: int, num_pooling_layers: int) \
+def _get_neighbor_list_by_kernel(kernel_size: int, pooling: bool, pooling_kernel_size: int, num_pooling_layers: int) \
         -> list[list[int]]:
     """
     Get list of neighbors up to specified kernel size rings away
@@ -96,7 +96,7 @@ def _get_neighbor_list_by_kernel(kernel_size: int, pooled: bool, pooling_kernel_
     kernel_size=3 -> three rings (36 neighbors)
     """
     # Get initial immediate neighbors for each hexagon
-    base_neighbors = _get_neighbor_indices(pooled, pooling_kernel_size, num_pooling_layers)
+    base_neighbors = _get_neighbor_indices(pooling, pooling_kernel_size, num_pooling_layers)
 
     # For each hexagon, build expanded neighbor list
     expanded_neighbors = [[] for _ in range(len(base_neighbors))]
@@ -140,15 +140,3 @@ def get_neighbor_tensor(kernel_size: int, pooling: bool, pooling_kernel_size: in
         _NEIGHBOR_CACHE[cache_key] = NeighborInfo(tensor, max_neighbors)
 
     return _NEIGHBOR_CACHE[cache_key]
-
-
-if __name__ == '__main__':
-    pooled = _get_neighbor_indices(True, 2, 1)
-    print(f"Poolded: {len(pooled)}")
-    standard = _get_neighbor_indices(False, 2, 1)
-    print(f"Standard: {standard}")
-
-    for ab in pooled:
-        for index in ab:
-            if index > 519:
-                print(f"ALARM: {index}")
