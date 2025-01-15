@@ -123,13 +123,13 @@ def _get_neighbor_list_by_kernel(kernel_size: int, pooled: bool, pooling_kernel_
     return expanded_neighbors
 
 
-def get_neighbor_tensor(kernel_size: int, pooled: bool, pooling_kernel_size: int, num_pooling_layers: int) \
+def get_neighbor_tensor(kernel_size: int, pooling: bool, pooling_kernel_size: int, num_pooling_layers: int) \
         -> NeighborInfo:
     """Move to gpu for efficiency"""
-    cache_key = (kernel_size, pooled, pooling_kernel_size, num_pooling_layers)
+    cache_key = (kernel_size, pooling, pooling_kernel_size, num_pooling_layers)
 
     if cache_key not in _NEIGHBOR_CACHE:
-        neighbors_list = _get_neighbor_list_by_kernel(kernel_size, pooled, pooling_kernel_size, num_pooling_layers)
+        neighbors_list = _get_neighbor_list_by_kernel(kernel_size, pooling, pooling_kernel_size, num_pooling_layers)
         max_neighbors = max(len(neighbors) for neighbors in neighbors_list)
 
         padded_neighbors = [
