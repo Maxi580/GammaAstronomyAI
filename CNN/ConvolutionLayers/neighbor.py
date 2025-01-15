@@ -30,8 +30,9 @@ def _sort_by_angle(pixel_positions, center_idx: int, neighbor_indices: list[int]
 
 def _get_invalid_indices_after_pooling(pooling_kernel_size: int, num_pooling_layers: int) -> list[int]:
     stride = pooling_kernel_size ** num_pooling_layers
+    pooled_size = 1039 // stride  # Size of Array after Pooling
     all_indices = set(range(1039))
-    valid_indices = set(range(0, 1039, stride))
+    valid_indices = set(range(0, pooled_size * stride, stride))
     invalid_indices = list(all_indices - valid_indices)
     return invalid_indices
 
@@ -55,16 +56,16 @@ def _get_neighbor_indices(pooled: bool, pooling_kernel_size: int, num_pooling_la
     if pooled:
         invalid_indices = _get_invalid_indices_after_pooling(pooling_kernel_size, num_pooling_layers)
 
+        pooled_neighbors = []
         for neighbor_index in range(len(neighbors)):
-            if neighbor_index in invalid_indices:
-                neighbors[neighbor_index] = []
-            else:
-                neighbors[neighbor_index] = [n for n in neighbors[neighbor_index] if n not in invalid_indices]
+            if neighbor_index not in invalid_indices:
+                pooled_neighbors.append([n for n in neighbors[neighbor_index] if n not in invalid_indices])
+        neighbors = pooled_neighbors
 
     return neighbors
 
 
-def _get_neighbor_list_by_kernel(kernel_size: int, pooled: bool, pooling_kernel_size: int, num_pooling_layers: int)\
+def _get_neighbor_list_by_kernel(kernel_size: int, pooled: bool, pooling_kernel_size: int, num_pooling_layers: int) \
         -> list[list[int]]:
     """
     Get list of neighbors up to specified kernel size rings away
@@ -115,3 +116,7 @@ def get_neighbor_tensor(kernel_size: int, pooled: bool, pooling_kernel_size: int
         _NEIGHBOR_CACHE[kernel_size] = NeighborInfo(tensor, max_neighbors)
 
     return _NEIGHBOR_CACHE[kernel_size]
+
+
+if __name__ == '__main__':
+    _get_neighbor_indices(True, 2, 1)
