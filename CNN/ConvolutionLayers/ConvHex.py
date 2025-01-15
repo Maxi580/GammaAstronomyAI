@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 from torch.nn import init
@@ -6,14 +8,15 @@ from CNN.ConvolutionLayers.neighbor import get_neighbor_tensor
 
 
 class ConvHex(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, groups=1, bias=True):
+    def __init__(self, in_channels, out_channels, kernel_size, pooled=False, pooling_cnt=0, pooling_kernel_size=2,
+                 groups=1, bias=True):
         super().__init__()
         if in_channels % groups != 0:
             raise ValueError("in_channels must be divisible by groups")
         if out_channels % groups != 0:
             raise ValueError("out_channels must be divisible by groups")
 
-        neighbor_info = get_neighbor_tensor(kernel_size)
+        neighbor_info = get_neighbor_tensor(kernel_size, pooled, pooling_cnt, pooling_kernel_size)
         self.register_buffer('neighbors', neighbor_info.tensor)
 
         total_inputs = neighbor_info.max_neighbors + 1

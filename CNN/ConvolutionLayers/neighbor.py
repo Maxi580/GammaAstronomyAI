@@ -63,7 +63,8 @@ def _get_neighbor_indices(pooled: bool, pooling_kernel_size: int, num_pooling_la
     return neighbors
 
 
-def _get_neighbor_list_by_kernel(kernel_size: int, pooled: bool, pooling_kernel_size: int, num_pooling_layers: int) -> list[list[int]]:
+def _get_neighbor_list_by_kernel(kernel_size: int, pooled: bool, pooling_kernel_size: int, num_pooling_layers: int)\
+        -> list[list[int]]:
     """
     Get list of neighbors up to specified kernel size rings away
     kernel_size=1 -> immediate neighbors only (6 neighbors)
@@ -98,10 +99,11 @@ def _get_neighbor_list_by_kernel(kernel_size: int, pooled: bool, pooling_kernel_
     return expanded_neighbors
 
 
-def get_neighbor_tensor(kernel_size: int) -> NeighborInfo:
+def get_neighbor_tensor(kernel_size: int, pooled: bool, pooling_kernel_size: int, num_pooling_layers: int) \
+        -> NeighborInfo:
     """Move to gpu for efficiency"""
     if kernel_size not in _NEIGHBOR_CACHE:
-        neighbors_list = _get_neighbor_list_by_kernel(kernel_size)
+        neighbors_list = _get_neighbor_list_by_kernel(kernel_size, pooled, pooling_kernel_size, num_pooling_layers)
         max_neighbors = max(len(neighbors) for neighbors in neighbors_list)
 
         padded_neighbors = [
@@ -112,7 +114,3 @@ def get_neighbor_tensor(kernel_size: int) -> NeighborInfo:
         _NEIGHBOR_CACHE[kernel_size] = NeighborInfo(tensor, max_neighbors)
 
     return _NEIGHBOR_CACHE[kernel_size]
-
-
-if __name__ == "__main__":
-    print(_get_neighbor_indices(True, 2, 1)[45])
