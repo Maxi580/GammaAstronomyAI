@@ -126,7 +126,9 @@ def _get_neighbor_list_by_kernel(kernel_size: int, pooled: bool, pooling_kernel_
 def get_neighbor_tensor(kernel_size: int, pooled: bool, pooling_kernel_size: int, num_pooling_layers: int) \
         -> NeighborInfo:
     """Move to gpu for efficiency"""
-    if kernel_size not in _NEIGHBOR_CACHE:
+    cache_key = (kernel_size, pooled, pooling_kernel_size, num_pooling_layers)
+
+    if cache_key not in _NEIGHBOR_CACHE:
         neighbors_list = _get_neighbor_list_by_kernel(kernel_size, pooled, pooling_kernel_size, num_pooling_layers)
         max_neighbors = max(len(neighbors) for neighbors in neighbors_list)
 
@@ -135,14 +137,14 @@ def get_neighbor_tensor(kernel_size: int, pooled: bool, pooling_kernel_size: int
             for neighbors in neighbors_list
         ]
         tensor = torch.tensor(padded_neighbors, dtype=torch.long)
-        _NEIGHBOR_CACHE[kernel_size] = NeighborInfo(tensor, max_neighbors)
+        _NEIGHBOR_CACHE[cache_key] = NeighborInfo(tensor, max_neighbors)
 
-    return _NEIGHBOR_CACHE[kernel_size]
+    return _NEIGHBOR_CACHE[cache_key]
 
 
 if __name__ == '__main__':
     pooled = _get_neighbor_indices(True, 2, 1)
-    print(f"Poolded: {pooled}")
+    print(f"Poolded: {len(pooled)}")
     standard = _get_neighbor_indices(False, 2, 1)
     print(f"Standard: {standard}")
 

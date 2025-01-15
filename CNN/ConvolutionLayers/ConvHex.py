@@ -44,6 +44,8 @@ class ConvHex(nn.Module):
 
     def forward(self, x):
         batch_size, in_channels, num_hex = x.shape
+        print("\nStarting forward pass:")
+        print(f"Input x shape: {x.shape}")
 
         if in_channels != self.in_channels:
             raise ValueError(f"Expected {self.in_channels} channels but got {in_channels}")
@@ -51,12 +53,16 @@ class ConvHex(nn.Module):
         # Get valid mask and indices (Not all hexagons have max_neighbors, these values are padded)
         valid_mask = (self.neighbors >= 0)
         neighbor_indices = self.neighbors.clamp(min=0)  # Set padded Values to 0
+        print(f"Neighbor indices shape: {neighbor_indices.shape}")  # This is crucial
+        print(f"Max neighbor index: {neighbor_indices.max()}")
 
         # [batch_size, in_channels, num_hex] => [batch_size, in_channels, num_hex, 1]
         center_values = x.unsqueeze(3)
+        print(f"Center values shape: {center_values.shape}")
 
         # Get neighbor values
         neighbor_values = x[:, :, neighbor_indices]
+        print(f"Neighbor values shape: {neighbor_values.shape}")
 
         # Calculate average Value
         expanded_mask = valid_mask.unsqueeze(0).unsqueeze(1)
@@ -65,6 +71,8 @@ class ConvHex(nn.Module):
             neighbor_values,
             torch.zeros_like(neighbor_values)
         ).sum(dim=3, keepdim=True)
+        print(f"Valid sum shape: {valid_sum.shape}")
+        print(f"Center values shape before add: {center_values.shape}")
         total_sum = valid_sum + center_values
         valid_count = expanded_mask.sum(dim=3, keepdim=True).float() + 1.0
         avg_values = total_sum / valid_count
