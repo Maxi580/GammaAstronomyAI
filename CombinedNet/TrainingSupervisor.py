@@ -156,8 +156,8 @@ class EarlyStopping:
 class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
     BATCH_SIZE: int = 8
-    LEARNING_RATE: float = 1e-4
-    WEIGHT_DECAY: float = 0.01
+    LEARNING_RATE: float = 1e-5
+    WEIGHT_DECAY: float = 0.05
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     GRAD_CLIP_NORM: float = 3
@@ -309,7 +309,7 @@ class TrainingSupervisor:
     def train_model(self, epochs: int):
         weight_proton, weight_gamma = self.calculate_weight_distribution()
         class_weights = torch.tensor([weight_proton, weight_gamma]).to(self.device)
-        criterion = nn.CrossEntropyLoss(weight=class_weights)
+        criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
 
         optimizer = optim.AdamW(
             self.model.parameters(),
@@ -327,7 +327,7 @@ class TrainingSupervisor:
             div_factor=10,
         )
 
-        early_stopping = EarlyStopping(patience=3, min_delta=0.001)
+        early_stopping = EarlyStopping(patience=5, min_delta=0.001)
 
         torch.manual_seed(42)
         if torch.cuda.is_available():
