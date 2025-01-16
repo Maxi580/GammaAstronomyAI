@@ -386,34 +386,24 @@ class TrainingSupervisor:
         train_labels = []
         train_loss = 0
 
-        optimizer.zero_grad()
-        accumulated_loss = 0
-        accumulation_steps = 4
-
         self.model.train()
         batch_cntr = 1
         total_batches = len(self.training_data_loader)
-
-        for i, batch in enumerate(self.training_data_loader):
+        for batch in self.training_data_loader:
             m1_images, m2_images, features, labels = self._extract_batch(batch)
 
             optimizer.zero_grad()
             outputs = self.model(m1_images, m2_images, features)
 
             loss = criterion(outputs, labels)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.GRAD_CLIP_NORM)
             loss.backward()
-            accumulated_loss += loss.item()
-
-            if (i + 1) % accumulation_steps == 0:
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.GRAD_CLIP_NORM)
-                optimizer.step()
-                optimizer.zero_grad()
-                accumulated_loss = 0
+            optimizer.step()
 
             _, predicted = outputs.max(1)
             train_preds.extend(predicted.cpu().numpy())
             train_labels.extend(labels.cpu().numpy())
-            train_loss += loss.item() * accumulation_steps
+            train_loss += loss.item()
 
             if self.debug_info and batch_cntr % 1000 == 0:
                 current_accuracy = 100.0 * accuracy_score(train_labels, train_preds)
