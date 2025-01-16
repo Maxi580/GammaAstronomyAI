@@ -317,14 +317,12 @@ class TrainingSupervisor:
             weight_decay=self.WEIGHT_DECAY
         )
 
-        steps_per_epoch = len(self.training_data_loader)
-        scheduler = optim.lr_scheduler.OneCycleLR(
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
-            max_lr=self.LEARNING_RATE * 1.5,
-            epochs=epochs,
-            steps_per_epoch=steps_per_epoch,
-            pct_start=0.2,
-            div_factor=10,
+            mode='min',
+            factor=0.1,
+            patience=2,
+            min_lr=1e-6
         )
 
         early_stopping = EarlyStopping(patience=5, min_delta=0.001)
@@ -344,7 +342,7 @@ class TrainingSupervisor:
                 print_metrics(self.dataset.labels, train_metrics)
 
             val_metrics = self._validation_step(criterion)
-            scheduler.step()
+            scheduler.step(val_metrics['loss'])
 
             if self.debug_info:
                 print(f"\nValidation Metrics of epoch: {epoch + 1}: \n")
