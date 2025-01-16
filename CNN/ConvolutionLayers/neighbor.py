@@ -68,12 +68,12 @@ def _get_pooled_neighbors(neighbors, pooling_kernel_size, num_pooling_layers, pi
 
 
 def _get_neighbor_indices(pooling: bool, pooling_kernel_size: int, num_pooling_layers: int) -> list[list[int]]:
-    """Returns a list of Geometrically sorted neighbor indicesi
+    """Returns a list of Geometrically sorted neighbor indices
        Geometric starts top left and goes clockwise"""
-    f = str(files("ctapipe_io_magic").joinpath("resources/MAGIiCCam.camgeom.fits.gz"))
+    f = str(files("ctapipe_io_magic").joinpath("resources/MAGICCam.camgeom.fits.gz"))
     geom = CameraGeometry.from_table(f)
 
-    pixel_positions = np.column_stack([geom.pix_x, geom.pix_yi])
+    pixel_positions = np.column_stack([geom.pix_x, geom.pix_y])
     neighbors = geom.neighbors
 
     if pooling:
