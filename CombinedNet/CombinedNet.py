@@ -45,22 +45,17 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(32 * 259 * 2, 2048),
-            nn.BatchNorm1d(2048),
+            nn.Linear(32 * 259 * 2, 1024),
+            nn.BatchNorm1d(1024),
             nn.ReLU(),
             nn.Dropout(0.2),
 
-            nn.Linear(2048, 512),
-            nn.BatchNorm1d(512),
+            nn.Linear(1024, 256),
+            nn.BatchNorm1d(256),
             nn.ReLU(),
             nn.Dropout(0.2),
 
-            nn.Linear(512, 128),
-            nn.BatchNorm1d(128),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-
-            nn.Linear(128, 2)
+            nn.Linear(256, 2)
         )
 
     def forward(self, m1_image, m2_image, measurement_features):
