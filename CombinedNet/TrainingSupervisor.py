@@ -155,7 +155,7 @@ class EarlyStopping:
 
 class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
-    BATCH_SIZE: int = 8
+    BATCH_SIZE: int = 16
     LEARNING_RATE: float = 1e-5
     WEIGHT_DECAY: float = 0.05
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"

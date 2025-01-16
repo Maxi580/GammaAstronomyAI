@@ -21,7 +21,7 @@ class TelescopeCNN(nn.Module):
             nn.MaxPool1d(kernel_size=2),
             nn.Dropout1d(0.2),
 
-            ConvHex(8, 16, kernel_size=2, pooling=False, pooling_cnt=1, pooling_kernel_size=2),
+            ConvHex(8, 16, kernel_size=2, pooling=True, pooling_cnt=1, pooling_kernel_size=2),
             nn.BatchNorm1d(16),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=2),
