@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+
 from CNN.ConvolutionLayers.ConvHex import ConvHex
 
 NUM_OF_HEXAGONS = 1039
@@ -46,16 +47,21 @@ class CombinedNet(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Linear(32 * 259 * 2, 1024),
-            nn.BatchNorm1d(1024),
+            # nn.BatchNorm1d(1024),
             nn.ReLU(),
             nn.Dropout(0.2),
 
             nn.Linear(1024, 256),
-            nn.BatchNorm1d(256),
+            # nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            
+            nn.Linear(256, 32),
+            # nn.BatchNorm1d(256),
             nn.ReLU(),
             nn.Dropout(0.2),
 
-            nn.Linear(256, 2)
+            nn.Linear(32, 2)
         )
 
     def forward(self, m1_image, m2_image, measurement_features):

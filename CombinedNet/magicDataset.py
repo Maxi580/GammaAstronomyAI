@@ -1,8 +1,9 @@
+from typing import Any, Dict, Optional, Tuple
+
+import pandas as pd
+import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
-import pandas as pd
-from typing import Dict, Tuple, Any, Optional
-import pyarrow.parquet as pq
 
 
 def replace_nan(value):
@@ -113,8 +114,12 @@ class MagicDataset(Dataset):
             print(f"Calculated Number of Protons: {self.n_protons}")
             print(f"Calculated Number of Protons: {self.n_gammas}")
 
-        self.proton_data = pd.read_parquet(proton_filename).iloc[:self.n_protons]
-        self.gamma_data = pd.read_parquet(gamma_filename).iloc[:self.n_gammas]
+        # Read the first num_rows rows
+        self.proton_data = read_parquet_limit(proton_filename, self.n_protons)
+        self.gamma_data = read_parquet_limit(gamma_filename, self.n_gammas)
+
+        # self.proton_data = pd.read_parquet(proton_filename, engine='fastparquet', rows=self.n_protons)
+        # self.gamma_data = pd.read_parquet(gamma_filename, engine='fastparquet', rows=self.n_gammas)
         self.length = self.n_protons + self.n_gammas
         self.labels = {self.PROTON_LABEL: 0, self.GAMMA_LABEL: 1}
 
@@ -156,3 +161,11 @@ class MagicDataset(Dataset):
         }
 
         return {'total_samples': total_samples, 'distribution': distribution}
+
+
+def read_parquet_limit(filename, max_rows):
+    parquet_file_stream = pq.ParquetFile(filename).iter_batches(batch_size=max_rows)
+    
+    batch = next(parquet_file_stream)
+    
+    return batch.to_pandas()

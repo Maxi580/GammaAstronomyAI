@@ -1,19 +1,15 @@
 import os
-from typing import TypedDict, Literal
+from typing import Literal, TypedDict
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    f1_score,
-    precision_score,
-    recall_score,
-)
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
+                             precision_score, recall_score)
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
+
 from CombinedNet.CombinedNet import CombinedNet
 from CombinedNet.magicDataset import MagicDataset
 from CombinedNet.resultsWriter import ResultsWriter
@@ -364,7 +360,7 @@ class TrainingSupervisor:
                 break
 
         if self.debug_info:
-            self.write_results(epochs)
+            self.write_results(epoch + 1)
 
         """if self.debug_info:
             print("Running Inference on Test Sample")
