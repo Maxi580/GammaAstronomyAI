@@ -2,9 +2,6 @@
     "[python]": {
         "editor.formatOnType": false,
         "editor.formatOnSave": false,
-        "editor.defaultFormatter": "ms-python.black-formatter",
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "explicit"
-        },
+        "editor.defaultFormatter": "ms-python.black-formatter"
     }
 }
