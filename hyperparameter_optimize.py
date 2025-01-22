@@ -29,44 +29,51 @@ def create_model_with_params(trial):
     class TelescopeCNN(nn.Module):
         def __init__(self):
             super().__init__()
-            kernel_size1 = trial.suggest_int('kernel_size1', 1, 5)
-            kernel_size2 = trial.suggest_int('kernel_size2', 1, 5)
-            kernel_size3 = trial.suggest_int('kernel_size3', 1, 5)
-            channels1 = trial.suggest_int('cnn_channels1', 2, 16)
-            channels2 = trial.suggest_int('cnn_channels2', 2, 32)
-            channels3 = trial.suggest_int('cnn_channels3', 2, 48)
-            dropout_cnn_1 = trial.suggest_float('dropout_cnn_1', 0.05, 0.8)
-            dropout_cnn_2 = trial.suggest_float('dropout_cnn_2', 0.05, 0.8)
-            dropout_cnn_3 = trial.suggest_float('dropout_cnn_3', 0.05, 0.8)
 
-            use_pooling = trial.suggest_categorical('use_pooling', [True, False])
-            pool_size = None
-            if use_pooling:
-                pool_size = trial.suggest_int('average_pool', 16, 520)
+            pooling_pattern = [
+                trial.suggest_categorical(f'pooling_layer_{i}', [True, False])
+                for i in range(3)
+            ]
 
-            self.cnn = nn.Sequential(
-                nn.Conv1d(1, channels1, kernel_size=3, padding='same'),
-                nn.BatchNorm1d(channels1),
-                nn.ReLU(),
-                nn.Dropout1d(dropout_cnn_1),
+            channels = [
+                1,
+                trial.suggest_int('cnn_channels1', 2, 16),
+                trial.suggest_int('cnn_channels2', 4, 32),
+                trial.suggest_int('cnn_channels3', 8, 48)
+            ]
 
-                nn.Conv1d(channels1, channels2, kernel_size=3, padding='same'),
-                nn.BatchNorm1d(channels2),
-                nn.ReLU(),
-                nn.Dropout1d(dropout_cnn_2),
+            layers = []
+            pooling_count = 0
 
-                nn.Conv1d(channels2, channels3, kernel_size=2, padding='same'),
-                nn.BatchNorm1d(channels3),
-                nn.ReLU(),
-                nn.Dropout1d(dropout_cnn_3),
-            )
-            self.pool = nn.AdaptiveAvgPool1d(pool_size) if pool_size else None
+            for i in range(3):
+                layers.append(
+                    ConvHex(
+                        channels[i],
+                        channels[i + 1],
+                        kernel_size=trial.suggest_int(f'kernel_size{i + 1}', 1, 5),
+                        pooling=pooling_pattern[i],
+                        pooling_cnt=pooling_count,
+                        pooling_kernel_size=2
+                    )
+                )
+
+                layers.extend([
+                    nn.BatchNorm1d(channels[i + 1]),
+                    nn.ReLU(),
+                ])
+
+                if pooling_pattern[i]:
+                    layers.append(nn.MaxPool1d(kernel_size=2))
+                    pooling_count += 1
+
+                layers.append(nn.Dropout1d(
+                    trial.suggest_float(f'dropout_cnn_{i + 1}', 0.05, 0.6)
+                ))
+
+            self.cnn = nn.Sequential(*layers)
 
         def forward(self, x):
-            x = self.cnn(x)
-            if self.pool is not None:
-                x = self.pool(x)
-            return x
+            return self.cnn(x)
 
     class CustomCombinedNet(nn.Module):
         def __init__(self):
@@ -75,32 +82,31 @@ def create_model_with_params(trial):
             self.m1_cnn = TelescopeCNN()
             self.m2_cnn = TelescopeCNN()
 
-            use_pooling = trial.params['use_pooling']
             channels3 = trial.params['cnn_channels3']
-
-            if use_pooling:
-                pool_size = trial.params['average_pool']
-                linear_input_size = channels3 * pool_size * 2
-            else:
-                linear_input_size = channels3 * NUM_OF_HEXAGONS * 2
+            num_pooling = sum(1 for i in range(3) if trial.params[f'pooling_layer_{i}'])
+            input_size = channels3 * (1039 // (2 ** num_pooling)) * 2
 
             linear1_size = trial.suggest_int('linear1_size', 512, 2048, step=256)
             linear2_size = trial.suggest_int('linear2_size', 128, 512, step=64)
-            dropout_linear_1 = trial.suggest_float('dropout_linear_1', 0.05, 0.5)
-            dropout_linear_2 = trial.suggest_float('dropout_linear_2', 0.05, 0.5)
+            linear3_size = trial.suggest_int('linear3_size', 64, 256, step=32)
+            dropout_linear_1 = trial.suggest_float('dropout_linear_1', 0.05, 0.6)
+            dropout_linear_2 = trial.suggest_float('dropout_linear_2', 0.05, 0.6)
+            dropout_linear_3 = trial.suggest_float('dropout_linear_3', 0.05, 0.6)
 
             self.classifier = nn.Sequential(
-                nn.Linear(linear_input_size, linear1_size),
-                nn.BatchNorm1d(linear1_size),
+                nn.Linear(input_size, linear1_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_1),
 
                 nn.Linear(linear1_size, linear2_size),
-                nn.BatchNorm1d(linear2_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_2),
 
-                nn.Linear(linear2_size, 2)
+                nn.Linear(linear2_size, linear3_size),
+                nn.ReLU(),
+                nn.Dropout(dropout_linear_3),
+
+                nn.Linear(linear3_size, 2)
             )
 
         def forward(self, m1_image, m2_image, measurement_features):
@@ -126,7 +132,7 @@ def objective(trial, proton_file: str, gamma_file: str, study_name, epochs: int)
         output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                   f"parameter_tuning/{study_name}", nametag)
 
-        dataset = MagicDataset(proton_file, gamma_file, max_samples=20000, debug_info=False)
+        dataset = MagicDataset(proton_file, gamma_file, max_samples=100000, debug_info=False)
         supervisor = TrainingSupervisor("combinednet", dataset, output_dir, debug_info=False, save_model=False)
 
         supervisor.model = create_model_with_params(trial).to(supervisor.device)
@@ -169,7 +175,9 @@ def start_or_resume_study(proton_file: str, gamma_file: str, study_name: str, ep
         study = optuna.create_study(
             study_name=study_name,
             storage="sqlite:///optuna_study.db",
-            direction="maximize"
+            direction="maximize",
+            pruner=optuna.pruners.MedianPruner(),
+            sampler=optuna.samplers.TPESampler(seed=42),
         )
         print("Creating new study")
 
@@ -182,7 +190,7 @@ def start_or_resume_study(proton_file: str, gamma_file: str, study_name: str, ep
 
 
 def main(proton_file: str, gamma_file: str, epochs: int, n_trials: int):
-    study_name = "combinednet_optimization"
+    study_name = "OptimizeHexCNN"
     study = start_or_resume_study(proton_file, gamma_file, study_name, epochs, n_trials)
 
     print("Best trial:")
