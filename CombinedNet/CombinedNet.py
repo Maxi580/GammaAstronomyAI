@@ -17,19 +17,19 @@ class TelescopeCNN(nn.Module):
         super().__init__()
         self.cnn = nn.Sequential(
             ConvHex(1, 8, kernel_size=2, pooling=False, pooling_cnt=0, pooling_kernel_size=2),
-            nn.BatchNorm1d(8),
+            nn.GroupNorm(2, 8),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=2),
             nn.Dropout1d(0.2),
 
             ConvHex(8, 16, kernel_size=2, pooling=True, pooling_cnt=1, pooling_kernel_size=2),
-            nn.BatchNorm1d(16),
+            nn.GroupNorm(4, 16),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=2),
             nn.Dropout1d(0.2),
 
             ConvHex(16, 32, kernel_size=3, pooling=True, pooling_cnt=2, pooling_kernel_size=2),
-            nn.BatchNorm1d(32),
+            nn.GroupNorm(8, 32),
             nn.ReLU(),
             nn.Dropout1d(0.2),
         )
@@ -47,17 +47,17 @@ class CombinedNet(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Linear(32 * 259 * 2, 1024),
-            # nn.BatchNorm1d(1024),
+            nn.GroupNorm(32, 1024),
             nn.ReLU(),
             nn.Dropout(0.2),
 
             nn.Linear(1024, 256),
-            # nn.BatchNorm1d(256),
+            nn.GroupNorm(16, 256),
             nn.ReLU(),
             nn.Dropout(0.2),
-            
+
             nn.Linear(256, 32),
-            # nn.BatchNorm1d(256),
+            nn.GroupNorm(8, 32),
             nn.ReLU(),
             nn.Dropout(0.2),
 

@@ -152,11 +152,11 @@ class EarlyStopping:
 class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
     BATCH_SIZE: int = 32
-    LEARNING_RATE: float = 1e-5
-    WEIGHT_DECAY: float = 0.05
+    LEARNING_RATE: float = 3.812093430784664e-05
+    WEIGHT_DECAY: float = 0.0006379532652682471
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
-    GRAD_CLIP_NORM: float = 3
+    GRAD_CLIP_NORM: float = 0.7443779073289943
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
                  save_model: bool = False) -> None:
@@ -470,3 +470,4 @@ class TrainingSupervisor:
 
         writer = ResultsWriter(self.output_dir)
         writer.save_training_results(training_data)
+        
