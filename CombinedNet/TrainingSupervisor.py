@@ -360,7 +360,7 @@ class TrainingSupervisor:
                 break
 
         if self.debug_info:
-            self.write_results(epochs)
+            self.write_results(epoch + 1)
 
         """if self.debug_info:
             print("Running Inference on Test Sample")
