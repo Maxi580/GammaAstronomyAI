@@ -44,14 +44,17 @@ def create_model_with_params(trial):
 
             layers = []
             pooling_count = 0
+            has_previous_pooling = False
 
             for i in range(3):
+                needs_pooling = has_previous_pooling or pooling_pattern[i]
+
                 layers.append(
                     ConvHex(
                         channels[i],
                         channels[i + 1],
                         kernel_size=trial.suggest_int(f'kernel_size{i + 1}', 1, 5),
-                        pooling=pooling_pattern[i],
+                        pooling=needs_pooling,
                         pooling_cnt=pooling_count,
                         pooling_kernel_size=2
                     )
@@ -65,6 +68,7 @@ def create_model_with_params(trial):
                 if pooling_pattern[i]:
                     layers.append(nn.MaxPool1d(kernel_size=2))
                     pooling_count += 1
+                    has_previous_pooling = True
 
                 layers.append(nn.Dropout1d(
                     trial.suggest_float(f'dropout_cnn_{i + 1}', 0.05, 0.6)
