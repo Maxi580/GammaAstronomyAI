@@ -28,8 +28,7 @@ def create_model_with_params(trial):
 
     def get_valid_num_groups(channel_size, state: str):
         divisors = [i for i in range(1, channel_size + 1) if channel_size % i == 0]
-        min_groups = min(16, len(divisors))  # Cap at 16 groups
-        return trial.suggest_int(state, 1, min_groups)
+        return trial.suggest_categorical(state, divisors)
 
     class TelescopeCNN(nn.Module):
         def __init__(self):
