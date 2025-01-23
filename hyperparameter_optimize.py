@@ -26,6 +26,11 @@ def create_model_with_params(trial):
         """Arrays are 1183 long, however the last 144 are always 0"""
         return image[:, :, :NUM_OF_HEXAGONS]
 
+    def get_valid_num_groups(channel_size, state: str):
+        divisors = [i for i in range(1, channel_size + 1) if channel_size % i == 0]
+        min_groups = min(16, len(divisors))  # Cap at 16 groups
+        return trial.suggest_int(state, 1, min_groups)
+
     class TelescopeCNN(nn.Module):
         def __init__(self):
             super().__init__()
@@ -61,7 +66,7 @@ def create_model_with_params(trial):
                 )
 
                 layers.extend([
-                    nn.GroupNorm(trial.suggest_int(f'cnn_channels_{i+1}', 1, 16), channels[i+1]),
+                    nn.GroupNorm(get_valid_num_groups(channels[i + 1], f'cnn_num_groups_{i}'), channels[i + 1]),
                     nn.ReLU(),
                 ])
 
@@ -78,6 +83,8 @@ def create_model_with_params(trial):
 
         def forward(self, x):
             return self.cnn(x)
+
+
 
     class CustomCombinedNet(nn.Module):
         def __init__(self):
@@ -97,23 +104,19 @@ def create_model_with_params(trial):
             dropout_linear_2 = trial.suggest_float('dropout_linear_2', 0.05, 0.6)
             dropout_linear_3 = trial.suggest_float('dropout_linear_3', 0.05, 0.6)
 
-            num_groups_1 = trial.suggest_int('num_groups_1', 1, 64)
-            num_groups_2 = trial.suggest_int('num_groups_2', 1, 64)
-            num_groups_3 = trial.suggest_int('num_groups_3', 1, 64)
-
             self.classifier = nn.Sequential(
                 nn.Linear(input_size, linear1_size),
-                nn.GroupNorm(num_groups_1, linear1_size),
+                nn.GroupNorm(get_valid_num_groups(linear1_size, f'mlp_groups_1'), linear1_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_1),
 
                 nn.Linear(linear1_size, linear2_size),
-                nn.GroupNorm(num_groups_2, linear2_size),
+                nn.GroupNorm(get_valid_num_groups(linear2_size, f'mlp_groups_2'), linear2_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_2),
 
                 nn.Linear(linear2_size, linear3_size),
-                nn.GroupNorm(num_groups_3, linear3_size),
+                nn.GroupNorm(get_valid_num_groups(linear3_size, f'mlp_groups_3'), linear3_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_3),
 
@@ -148,7 +151,7 @@ def objective(trial, proton_file: str, gamma_file: str, study_name, epochs: int)
 
         supervisor.model = create_model_with_params(trial).to(supervisor.device)
 
-        supervisor.LEARNING_RATE = trial.suggest_float('learning_rate', 1e-5, 1e-3, log=True)
+        supervisor.LEARNING_RATE = trial.suggest_float('learning_rate', 1e-6, 1e-2, log=True)
         supervisor.WEIGHT_DECAY = trial.suggest_float('weight_decay', 1e-4, 1e-2, log=True)
         supervisor.GRAD_CLIP_NORM = trial.suggest_float('grad_clip_norm', 0.1, 5.0)
 
