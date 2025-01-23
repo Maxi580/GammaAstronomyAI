@@ -153,7 +153,7 @@ def objective(trial, proton_file: str, gamma_file: str, study_name, epochs: int)
         output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                   f"parameter_tuning/{study_name}", nametag)
 
-        dataset = MagicDataset(proton_file, gamma_file, max_samples=150000, debug_info=False)
+        dataset = MagicDataset(proton_file, gamma_file, max_samples=100000, debug_info=False)
         supervisor = TrainingSupervisor("combinednet", dataset, output_dir, debug_info=False, save_model=False)
 
         supervisor.model = create_model_with_params(trial).to(supervisor.device)
