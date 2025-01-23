@@ -99,7 +99,7 @@ def create_model_with_params(trial):
 
             channels3 = trial.params['cnn_channels3']
             num_pooling = sum(1 for i in range(3) if trial.params[f'pooling_layer_{i}'])
-            input_size = channels3 * (1039 // (2 ** num_pooling))
+            input_size = channels3 * (1039 // (2 ** num_pooling)) * 2
 
             linear1_size = trial.suggest_int('linear1_size', 512, 2048, step=256)
             linear2_size = trial.suggest_int('linear2_size', 128, 512, step=64)
