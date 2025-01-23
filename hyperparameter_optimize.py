@@ -26,9 +26,14 @@ def create_model_with_params(trial):
         """Arrays are 1183 long, however the last 144 are always 0"""
         return image[:, :, :NUM_OF_HEXAGONS]
 
-    def get_valid_num_groups(channel_size, state: str):
-        divisors = [i for i in range(1, channel_size + 1) if channel_size % i == 0]
-        return trial.suggest_categorical(state, divisors)
+    def calculate_group_size(num_channels, target_groups_per_channel=4):
+        target_groups = num_channels // target_groups_per_channel
+
+        for groups in range(target_groups, 0, -1):
+            if num_channels % groups == 0:
+                return groups
+
+        return 1
 
     class TelescopeCNN(nn.Module):
         def __init__(self, prefix):
@@ -36,15 +41,15 @@ def create_model_with_params(trial):
             self.prefix = prefix
 
             pooling_pattern = [
-                trial.suggest_categorical(f'{self.prefix}pooling_layer_{i}', [True, False])
+                trial.suggest_categorical(f'pooling_layer_{i}', [True, False])
                 for i in range(3)
             ]
 
             channels = [
                 1,
-                trial.suggest_int(f'{self.prefix}cnn_channels1', 2, 16),
-                trial.suggest_int(f'{self.prefix}cnn_channels2', 4, 32),
-                trial.suggest_int(f'{self.prefix}cnn_channels3', 8, 48)
+                trial.suggest_int(f'cnn_channels1', 2, 16),
+                trial.suggest_int(f'cnn_channels2', 4, 32),
+                trial.suggest_int(f'cnn_channels3', 8, 48)
             ]
 
             layers = []
@@ -58,7 +63,7 @@ def create_model_with_params(trial):
                     ConvHex(
                         channels[i],
                         channels[i + 1],
-                        kernel_size=trial.suggest_int(f'{self.prefix}kernel_size{i + 1}', 1, 5),
+                        kernel_size=trial.suggest_int(f'kernel_size{i + 1}', 1, 5),
                         pooling=needs_pooling,
                         pooling_cnt=pooling_count,
                         pooling_kernel_size=2
@@ -66,7 +71,8 @@ def create_model_with_params(trial):
                 )
 
                 layers.extend([
-                    nn.GroupNorm(get_valid_num_groups(channels[i + 1], f'{self.prefix}cnn_num_groups_{i + 1}'), channels[i + 1]),
+                    nn.GroupNorm(calculate_group_size(channels[i+1], trial.suggest_int(f'cnn_group_size_{i + 1}',
+                                                                                       1, 16)), channels[i + 1]),
                     nn.ReLU(),
                 ])
 
@@ -76,15 +82,13 @@ def create_model_with_params(trial):
                     has_previous_pooling = True
 
                 layers.append(nn.Dropout1d(
-                    trial.suggest_float(f'{self.prefix}dropout_cnn_{i + 1}', 0.05, 0.6)
+                    trial.suggest_float(f'dropout_cnn_{i + 1}', 0.05, 0.6)
                 ))
 
             self.cnn = nn.Sequential(*layers)
 
         def forward(self, x):
             return self.cnn(x)
-
-
 
     class CustomCombinedNet(nn.Module):
         def __init__(self):
@@ -93,14 +97,9 @@ def create_model_with_params(trial):
             self.m1_cnn = TelescopeCNN("m1_")
             self.m2_cnn = TelescopeCNN("m2_")
 
-            m1_channels3 = trial.params['m1_cnn_channels3']
-            m2_channels3 = trial.params['m2_cnn_channels3']
-            m1_num_pooling = sum(1 for i in range(3) if trial.params[f'm1_pooling_layer_{i}'])
-            m2_num_pooling = sum(1 for i in range(3) if trial.params[f'm2_pooling_layer_{i}'])
-            input_size = (
-                    m1_channels3 * (1039 // (2 ** m1_num_pooling)) +
-                    m2_channels3 * (1039 // (2 ** m2_num_pooling))
-            )
+            channels3 = trial.params['cnn_channels3']
+            num_pooling = sum(1 for i in range(3) if trial.params[f'pooling_layer_{i}'])
+            input_size = channels3 * (1039 // (2 ** num_pooling))
 
             linear1_size = trial.suggest_int('linear1_size', 512, 2048, step=256)
             linear2_size = trial.suggest_int('linear2_size', 128, 512, step=64)
@@ -111,17 +110,20 @@ def create_model_with_params(trial):
 
             self.classifier = nn.Sequential(
                 nn.Linear(input_size, linear1_size),
-                nn.GroupNorm(get_valid_num_groups(linear1_size, f'mlp_groups_1'), linear1_size),
+                nn.GroupNorm(calculate_group_size(linear1_size, trial.suggest_int(f'mlp_group_size_1', 1, 32)),
+                             linear1_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_1),
 
                 nn.Linear(linear1_size, linear2_size),
-                nn.GroupNorm(get_valid_num_groups(linear2_size, f'mlp_groups_2'), linear2_size),
+                nn.GroupNorm(calculate_group_size(linear2_size, trial.suggest_int(f'mlp_group_size_2', 1, 32)),
+                             linear2_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_2),
 
                 nn.Linear(linear2_size, linear3_size),
-                nn.GroupNorm(get_valid_num_groups(linear3_size, f'mlp_groups_3'), linear3_size),
+                nn.GroupNorm(calculate_group_size(linear3_size, trial.suggest_int(f'mlp_group_size_3', 1, 32)),
+                             linear3_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_3),
 
