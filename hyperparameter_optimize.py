@@ -31,19 +31,20 @@ def create_model_with_params(trial):
         return trial.suggest_categorical(state, divisors)
 
     class TelescopeCNN(nn.Module):
-        def __init__(self):
+        def __init__(self, prefix):
             super().__init__()
+            self.prefix = prefix
 
             pooling_pattern = [
-                trial.suggest_categorical(f'pooling_layer_{i}', [True, False])
+                trial.suggest_categorical(f'{self.prefix}pooling_layer_{i}', [True, False])
                 for i in range(3)
             ]
 
             channels = [
                 1,
-                trial.suggest_int('cnn_channels1', 2, 16),
-                trial.suggest_int('cnn_channels2', 4, 32),
-                trial.suggest_int('cnn_channels3', 8, 48)
+                trial.suggest_int(f'{self.prefix}cnn_channels1', 2, 16),
+                trial.suggest_int(f'{self.prefix}cnn_channels2', 4, 32),
+                trial.suggest_int(f'{self.prefix}cnn_channels3', 8, 48)
             ]
 
             layers = []
@@ -57,7 +58,7 @@ def create_model_with_params(trial):
                     ConvHex(
                         channels[i],
                         channels[i + 1],
-                        kernel_size=trial.suggest_int(f'kernel_size{i + 1}', 1, 5),
+                        kernel_size=trial.suggest_int(f'{self.prefix}kernel_size{i + 1}', 1, 5),
                         pooling=needs_pooling,
                         pooling_cnt=pooling_count,
                         pooling_kernel_size=2
@@ -65,7 +66,7 @@ def create_model_with_params(trial):
                 )
 
                 layers.extend([
-                    nn.GroupNorm(get_valid_num_groups(channels[i + 1], f'cnn_num_groups_{i}'), channels[i + 1]),
+                    nn.GroupNorm(get_valid_num_groups(channels[i + 1], f'{self.prefix}cnn_num_groups_{i + 1}'), channels[i + 1]),
                     nn.ReLU(),
                 ])
 
@@ -75,7 +76,7 @@ def create_model_with_params(trial):
                     has_previous_pooling = True
 
                 layers.append(nn.Dropout1d(
-                    trial.suggest_float(f'dropout_cnn_{i + 1}', 0.05, 0.6)
+                    trial.suggest_float(f'{self.prefix}dropout_cnn_{i + 1}', 0.05, 0.6)
                 ))
 
             self.cnn = nn.Sequential(*layers)
@@ -89,8 +90,8 @@ def create_model_with_params(trial):
         def __init__(self):
             super().__init__()
 
-            self.m1_cnn = TelescopeCNN()
-            self.m2_cnn = TelescopeCNN()
+            self.m1_cnn = TelescopeCNN("m1_")
+            self.m2_cnn = TelescopeCNN("m2_")
 
             channels3 = trial.params['cnn_channels3']
             num_pooling = sum(1 for i in range(3) if trial.params[f'pooling_layer_{i}'])
@@ -145,7 +146,7 @@ def objective(trial, proton_file: str, gamma_file: str, study_name, epochs: int)
         output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                   f"parameter_tuning/{study_name}", nametag)
 
-        dataset = MagicDataset(proton_file, gamma_file, max_samples=50000, debug_info=False)
+        dataset = MagicDataset(proton_file, gamma_file, max_samples=150000, debug_info=False)
         supervisor = TrainingSupervisor("combinednet", dataset, output_dir, debug_info=False, save_model=False)
 
         supervisor.model = create_model_with_params(trial).to(supervisor.device)
