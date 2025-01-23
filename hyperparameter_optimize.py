@@ -93,9 +93,14 @@ def create_model_with_params(trial):
             self.m1_cnn = TelescopeCNN("m1_")
             self.m2_cnn = TelescopeCNN("m2_")
 
-            channels3 = trial.params['cnn_channels3']
-            num_pooling = sum(1 for i in range(3) if trial.params[f'pooling_layer_{i}'])
-            input_size = channels3 * (1039 // (2 ** num_pooling)) * 2
+            m1_channels3 = trial.params['m1_cnn_channels3']
+            m2_channels3 = trial.params['m2_cnn_channels3']
+            m1_num_pooling = sum(1 for i in range(3) if trial.params[f'm1_pooling_layer_{i}'])
+            m2_num_pooling = sum(1 for i in range(3) if trial.params[f'm2_pooling_layer_{i}'])
+            input_size = (
+                    m1_channels3 * (1039 // (2 ** m1_num_pooling)) +
+                    m2_channels3 * (1039 // (2 ** m2_num_pooling))
+            )
 
             linear1_size = trial.suggest_int('linear1_size', 512, 2048, step=256)
             linear2_size = trial.suggest_int('linear2_size', 128, 512, step=64)
