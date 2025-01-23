@@ -61,7 +61,7 @@ def create_model_with_params(trial):
                 )
 
                 layers.extend([
-                    nn.BatchNorm1d(channels[i + 1]),
+                    nn.GroupNorm(trial.suggest_int(f'cnn_channels_{i+1}', 1, 16), channels[i+1]),
                     nn.ReLU(),
                 ])
 
@@ -97,16 +97,23 @@ def create_model_with_params(trial):
             dropout_linear_2 = trial.suggest_float('dropout_linear_2', 0.05, 0.6)
             dropout_linear_3 = trial.suggest_float('dropout_linear_3', 0.05, 0.6)
 
+            num_groups_1 = trial.suggest_int('num_groups_1', 1, 64)
+            num_groups_2 = trial.suggest_int('num_groups_2', 1, 64)
+            num_groups_3 = trial.suggest_int('num_groups_3', 1, 64)
+
             self.classifier = nn.Sequential(
                 nn.Linear(input_size, linear1_size),
+                nn.GroupNorm(num_groups_1, linear1_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_1),
 
                 nn.Linear(linear1_size, linear2_size),
+                nn.GroupNorm(num_groups_2, linear2_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_2),
 
                 nn.Linear(linear2_size, linear3_size),
+                nn.GroupNorm(num_groups_3, linear3_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_3),
 
