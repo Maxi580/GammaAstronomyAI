@@ -175,7 +175,7 @@ def objective(trial, proton_file: str, gamma_file: str, study_name, epochs: int)
 
         return avg_accuracy
 
-    except (RuntimeError, torch.cuda.OutOfMemoryError) as e:
+    except Exception as e:
         print(f"Trial {trial.number} failed with error: {str(e)}")
         raise optuna.exceptions.TrialPruned()
 
