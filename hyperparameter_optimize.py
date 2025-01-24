@@ -146,14 +146,13 @@ def create_model_with_params(trial):
     return CustomCombinedNet()
 
 
-def objective(trial, proton_file: str, gamma_file: str, study_name, epochs: int):
+def objective(trial, dataset, study_name, epochs: int):
     supervisor = None
     try:
         nametag = f"{study_name}_WTF_{time.strftime('%Y-%m-%d_%H-%M-%S')}_trial_{trial.number}"
         output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                   f"parameter_tuning/{study_name}", nametag)
 
-        dataset = MagicDataset(proton_file, gamma_file, max_samples=100000, debug_info=False)
         supervisor = TrainingSupervisor("combinednet", dataset, output_dir, debug_info=False, save_model=False)
 
         supervisor.model = create_model_with_params(trial).to(supervisor.device)
@@ -184,7 +183,7 @@ def objective(trial, proton_file: str, gamma_file: str, study_name, epochs: int)
             clean_memory()
 
 
-def start_or_resume_study(proton_file: str, gamma_file: str, study_name: str, epochs: int, n_trials: int):
+def start_or_resume_study(dataset, study_name: str, epochs: int, n_trials: int):
     try:
         study = optuna.load_study(
             study_name=study_name,
@@ -203,16 +202,17 @@ def start_or_resume_study(proton_file: str, gamma_file: str, study_name: str, ep
         print("Creating new study")
 
     study.optimize(
-        lambda trial: objective(trial, proton_file, gamma_file, study_name, epochs),
+        lambda trial: objective(trial, dataset, study_name, epochs),
         n_trials=n_trials
     )
 
     return study
 
 
-def main(proton_file: str, gamma_file: str, epochs: int, n_trials: int):
+def main(proton: str, gamma: str, epochs: int, n_trials: int):
     study_name = "OptimizeHexCNN"
-    study = start_or_resume_study(proton_file, gamma_file, study_name, epochs, n_trials)
+    dataset = MagicDataset(proton, gamma, max_samples=100000, debug_info=False)
+    study = start_or_resume_study(dataset, study_name, epochs, n_trials)
 
     print("Best trial:")
     print(f" Value (Val Accuracy): {study.best_trial.value}")
@@ -226,8 +226,8 @@ if __name__ == "__main__":
     gamma_file = "magic-gammas.parquet"
 
     main(
-        proton_file=proton_file,
-        gamma_file=gamma_file,
+        proton_file,
+        gamma_file,
         epochs=10,
         n_trials=250
     )
