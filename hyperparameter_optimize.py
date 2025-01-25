@@ -26,14 +26,15 @@ def create_model_with_params(trial):
         """Arrays are 1183 long, however the last 144 are always 0"""
         return image[:, :, :NUM_OF_HEXAGONS]
 
-    def calculate_group_size(num_channels, target_groups_per_channel=4):
-        target_groups = num_channels // target_groups_per_channel
+    def suggest_group_norm_params(trial, num_channels, name_prefix):
+        possible_groups = [i for i in range(1, num_channels + 1) if num_channels % i == 0]
 
-        for groups in range(target_groups, 0, -1):
-            if num_channels % groups == 0:
-                return groups
+        num_groups = trial.suggest_categorical(
+            f'{name_prefix}_groups',
+            possible_groups
+        )
 
-        return 1
+        return num_groups
 
     class TelescopeCNN(nn.Module):
         def __init__(self, prefix):
@@ -71,8 +72,8 @@ def create_model_with_params(trial):
                 )
 
                 layers.extend([
-                    nn.GroupNorm(calculate_group_size(channels[i+1], trial.suggest_int(f'cnn_group_size_{i + 1}',
-                                                                                       1, 16)), channels[i + 1]),
+                    nn.GroupNorm(suggest_group_norm_params(trial, channels[i+1], f'cnn_{i + 1}'),
+                                 channels[i + 1]),
                     nn.ReLU(),
                 ])
 
@@ -110,20 +111,17 @@ def create_model_with_params(trial):
 
             self.classifier = nn.Sequential(
                 nn.Linear(input_size, linear1_size),
-                nn.GroupNorm(calculate_group_size(linear1_size, trial.suggest_int(f'mlp_group_size_1', 1, 32)),
-                             linear1_size),
+                nn.GroupNorm(suggest_group_norm_params(trial, linear1_size, f'mlp_1'), linear1_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_1),
 
                 nn.Linear(linear1_size, linear2_size),
-                nn.GroupNorm(calculate_group_size(linear2_size, trial.suggest_int(f'mlp_group_size_2', 1, 32)),
-                             linear2_size),
+                nn.GroupNorm(suggest_group_norm_params(trial, linear2_size, f'mlp_2'), linear2_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_2),
 
                 nn.Linear(linear2_size, linear3_size),
-                nn.GroupNorm(calculate_group_size(linear3_size, trial.suggest_int(f'mlp_group_size_3', 1, 32)),
-                             linear3_size),
+                nn.GroupNorm(suggest_group_norm_params(trial, linear3_size, f'mlp_3'), linear3_size),
                 nn.ReLU(),
                 nn.Dropout(dropout_linear_3),
 
