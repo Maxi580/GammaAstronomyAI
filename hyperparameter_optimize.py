@@ -163,16 +163,15 @@ def objective(trial, dataset, study_name, epochs: int):
 
         supervisor.train_model(epochs)
 
-        last_n_accuracies = [metrics['accuracy'] for metrics in supervisor.validation_metrics[-3:]]
-        avg_accuracy = sum(last_n_accuracies) / len(last_n_accuracies)
-        print(f"\nTrial {trial.number} got an accuracy of {avg_accuracy}%")
+        best_accuracy = max(metrics['accuracy'] for metrics in supervisor.validation_metrics)
+        print(f"\nBest Accuracy of Trial {trial.number} is {best_accuracy}%")
 
         print("Parameters:")
         for param_name, param_value in trial.params.items():
             print(f"  {param_name}: {param_value}")
         print("-" * 50)
 
-        return avg_accuracy
+        return best_accuracy
 
     except Exception as e:
         print(f"Trial {trial.number} failed with error: {str(e)}")
