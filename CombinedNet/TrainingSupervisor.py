@@ -153,10 +153,10 @@ class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
     BATCH_SIZE: int = 32
     LEARNING_RATE: float = 3.812093430784664e-05
-    WEIGHT_DECAY: float = 0.0006379532652682471
+    WEIGHT_DECAY: float = 0.0006479928221462572
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
-    GRAD_CLIP_NORM: float = 0.7443779073289943
+    GRAD_CLIP_NORM: float = 4.818439292946908
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
                  save_model: bool = False) -> None:
@@ -313,15 +313,16 @@ class TrainingSupervisor:
             weight_decay=self.WEIGHT_DECAY
         )
 
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+        scheduler = optim.lr_scheduler.CyclicLR(
             optimizer,
-            mode='min',
-            factor=0.1,
-            patience=2,
-            min_lr=1e-6
+            base_lr=1e-5,
+            max_lr=1e-3,
+            step_size_up=4,
+            mode='triangular2',
+            cycle_momentum=False
         )
 
-        early_stopping = EarlyStopping(patience=5, min_delta=0.001)
+        early_stopping = EarlyStopping(patience=100, min_delta=0.001)
 
         torch.manual_seed(42)
         if torch.cuda.is_available():
@@ -338,7 +339,7 @@ class TrainingSupervisor:
                 print_metrics(self.dataset.labels, train_metrics)
 
             val_metrics = self._validation_step(criterion)
-            scheduler.step(val_metrics['loss'])
+            scheduler.step()
 
             if self.debug_info:
                 print(f"\nValidation Metrics of epoch: {epoch + 1}: \n")
@@ -470,4 +471,3 @@ class TrainingSupervisor:
 
         writer = ResultsWriter(self.output_dir)
         writer.save_training_results(training_data)
-        

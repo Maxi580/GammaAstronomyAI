@@ -16,22 +16,22 @@ class TelescopeCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            ConvHex(1, 8, kernel_size=2, pooling=False, pooling_cnt=0, pooling_kernel_size=2),
-            nn.GroupNorm(2, 8),
+            ConvHex(1, 14, kernel_size=1, pooling=False, pooling_cnt=0, pooling_kernel_size=2),
+            nn.GroupNorm(7, 14),
+            nn.ReLU(),
+            nn.Dropout1d(0.3601080051216868),
+
+            ConvHex(14, 18, kernel_size=4, pooling=False, pooling_cnt=0, pooling_kernel_size=2),
+            nn.GroupNorm(9, 18),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=2),
-            nn.Dropout1d(0.2),
+            nn.Dropout1d(0.10389074001028657),
 
-            ConvHex(8, 16, kernel_size=2, pooling=True, pooling_cnt=1, pooling_kernel_size=2),
-            nn.GroupNorm(4, 16),
+            ConvHex(18, 36, kernel_size=1, pooling=True, pooling_cnt=1, pooling_kernel_size=2),
+            nn.GroupNorm(18, 36),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=2),
-            nn.Dropout1d(0.2),
-
-            ConvHex(16, 32, kernel_size=3, pooling=True, pooling_cnt=2, pooling_kernel_size=2),
-            nn.GroupNorm(8, 32),
-            nn.ReLU(),
-            nn.Dropout1d(0.2),
+            nn.Dropout1d(0.35031261571845096),
         )
 
     def forward(self, x):
@@ -46,23 +46,23 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(32 * 259 * 2, 1024),
-            nn.GroupNorm(32, 1024),
+            nn.Linear(36 * (1039 // (2 ** 2)) * 2, 768),
+            nn.GroupNorm(32, 768),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.4936012148325484),
 
-            nn.Linear(1024, 256),
-            nn.GroupNorm(16, 256),
+            nn.Linear(768, 384),
+            nn.GroupNorm(16, 384),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.5340424416693821),
 
-            nn.Linear(256, 32),
-            nn.GroupNorm(8, 32),
+            nn.Linear(384, 128),
+            nn.GroupNorm(8, 128),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.21686133182097764),
 
-            nn.Linear(32, 2)
-        )
+            nn.Linear(128, 2)
+            )
 
     def forward(self, m1_image, m2_image, measurement_features):
         # Add Channel Dimension
