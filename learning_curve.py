@@ -130,7 +130,7 @@ def main(step_size: int, max_step: int, epochs: int, model_name: str):
             print(f'\t- Training Accuracy: {data['training_metrics'][-1]['accuracy']:>6.2f}%')
             print(f'\t- Validation Accuracy: {data['validation_metrics'][-1]['accuracy']:>6.2f}%')
         
-
+    print('Plotting result diagrams...')
     write_result_plots(output_dir)
 
 
