@@ -68,31 +68,31 @@ def write_result_plots(output_dir: str):
         
     plots = [
             _plot_config('learning_curve_accuracy.png', 'Learning Curve - Accuracy',
-                         ((min_samples, max_samples), None, 'Samples'),
+                         ((min_samples, max_samples), samples_counts, 'Samples'),
                          ((0, 100), None, 'Accuracy'),
                          [('accuracy', train_metrics, 'Training'),
                           ('accuracy', val_metrics, 'Validation')]),
             
             _plot_config('learning_curve_precision.png', 'Learning Curve - Precision',
-                         ((min_samples, max_samples), None, 'Samples'),
+                         ((min_samples, max_samples), samples_counts, 'Samples'),
                          ((0, 100), np.arange(0, 101, 10), 'Precision'),
                          [('precision', train_metrics, 'Training'),
                           ('precision', val_metrics, 'Validation')]),
             
             _plot_config('learning_curve_recall.png', 'Learning Curve - Recall',
-                         ((min_samples, max_samples), None, 'Samples'),
+                         ((min_samples, max_samples), samples_counts, 'Samples'),
                          ((0, 100), np.arange(0, 101, 10), 'Recall'),
                          [('recall', train_metrics, 'Training'),
                           ('recall', val_metrics, 'Validation')]),
             
             _plot_config('learning_curve_f1.png', 'Learning Curve - F1',
-                         ((min_samples, max_samples), None, 'Samples'),
+                         ((min_samples, max_samples), samples_counts, 'Samples'),
                          ((0, 100), np.arange(0, 101, 10), 'F1'),
                          [('f1', train_metrics, 'Training'),
                           ('f1', val_metrics, 'Validation')]),
             
             _plot_config('learning_curve_loss.png', 'Learning Curve - Loss',
-                         ((min_samples, max_samples), None, 'Samples'),
+                         ((min_samples, max_samples), samples_counts, 'Samples'),
                          ((0, 1), np.arange(0, 1.1, 0.1), 'Loss Value'),
                          [('loss', train_metrics, 'Training'),
                           ('loss', val_metrics, 'Validation')]),
