@@ -131,7 +131,7 @@ def main(step_size: int, max_step: int, epochs: int, model_name: str):
             print(f'\t- Validation Accuracy: {data['validation_metrics'][-1]['accuracy']:>6.2f}%')
         
     print('Plotting result diagrams...')
-    write_result_plots(output_dir)
+    write_result_plots(parent_dir)
 
 
 if __name__ == '__main__':
