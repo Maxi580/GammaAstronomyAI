@@ -151,7 +151,7 @@ def objective(trial, dataset, study_name, epochs: int):
         output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                   f"parameter_tuning/{study_name}", nametag)
 
-        supervisor = TrainingSupervisor("combinednet", dataset, output_dir, debug_info=False, save_model=False)
+        supervisor = TrainingSupervisor("combinednet", dataset, output_dir, debug_info=False, save_model=False, save_debug_data=False)
 
         supervisor.model = create_model_with_params(trial).to(supervisor.device)
 

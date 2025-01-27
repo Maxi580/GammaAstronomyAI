@@ -159,13 +159,14 @@ class TrainingSupervisor:
     GRAD_CLIP_NORM: float = 4.818439292946908
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
-                 save_model: bool = False) -> None:
+                 save_model: bool = False, save_debug_data: bool = True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
                                    else "cpu")
         self.debug_info = debug_info
         self.save_model = save_model
+        self.save_debug_data = save_debug_data
 
-        if self.debug_info or self.save_model:
+        if self.save_debug_data or self.save_model:
             os.makedirs(output_dir, exist_ok=True)
 
         if debug_info:
@@ -360,7 +361,7 @@ class TrainingSupervisor:
                     print(f"Early stopping triggered at epoch {epoch + 1}")
                 break
 
-        if self.debug_info:
+        if self.save_debug_data:
             self.write_results(epoch + 1)
 
         """if self.debug_info:
