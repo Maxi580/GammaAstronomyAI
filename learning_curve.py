@@ -51,48 +51,54 @@ def _create_plot(samples, plot_config, output_dir: str):
 
 def write_result_plots(output_dir: str):
     info_files = glob.glob('./*/info.json', root_dir=output_dir)
-    
-    train_metrics = []
-    val_metrics = []
-    samples_counts = []
+
+    runs = []
     
     for filename in info_files:
         with open(os.path.join(output_dir, filename), 'r') as file:
             data = json.load(file)
-            train_metrics.append(data['training_metrics'][-1])
-            val_metrics.append(data['validation_metrics'][-1])
-            samples_counts.append(data['dataset']['distribution']['total_samples'])
+            runs.append((
+                data['dataset']['distribution']['total_samples'] / 1000,
+                data['training_metrics'][-1],
+                data['validation_metrics'][-1]
+            ))
+            
+    runs.sort(key=lambda x: x[0])
+    
+    samples_counts = [x[0] for x in runs]
+    train_metrics = [x[1] for x in runs]
+    val_metrics = [x[2] for x in runs]
             
     min_samples = min(samples_counts)
     max_samples = max(samples_counts)
         
     plots = [
             _plot_config('learning_curve_accuracy.png', 'Learning Curve - Accuracy',
-                         ((min_samples, max_samples), samples_counts, 'Samples'),
+                         ((min_samples, max_samples), None, 'Samples (in thousands)'),
                          ((0, 100), None, 'Accuracy'),
                          [('accuracy', train_metrics, 'Training'),
                           ('accuracy', val_metrics, 'Validation')]),
             
             _plot_config('learning_curve_precision.png', 'Learning Curve - Precision',
-                         ((min_samples, max_samples), samples_counts, 'Samples'),
-                         ((0, 100), np.arange(0, 101, 10), 'Precision'),
+                         ((min_samples, max_samples), None, 'Samples (in thousands)'),
+                         ((0, 100), None, 'Precision'),
                          [('precision', train_metrics, 'Training'),
                           ('precision', val_metrics, 'Validation')]),
             
             _plot_config('learning_curve_recall.png', 'Learning Curve - Recall',
-                         ((min_samples, max_samples), samples_counts, 'Samples'),
-                         ((0, 100), np.arange(0, 101, 10), 'Recall'),
+                         ((min_samples, max_samples), None, 'Samples (in thousands)'),
+                         ((0, 100), None, 'Recall'),
                          [('recall', train_metrics, 'Training'),
                           ('recall', val_metrics, 'Validation')]),
             
             _plot_config('learning_curve_f1.png', 'Learning Curve - F1',
-                         ((min_samples, max_samples), samples_counts, 'Samples'),
-                         ((0, 100), np.arange(0, 101, 10), 'F1'),
+                         ((min_samples, max_samples), None, 'Samples (in thousands)'),
+                         ((0, 100), None, 'F1'),
                          [('f1', train_metrics, 'Training'),
                           ('f1', val_metrics, 'Validation')]),
             
             _plot_config('learning_curve_loss.png', 'Learning Curve - Loss',
-                         ((min_samples, max_samples), samples_counts, 'Samples'),
+                         ((min_samples, max_samples), None, 'Samples (in thousands)'),
                          ((0, 1), np.arange(0, 1.1, 0.1), 'Loss Value'),
                          [('loss', train_metrics, 'Training'),
                           ('loss', val_metrics, 'Validation')]),
