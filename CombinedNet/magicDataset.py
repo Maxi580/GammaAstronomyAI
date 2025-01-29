@@ -140,11 +140,101 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        m1_raw = torch.tensor(row['image_m1'], dtype=torch.float32)
-        m2_raw = torch.tensor(row['image_m2'], dtype=torch.float32)
+        noisy_m1 = torch.tensor(row['image_m1'], dtype=torch.float32)
+        # clean_m1 = torch.tensor(row['clean_image_m1'], dtype=torch.float32)
+        noisy_m2 = torch.tensor(row['image_m2'], dtype=torch.float32)
+        # clean_m2 = torch.tensor(row['clean_image_m2'], dtype=torch.float32)
+        # noise_m1 = noisy_m1 - clean_m1
+        # noise_m2 = noisy_m2 - clean_m2
+
         features = extract_features(row)
 
-        return m1_raw, m2_raw, features, self.labels[label]
+        return noisy_m1, noisy_m2, features, self.labels[label]
+
+    def analyze_noise(self):
+        stats = {
+            self.PROTON_LABEL: {
+                'count': 0,
+                'noisy_m1': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')},
+                'clean_m1': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')},
+                'noise_m1': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')},
+                'noisy_m2': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')},
+                'clean_m2': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')},
+                'noise_m2': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')}
+            },
+            self.GAMMA_LABEL: {
+                'count': 0,
+                'noisy_m1': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')},
+                'clean_m1': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')},
+                'noise_m1': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')},
+                'noisy_m2': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')},
+                'clean_m2': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')},
+                'noise_m2': {'negatives': 0, 'sum': 0, 'squared_sum': 0, 'min': float('inf'), 'max': float('-inf')}
+            }
+        }
+
+        for idx in range(self.length):
+            if idx < self.n_protons:
+                row = self.proton_data.iloc[idx]
+                label = self.PROTON_LABEL
+            else:
+                row = self.gamma_data.iloc[idx - self.n_protons]
+                label = self.GAMMA_LABEL
+
+            noisy_m1 = torch.tensor(row['image_m1'], dtype=torch.float32)
+            clean_m1 = torch.tensor(row['clean_image_m1'], dtype=torch.float32)
+            noisy_m2 = torch.tensor(row['image_m2'], dtype=torch.float32)
+            clean_m2 = torch.tensor(row['clean_image_m2'], dtype=torch.float32)
+            noise_m1 = noisy_m1 - clean_m1
+            noise_m2 = noisy_m2 - clean_m2
+
+            images = {
+                'noisy_m1': noisy_m1,
+                'clean_m1': clean_m1,
+                'noise_m1': noise_m1,
+                'noisy_m2': noisy_m2,
+                'clean_m2': clean_m2,
+                'noise_m2': noise_m2
+            }
+
+            stats[label]['count'] += 1
+
+            for img_name, img in images.items():
+                stats[label][img_name]['negatives'] += (img < 0).sum().item()
+                stats[label][img_name]['sum'] += img.sum().item()
+                stats[label][img_name]['squared_sum'] += (img ** 2).sum().item()
+                stats[label][img_name]['min'] = min(stats[label][img_name]['min'], img.min().item())
+                stats[label][img_name]['max'] = max(stats[label][img_name]['max'], img.max().item())
+
+            if idx % 1000 == 0:
+                print(f"Processed {idx}/{self.length} samples...")
+
+        for label in [self.PROTON_LABEL, self.GAMMA_LABEL]:
+            n = stats[label]['count']
+            n_pixels = 1039
+            total_pixels = n * n_pixels
+
+            for img_type in ['noisy_m1', 'clean_m1', 'noise_m1', 'noisy_m2', 'clean_m2', 'noise_m2']:
+                img_stats = stats[label][img_type]
+
+                img_stats['mean'] = img_stats['sum'] / total_pixels
+                img_stats['variance'] = (img_stats['squared_sum'] / total_pixels) - (img_stats['mean'] ** 2)
+                img_stats['std'] = (img_stats['variance']) ** 0.5
+                img_stats['negative_percentage'] = (img_stats['negatives'] / total_pixels) * 100
+
+        print("\nAnalysis Results:")
+        for label in [self.PROTON_LABEL, self.GAMMA_LABEL]:
+            print(f"\n{label.upper()} ANALYSIS (Total samples: {stats[label]['count']})")
+            for img_type in ['noisy_m1', 'clean_m1', 'noise_m1', 'noisy_m2', 'clean_m2', 'noise_m2']:
+                print(f"\n  {img_type}:")
+                img_stats = stats[label][img_type]
+                print(f"    Negative values: {img_stats['negatives']} ({img_stats['negative_percentage']:.2f}%)")
+                print(f"    Mean: {img_stats['mean']:.6f}")
+                print(f"    Std: {img_stats['std']:.6f}")
+                print(f"    Min: {img_stats['min']:.6f}")
+                print(f"    Max: {img_stats['max']:.6f}")
+
+        return stats
 
     def get_distribution(self) -> Dict[str, Any]:
         total_samples = self.length
@@ -165,7 +255,7 @@ class MagicDataset(Dataset):
 
 def read_parquet_limit(filename, max_rows):
     parquet_file_stream = pq.ParquetFile(filename).iter_batches(batch_size=max_rows)
-    
+
     batch = next(parquet_file_stream)
-    
+
     return batch.to_pandas()
