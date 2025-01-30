@@ -16,13 +16,6 @@ from CombinedNet.magicDataset import MagicDataset
 POOLING_KERNEL_SIZE = 2
 
 
-def inspect_model_kernels(model_path):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = CombinedNet()
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    model.eval()
-
-
 def reconstruct_image(array_1039, save_path, title=None):
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
@@ -62,8 +55,10 @@ def extract_conv_arrays(tensor, cnn_idx, pooling_count, output_dir):
         reconstruct_image(channel_data, output_dir + f"cnn{cnn_idx}/{channel_idx}.png")
 
 
-def simulate_forward_pass(image, model, output_dir):
+def simulate_forward_pass(image, model, device, output_dir):
     pooling_cnt = 0
+
+    image = image.to(device)
 
     for idx, layer in enumerate(model.m1_cnn.cnn):
         if isinstance(layer, ConvHex):
@@ -81,8 +76,11 @@ def debug_forward_pass(model_path, prefix, image_m1, image_m2):
     os.makedirs(os.path.dirname(output_dir), exist_ok=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+
     model = CombinedNet()
     model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
+    model = model.to(device)
     model.eval()
 
     image_m1 = image_m1.to(device)
@@ -103,13 +101,12 @@ def debug_forward_pass(model_path, prefix, image_m1, image_m2):
     image_m1 = resize_input(image_m1)
     image_m2 = resize_input(image_m2)
 
-    simulate_forward_pass(image_m1, model, output_dir)
-    simulate_forward_pass(image_m2, model, output_dir)
+    simulate_forward_pass(image_m1, model, device, output_dir)
+    simulate_forward_pass(image_m2, model, device, output_dir)
 
 
 if __name__ == "__main__":
     model_path = "trained_model.pth"
-    inspect_model_kernels(model_path)
 
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas.parquet"
