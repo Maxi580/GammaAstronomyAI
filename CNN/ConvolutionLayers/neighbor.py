@@ -35,6 +35,18 @@ def _get_valid_indices_after_pooling(pooling_kernel_size: int, num_pooling_layer
     return valid_indices
 
 
+def unpool_array(pooled_array: np.ndarray, pooling_kernel_size: int, num_pooling_layers: int) -> np.ndarray:
+    valid_indices = _get_valid_indices_after_pooling(pooling_kernel_size, num_pooling_layers)
+
+    unpooled_array = np.zeros(1039)
+
+    for i, idx in enumerate(valid_indices):
+        if i < len(pooled_array):
+            unpooled_array[idx] = pooled_array[i]
+
+    return unpooled_array
+
+
 def _get_pooled_neighbors(neighbors, pooling_kernel_size, num_pooling_layers, pixel_positions):
     # Get valid indices after pooling
     valid_indices = _get_valid_indices_after_pooling(pooling_kernel_size, num_pooling_layers)
