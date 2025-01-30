@@ -106,8 +106,8 @@ def debug_forward_pass(model_path, prefix, image_m1, image_m2):
     image_m1 = resize_input(image_m1)
     image_m2 = resize_input(image_m2)
 
-    simulate_forward_pass(image_m1, model, output_dir)
-    simulate_forward_pass(image_m2, model, output_dir)
+    simulate_forward_pass(image_m1, model, output_dir + "/m1/")
+    simulate_forward_pass(image_m2, model, output_dir + "/m2/")
 
 
 if __name__ == "__main__":
