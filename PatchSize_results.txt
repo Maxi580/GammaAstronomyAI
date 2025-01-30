@@ -1,0 +1,193 @@
+128:
+Using device: mps
+Epoch 1
+Batch 0 - Loss: 0.7627463340759277 - Accuracy: 0.2344
+Batch 100 - Loss: 0.23104046285152435 - Accuracy: 0.7916
+Batch 200 - Loss: 0.0461987629532814 - Accuracy: 0.9710
+Batch 300 - Loss: 0.05867098271846771 - Accuracy: 0.9859
+Batch 400 - Loss: 0.033597491681575775 - Accuracy: 0.9899
+Batch 500 - Loss: 0.009677624329924583 - Accuracy: 0.9920
+Batch 600 - Loss: 0.01072024181485176 - Accuracy: 0.9920
+Batch 700 - Loss: 0.05234096944332123 - Accuracy: 0.9916
+Batch 800 - Loss: 0.01648137718439102 - Accuracy: 0.9921
+Batch 900 - Loss: 0.11978118121623993 - Accuracy: 0.9912
+Batch 1000 - Loss: 0.02167653851211071 - Accuracy: 0.9932
+Batch 1100 - Loss: 0.03304368630051613 - Accuracy: 0.9931
+Batch 1200 - Loss: 0.032029952853918076 - Accuracy: 0.9938
+Batch 1300 - Loss: 0.01241836417466402 - Accuracy: 0.9927
+Batch 1400 - Loss: 0.0511515736579895 - Accuracy: 0.9945
+Batch 1500 - Loss: 0.005911469925194979 - Accuracy: 0.9938
+Batch 1600 - Loss: 0.001550068031065166 - Accuracy: 0.9946
+Batch 1700 - Loss: 0.009929459542036057 - Accuracy: 0.9937
+Batch 1800 - Loss: 0.014892499893903732 - Accuracy: 0.9938
+Batch 1900 - Loss: 0.013120555318892002 - Accuracy: 0.9928
+Batch 2000 - Loss: 0.0012623213697224855 - Accuracy: 0.9947
+Batch 2100 - Loss: 0.006686131935566664 - Accuracy: 0.9949
+Batch 2200 - Loss: 0.0054254839196801186 - Accuracy: 0.9947
+Batch 2300 - Loss: 0.0034271678887307644 - Accuracy: 0.9951
+Batch 2400 - Loss: 0.003557755146175623 - Accuracy: 0.9944
+Batch 2500 - Loss: 0.008836042135953903 - Accuracy: 0.9956
+Batch 2600 - Loss: 0.0015772157348692417 - Accuracy: 0.9939
+Epoch 1: Train Loss=0.0417, Val Loss=0.0137, Val Acc=0.9955
+Epoch 2
+Batch 0 - Loss: 0.007625035010278225 - Accuracy: 0.9922
+Batch 100 - Loss: 0.0009033601963892579 - Accuracy: 0.9957
+Batch 200 - Loss: 0.00763231236487627 - Accuracy: 0.9961
+Batch 300 - Loss: 0.017251653596758842 - Accuracy: 0.9959
+Batch 400 - Loss: 0.052641838788986206 - Accuracy: 0.9967
+Batch 500 - Loss: 0.019226208329200745 - Accuracy: 0.9948
+Batch 600 - Loss: 0.023589765653014183 - Accuracy: 0.9963
+Batch 700 - Loss: 0.0008535776287317276 - Accuracy: 0.9960
+
+
+
+
+
+
+
+512:
+Using device: mps
+Epoch 1
+Batch 0 - Loss: 0.7636542320251465 - Accuracy: 0.2656
+Batch 100 - Loss: 0.32520556449890137 - Accuracy: 0.7802
+Batch 200 - Loss: 0.08744458109140396 - Accuracy: 0.9427
+Batch 300 - Loss: 0.05822695791721344 - Accuracy: 0.9760
+Batch 400 - Loss: 0.04131637513637543 - Accuracy: 0.9855
+Batch 500 - Loss: 0.03976528346538544 - Accuracy: 0.9859
+Batch 600 - Loss: 0.02908218652009964 - Accuracy: 0.9891
+Batch 700 - Loss: 0.008973214775323868 - Accuracy: 0.9905
+Batch 800 - Loss: 0.004518507048487663 - Accuracy: 0.9903
+Batch 900 - Loss: 0.0183256808668375 - Accuracy: 0.9909
+Batch 1000 - Loss: 0.0020746919326484203 - Accuracy: 0.9901
+Batch 1100 - Loss: 0.05706304311752319 - Accuracy: 0.9901
+Batch 1200 - Loss: 0.08437316864728928 - Accuracy: 0.9908
+Batch 1300 - Loss: 0.08551844954490662 - Accuracy: 0.9912
+Batch 1400 - Loss: 0.028957048431038857 - Accuracy: 0.9912
+Batch 1500 - Loss: 0.03717460110783577 - Accuracy: 0.9925
+Batch 1600 - Loss: 0.05264004319906235 - Accuracy: 0.9918
+Batch 1700 - Loss: 0.019688105210661888 - Accuracy: 0.9920
+Batch 1800 - Loss: 0.026887984946370125 - Accuracy: 0.9927
+Batch 1900 - Loss: 0.005825323052704334 - Accuracy: 0.9932
+Batch 2000 - Loss: 0.02718351036310196 - Accuracy: 0.9927
+Batch 2100 - Loss: 0.03367656469345093 - Accuracy: 0.9930
+Batch 2200 - Loss: 0.03551604226231575 - Accuracy: 0.9939
+Batch 2300 - Loss: 0.07292500138282776 - Accuracy: 0.9925
+Batch 2400 - Loss: 0.0014951613266021013 - Accuracy: 0.9939
+Batch 2500 - Loss: 0.0008012390462681651 - Accuracy: 0.9941
+Batch 2600 - Loss: 0.0369437076151371 - Accuracy: 0.9940
+Epoch 1: Train Loss=0.0516, Val Loss=0.0137, Val Acc=0.9953
+Epoch 2
+Batch 0 - Loss: 0.021759813651442528 - Accuracy: 0.9922
+Batch 100 - Loss: 0.0033650416880846024 - Accuracy: 0.9951
+Batch 200 - Loss: 0.026178795844316483 - Accuracy: 0.9941
+Batch 300 - Loss: 0.03198495879769325 - Accuracy: 0.9946
+Batch 400 - Loss: 0.0021114281844347715 - Accuracy: 0.9949
+Batch 500 - Loss: 0.02405409887433052 - Accuracy: 0.9943
+Batch 600 - Loss: 0.005898403935134411 - Accuracy: 0.9949
+Batch 700 - Loss: 0.02900055982172489 - Accuracy: 0.9955
+Batch 800 - Loss: 0.017723355442285538 - Accuracy: 0.9957
+Batch 900 - Loss: 0.044806722551584244 - Accuracy: 0.9946
+Batch 1000 - Loss: 0.0005354678141884506 - Accuracy: 0.9945
+Batch 1100 - Loss: 0.001467767171561718 - Accuracy: 0.9952
+Batch 1200 - Loss: 0.0007100699003785849 - Accuracy: 0.9965
+Batch 1300 - Loss: 0.0023129074834287167 - Accuracy: 0.9952
+Batch 1400 - Loss: 0.023194553330540657 - Accuracy: 0.9958
+Batch 1500 - Loss: 0.00042081711580976844 - Accuracy: 0.9950
+Batch 1600 - Loss: 0.006495117675513029 - Accuracy: 0.9957
+Batch 1700 - Loss: 0.023923469707369804 - Accuracy: 0.9950
+Batch 1800 - Loss: 0.07769973576068878 - Accuracy: 0.9956
+Batch 1900 - Loss: 0.0016764302272349596 - Accuracy: 0.9950
+Batch 2000 - Loss: 0.0024786461144685745 - Accuracy: 0.9954
+Batch 2100 - Loss: 0.03535822778940201 - Accuracy: 0.9960
+Batch 2200 - Loss: 0.0003184477682225406 - Accuracy: 0.9950
+Batch 2300 - Loss: 0.003397124819457531 - Accuracy: 0.9959
+Batch 2400 - Loss: 0.008681975305080414 - Accuracy: 0.9957
+Batch 2500 - Loss: 0.0004137688665650785 - Accuracy: 0.9966
+Batch 2600 - Loss: 0.003750137286260724 - Accuracy: 0.9949
+Epoch 2: Train Loss=0.0144, Val Loss=0.0110, Val Acc=0.9963
+Epoch 3
+Batch 0 - Loss: 0.002747625345364213 - Accuracy: 1.0000
+
+
+
+4:
+Using device: mps
+Epoch 1
+Batch 0 - Loss: 0.6568935513496399 - Accuracy: 0.7266
+Batch 100 - Loss: 0.1603240668773651 - Accuracy: 0.8499
+Batch 200 - Loss: 0.033360302448272705 - Accuracy: 0.9809
+Batch 300 - Loss: 0.0054050348699092865 - Accuracy: 0.9945
+
+
+
+
+
+Mit letzten 5 Werten: ca. random, keine Prediction
+Mit letzten 50 Werten: ca. 94% Prediction
+
+
+
+Alle Daten, normales Training:
+Using device: mps
+Epoch 1
+Batch 0 - Loss: 0.6187945008277893 - Accuracy: 0.7344
+Batch 100 - Loss: 0.19899596273899078 - Accuracy: 0.8470
+Batch 200 - Loss: 0.031252212822437286 - Accuracy: 0.9809
+Batch 300 - Loss: 0.034968774765729904 - Accuracy: 0.9932
+Batch 400 - Loss: 0.005710137076675892 - Accuracy: 0.9955
+Batch 500 - Loss: 0.03020821325480938 - Accuracy: 0.9970
+Batch 600 - Loss: 0.0031813106033951044 - Accuracy: 0.9971
+Batch 700 - Loss: 0.00032310455571860075 - Accuracy: 0.9982
+Batch 800 - Loss: 0.028019821271300316 - Accuracy: 0.9968
+Batch 900 - Loss: 0.007012172136455774 - Accuracy: 0.9979
+Batch 1000 - Loss: 0.00043897214345633984 - Accuracy: 0.9980
+Batch 1100 - Loss: 0.008047770708799362 - Accuracy: 0.9987
+Batch 1200 - Loss: 0.000293322023935616 - Accuracy: 0.9984
+Batch 1300 - Loss: 0.021253719925880432 - Accuracy: 0.9984
+Epoch 1: Train Loss=0.0408, Val Loss=0.0040, Val Acc=0.9986
+Epoch 2
+Batch 0 - Loss: 0.0009836193639785051 - Accuracy: 1.0000
+Batch 100 - Loss: 0.00030472161597572267 - Accuracy: 0.9988
+Batch 200 - Loss: 0.0010428320383653045 - Accuracy: 0.9987
+Batch 300 - Loss: 7.311567605938762e-05 - Accuracy: 0.9986
+Batch 400 - Loss: 0.00012573310232255608 - Accuracy: 0.9991
+Batch 500 - Loss: 0.0003695684135891497 - Accuracy: 0.9983
+Batch 600 - Loss: 0.005635971203446388 - Accuracy: 0.9984
+Batch 700 - Loss: 0.0005976359243504703 - Accuracy: 0.9991
+Batch 800 - Loss: 0.018671607598662376 - Accuracy: 0.9988
+Batch 900 - Loss: 3.859435673803091e-05 - Accuracy: 0.9983
+Batch 1000 - Loss: 0.00015589143731631339 - Accuracy: 0.9991
+Batch 1100 - Loss: 8.506928861606866e-05 - Accuracy: 0.9991
+Batch 1200 - Loss: 0.031558502465486526 - Accuracy: 0.9984
+Batch 1300 - Loss: 2.621583189466037e-05 - Accuracy: 0.9991
+Epoch 2: Train Loss=0.0039, Val Loss=0.0017, Val Acc=0.9994
+Epoch 3
+Batch 0 - Loss: 3.835769894067198e-05 - Accuracy: 1.0000
+Batch 100 - Loss: 6.287844735197723e-05 - Accuracy: 0.9991
+Batch 200 - Loss: 1.8451586583978496e-05 - Accuracy: 0.9992
+Batch 300 - Loss: 5.972989310976118e-05 - Accuracy: 0.9975
+Batch 400 - Loss: 0.00013932489673607051 - Accuracy: 0.9993
+Batch 500 - Loss: 6.232930900296196e-05 - Accuracy: 0.9988
+Batch 600 - Loss: 9.316364594269544e-05 - Accuracy: 0.9991
+Batch 700 - Loss: 3.678725624922663e-05 - Accuracy: 0.9991
+Batch 800 - Loss: 4.386418731883168e-05 - Accuracy: 0.9987
+Batch 900 - Loss: 0.0006896649720147252 - Accuracy: 0.9993
+Batch 1000 - Loss: 0.03006855584681034 - Accuracy: 0.9994
+Batch 1100 - Loss: 6.977395969443023e-06 - Accuracy: 0.9993
+Batch 1200 - Loss: 1.8512186215957627e-05 - Accuracy: 0.9993
+Batch 1300 - Loss: 1.803741542971693e-05 - Accuracy: 0.9995
+Epoch 3: Train Loss=0.0028, Val Loss=0.0106, Val Acc=0.9975
+Epoch 4
+Batch 0 - Loss: 0.0003521464532241225 - Accuracy: 1.0000
+Batch 100 - Loss: 7.452073623426259e-05 - Accuracy: 0.9994
+Batch 200 - Loss: 7.688395999139175e-05 - Accuracy: 0.9986
+Batch 300 - Loss: 7.599934178870171e-05 - Accuracy: 0.9993
+Batch 400 - Loss: 0.00013176986249163747 - Accuracy: 0.9988
+Batch 500 - Loss: 7.96041713329032e-05 - Accuracy: 0.9992
+Batch 600 - Loss: 0.0039061293937265873 - Accuracy: 0.9977
+Batch 700 - Loss: 2.3872347810538486e-05 - Accuracy: 0.9988
+
+
+
+Alle Daten, normalized:
+97% nach 3 epochen. Nicht kopiert weil dumm.

@@ -142,12 +142,16 @@ def evaluate(model, dataloader, device):
 # 6) MAIN
 # -----------------------------------------------------
 if __name__ == "__main__":
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(
+        "mps" if torch.backends.mps.is_available() else
+        "cuda" if torch.cuda.is_available() else
+        "cpu"
+    )
 
     # Update with your paths:
     gamma_file = "../magic-gammas_part2.parquet"
     proton_file = "../magic-protons_part2.parquet"
-    model_path = "best_model_dual_to_show.pt" # or "best_model_dual_fin.pt"
+    model_path = "best_model_dual.pt" # or "best_model_dual_fin.pt"
 
     # Load dataset and model
     full_dataset = MagicDataset(gamma_file, proton_file)

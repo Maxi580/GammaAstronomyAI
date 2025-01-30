@@ -38,12 +38,12 @@ def split_parquet_file(input_file_path: str, output_dir: str = None) -> tuple[st
         raise ValueError("Input Parquet file is empty")
 
     # Calculate split point
-    split_index = len(df) // 2
+    split_index = len(df) // 4
 
     # Generate output file names
     input_filename = Path(input_file_path).stem
-    file1_path = os.path.join(output_dir, f"{input_filename}_part1.parquet")
-    file2_path = os.path.join(output_dir, f"{input_filename}_part2.parquet")
+    file1_path = os.path.join(output_dir, f"{input_filename}_small_part1.parquet")
+    file2_path = os.path.join(output_dir, f"{input_filename}_small_part2.parquet")
 
     # Split and save the files
     df.iloc[:split_index].to_parquet(file1_path, index=False)

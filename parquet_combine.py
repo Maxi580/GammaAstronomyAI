@@ -52,9 +52,10 @@ def combine_parquet_files(
     return output_file_path
 
 if __name__ == "__main__":
-    input_file2 = "./magic-gammas_part2_extracted.parquet"  # Replace with your first input file
-    input_file1 = "./magic-protons_part2_extracted.parquet"  # Replace with your second input file
-    output_file = "./combined_file_reverse.parquet"  # Replace with your desired output file path
+    input_file1 = "./magic-gammas_part2.parquet"  # Replace with your first input file
+    input_file2 = "./magic-protons_part2.parquet"  # Replace with your second input file
+    output_file = "./combined_file.parquet"  # Replace with your desired output file path
+    #columns_to_combine = ["run_number", "image_m1", "image_m2"]  # Columns to combine
     columns_to_combine = ["image_m1", "image_m2"]  # Columns to combine
 
     try:

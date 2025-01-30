@@ -34,7 +34,7 @@ def main():
     )
 
     # Generate samples (e.g., 1000 samples)
-    sample_gen.generate_samples(15000)
+    sample_gen.generate_samples(1000)
 
 if __name__ == '__main__':
     main()

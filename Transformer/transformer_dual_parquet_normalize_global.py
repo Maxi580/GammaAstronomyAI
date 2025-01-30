@@ -5,8 +5,6 @@ import torch.optim as optim
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader, random_split
 
-from Transformer.MaxiDataset import MaxiDataset
-
 
 # -----------------------------------------------------
 # 1) DATASET - Return (x_m1, x_m2), label
@@ -25,26 +23,34 @@ class MagicDataset(Dataset):
         self.df = pd.concat([df_gamma, df_proton], ignore_index=True)
         self.transform = transform
 
+        # -- Compute global mean/std (single value per branch) --
+        # Flatten all M1, M2 to get overall mean & std
+        all_m1 = []
+        all_m2 = []
+        for i in range(len(self.df)):
+            row = self.df.iloc[i]
+            all_m1.extend(row["image_m1"][:1039])
+            all_m2.extend(row["image_m2"][:1039])
+        all_m1 = torch.tensor(all_m1, dtype=torch.float32)
+        all_m2 = torch.tensor(all_m2, dtype=torch.float32)
+
+        self.mean_m1 = all_m1.mean()
+        self.std_m1 = all_m1.std()
+        self.mean_m2 = all_m2.mean()
+        self.std_m2 = all_m2.std()
+
     def __len__(self):
         return len(self.df)
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        x_m1 = torch.tensor(row["image_m1"][:1039] - row["clean_image_m1"][:1039], dtype=torch.float32)
-        x_m2 = torch.tensor(row["image_m2"][:1039] - row["clean_image_m2"][:1039], dtype=torch.float32)
+        x_m1 = torch.tensor(row["image_m1"][:1039], dtype=torch.float32)
+        x_m2 = torch.tensor(row["image_m2"][:1039], dtype=torch.float32)
         y = torch.tensor(row["label"], dtype=torch.long)
 
-        mid = len(x_m1) // 2
-
-        # Set second half to zero
-        #x_m1[:mid + mid - 50] = 0
-        #x_m2[:mid + mid - 50] = 0
-
-        #x_m1[0] = y
-        #x_m2[0] = y
-        #if self.transform:
-        #    x_m1 = self.transform(x_m1)
-        #    x_m2 = self.transform(x_m2)
+        # -- Global Normalization --
+        x_m1 = (x_m1 - self.mean_m1) / (self.std_m1 + 1e-8)
+        x_m2 = (x_m2 - self.mean_m2) / (self.std_m2 + 1e-8)
         return x_m1, x_m2, y
 
 
@@ -89,7 +95,7 @@ class PositionalEncoding(nn.Module):
 class ShapeTransformer(nn.Module):
     def __init__(self, emb_dim=128, n_heads=8, ff_dim=256, n_layers=4, n_classes=2, max_len=2000):
         super().__init__()
-        self.patch_embedding = PatchEmbedding(in_dim=1039, patch_size=8, emb_dim=emb_dim)
+        self.patch_embedding = PatchEmbedding(in_dim=1039, patch_size=64, emb_dim=emb_dim)
         self.pos_encoder = PositionalEncoding(emb_dim, max_len)
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=emb_dim,
@@ -99,15 +105,13 @@ class ShapeTransformer(nn.Module):
             batch_first=True
         )
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
-        # Final MLP for this single branch. We only output an embedding here,
-        # so let's keep it minimal: e.g. the final feature we want is x.mean(dim=1).
-        self.final_linear = nn.Identity()  # We'll extract the mean and pass it on.
+        self.final_linear = nn.Identity()
 
     def forward(self, x):
         x = self.patch_embedding(x)
         x = self.pos_encoder(x)
         x = self.transformer_encoder(x)
-        x = x.mean(dim=1)  # final embedding
+        x = x.mean(dim=1)
         return self.final_linear(x)
 
 
@@ -117,7 +121,6 @@ class ShapeTransformer(nn.Module):
 class CombinedTransformer(nn.Module):
     def __init__(self, emb_dim=512, n_heads=8, ff_dim=1024, n_layers=4, n_classes=2):
         super().__init__()
-        # Two separate shape transformers
         self.transformer_m1 = ShapeTransformer(
             emb_dim=emb_dim,
             n_heads=n_heads,
@@ -132,7 +135,6 @@ class CombinedTransformer(nn.Module):
             n_layers=n_layers,
             n_classes=n_classes
         )
-        # Merge embeddings from both branches -> final classification
         self.classifier = nn.Sequential(
             nn.Linear(2 * emb_dim, emb_dim),
             nn.ReLU(),
@@ -141,14 +143,14 @@ class CombinedTransformer(nn.Module):
         )
 
     def forward(self, x_m1, x_m2):
-        out_m1 = self.transformer_m1(x_m1)  # shape [batch, emb_dim]
-        out_m2 = self.transformer_m2(x_m2)  # shape [batch, emb_dim]
+        out_m1 = self.transformer_m1(x_m1)
+        out_m2 = self.transformer_m2(x_m2)
         combined = torch.cat([out_m1, out_m2], dim=1)
         return self.classifier(combined)
 
 
 # -----------------------------------------------------
-# 5) TRAIN/EVAL UTILS (mostly unchanged)
+# 5) TRAIN/EVAL UTILS
 # -----------------------------------------------------
 def train_model(model, dataloader, criterion, optimizer, device):
     model.train()
@@ -206,9 +208,9 @@ def report_misclassified(model, dataset, device):
 # 6) MAIN
 # -----------------------------------------------------
 if __name__ == "__main__":
-    BATCH_SIZE = 256
+    BATCH_SIZE = 128
     LR = 1e-5
-    EPOCHS = 10
+    EPOCHS = 3
     device = torch.device(
         "mps" if torch.backends.mps.is_available() else
         "cuda" if torch.cuda.is_available() else
@@ -216,11 +218,10 @@ if __name__ == "__main__":
     )
     print("Using device:", device)
     # Files
-    gamma_file = "../magic-gammas.parquet"
-    proton_file = "../magic-protons.parquet"
+    gamma_file = "../magic-gammas_small_part1.parquet"
+    proton_file = "../magic-protons_small_part1.parquet"
 
     # Dataset + split
-    #dataset = MaxiDataset(gamma_filename=gamma_file, proton_filename=proton_file)
     dataset = MagicDataset(gamma_parquet=gamma_file, proton_parquet=proton_file)
     train_size = int(0.7 * len(dataset))
     val_size = len(dataset) - train_size
