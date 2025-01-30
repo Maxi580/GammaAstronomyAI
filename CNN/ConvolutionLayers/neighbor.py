@@ -44,7 +44,7 @@ def unpool_array(pooled_array: np.ndarray, pooling_kernel_size: int, num_pooling
         if i < len(pooled_array):
             unpooled_array[idx] = pooled_array[i]
 
-    return unpooled_array
+    return unpooled_array, valid_indices
 
 
 def _get_pooled_neighbors(neighbors, pooling_kernel_size, num_pooling_layers, pixel_positions):

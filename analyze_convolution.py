@@ -16,26 +16,38 @@ from CombinedNet.magicDataset import MagicDataset
 POOLING_KERNEL_SIZE = 2
 
 
-def reconstruct_image(array_1039, save_path, title=None):
+def reconstruct_image(array_1039, save_path, title=None, pooling_count=0):
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     f = str(files("ctapipe_io_magic").joinpath("resources/MAGICCam.camgeom.fits.gz"))
     geom = CameraGeometry.from_table(f)
 
-    fig, ax = plt.subplots(figsize=(10, 10))
-    disp = CameraDisplay(geom, ax=ax)
-
     if torch.is_tensor(array_1039):
         array_1039 = array_1039.cpu().numpy()
 
-    disp.image = array_1039
+    fig, ax = plt.subplots(figsize=(10, 10))
+    disp = CameraDisplay(geom, ax=ax)
+
+    if pooling_count > 0:
+        array_1039, valid_indices = unpool_array(
+            array_1039,
+            pooling_kernel_size=2,
+            num_pooling_layers=POOLING_KERNEL_SIZE
+        )
+
+        mask = np.ones_like(array_1039, dtype=bool)
+        mask[valid_indices] = False
+        masked_data = np.ma.masked_array(array_1039, mask=mask)
+        disp.image = masked_data
+        disp.cmap.set_bad('gray', alpha=0.2)
+    else:
+        disp.image = array_1039
 
     if title:
         plt.title(title)
 
     plt.colorbar(disp.pixels, ax=ax, label='Intensity')
     plt.tight_layout()
-
     plt.savefig(save_path)
     plt.close()
 
@@ -43,22 +55,15 @@ def reconstruct_image(array_1039, save_path, title=None):
 def extract_conv_arrays(tensor, cnn_idx, pooling_count, output_dir):
     data = tensor.squeeze().cpu().detach().numpy()
     for channel_idx in range(data.shape[0]):
-        channel_data = data[channel_idx]
-
-        if pooling_count > 0:
-            channel_data = unpool_array(
-                channel_data,
-                pooling_kernel_size=2,
-                num_pooling_layers=POOLING_KERNEL_SIZE
-            )
-
-        reconstruct_image(channel_data, output_dir + f"cnn{cnn_idx}/{channel_idx}.png")
+        reconstruct_image(
+            data[channel_idx],
+            output_dir + f"cnn{cnn_idx}/{channel_idx}.png",
+            pooling_count=pooling_count
+        )
 
 
-def simulate_forward_pass(image, model, device, output_dir):
+def simulate_forward_pass(image, model, output_dir):
     pooling_cnt = 0
-
-    image = image.to(device)
 
     for idx, layer in enumerate(model.m1_cnn.cnn):
         if isinstance(layer, ConvHex):
@@ -101,8 +106,8 @@ def debug_forward_pass(model_path, prefix, image_m1, image_m2):
     image_m1 = resize_input(image_m1)
     image_m2 = resize_input(image_m2)
 
-    simulate_forward_pass(image_m1, model, device, output_dir)
-    simulate_forward_pass(image_m2, model, device, output_dir)
+    simulate_forward_pass(image_m1, model, output_dir)
+    simulate_forward_pass(image_m2, model, output_dir)
 
 
 if __name__ == "__main__":
@@ -111,7 +116,7 @@ if __name__ == "__main__":
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas.parquet"
     dataset = MagicDataset(proton_file, gamma_file, debug_info=False)
-    num_samples = 10
+    num_samples = 1
 
     total_samples = len(dataset)
     random_indices = np.random.choice(total_samples, num_samples, replace=False)
