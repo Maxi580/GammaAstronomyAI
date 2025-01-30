@@ -27,14 +27,9 @@ def create_model_with_params(trial):
         return image[:, :, :NUM_OF_HEXAGONS]
 
     def suggest_group_norm_params(trial, num_channels, name_prefix):
-        possible_groups = [i for i in range(1, num_channels + 1) if num_channels % i == 0]
-
-        num_groups = trial.suggest_categorical(
-            f'{name_prefix}_groups',
-            possible_groups
-        )
-
-        return num_groups
+        divisor_ratio = trial.suggest_int(f'{name_prefix}_group_ratio', 1, 10)
+        number_of_groups = num_channels // divisor_ratio
+        return number_of_groups
 
     class TelescopeCNN(nn.Module):
         def __init__(self, prefix):
