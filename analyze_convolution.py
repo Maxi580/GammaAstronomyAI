@@ -31,6 +31,10 @@ def reconstruct_image(array_1039, save_path, title=None):
 
     fig, ax = plt.subplots(figsize=(10, 10))
     disp = CameraDisplay(geom, ax=ax)
+
+    if torch.is_tensor(array_1039):
+        array_1039 = array_1039.cpu().numpy()
+
     disp.image = array_1039
 
     if title:
@@ -73,12 +77,12 @@ def simulate_forward_pass(image, model, output_dir):
 
 
 def debug_forward_pass(model_path, prefix, image_m1, image_m2):
-    output_dir = f"image{prefix}/reconstructed_cnn/"
+    output_dir = f"convolution_analysis/image{prefix}/reconstructed_cnn/"
     os.makedirs(os.path.dirname(output_dir), exist_ok=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = CombinedNet()
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     model.eval()
 
     image_m1 = image_m1.to(device)
