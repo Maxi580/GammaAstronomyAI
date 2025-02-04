@@ -88,9 +88,10 @@ def extract_features(row: pd.Series) -> torch.Tensor:
 
     return torch.tensor(features, dtype=torch.float32)
 
+
 def resize_input(image):
     """Arrays are 1183 long, however the last 144 are always 0"""
-    return image[:, :, :NUM_OF_HEXAGONS]
+    return image[:NUM_OF_HEXAGONS]
 
 
 def create_neighbor_mask(cog: dict, radius_rings: int = 6) -> torch.Tensor:
