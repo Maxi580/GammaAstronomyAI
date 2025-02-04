@@ -123,6 +123,9 @@ class MagicDataset(Dataset):
                  max_samples: Optional[int] = None, debug_info: bool = True):
         self.debug_info = debug_info
         self.mask_rings = mask_rings
+        if mask_rings is not None:
+            self.neighbors_info = get_neighbor_list_by_kernel(mask_rings, pooling=False, pooling_kernel_size=2,
+                                                     num_pooling_layers=0)
 
         if self.debug_info:
             print(f"Initializing dataset from:")
@@ -181,11 +184,8 @@ class MagicDataset(Dataset):
             m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
             m2_cog = {'x': row['hillas_cog_x_m2'], 'y': row['hillas_cog_y_m2']}
 
-            neighbors_info = get_neighbor_list_by_kernel(self.mask_rings, pooling=False, pooling_kernel_size=2,
-                                                         num_pooling_layers=0)
-
-            mask_m1 = create_neighbor_mask(m1_cog, neighbors_info)
-            mask_m2 = create_neighbor_mask(m2_cog, neighbors_info)
+            mask_m1 = create_neighbor_mask(m1_cog, self.neighbors_info)
+            mask_m2 = create_neighbor_mask(m2_cog, self.neighbors_info)
 
             noisy_m1 = noisy_m1 * mask_m1
             noisy_m2 = noisy_m2 * mask_m2
