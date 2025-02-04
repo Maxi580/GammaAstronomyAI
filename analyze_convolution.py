@@ -9,8 +9,8 @@ from ctapipe.instrument import CameraGeometry
 from ctapipe.visualization import CameraDisplay
 
 from CombinedNet.CombinedNet import CombinedNet, resize_input
-from CNN.ConvolutionLayers.ConvHex import ConvHex
-from CNN.ConvolutionLayers.neighbor import unpool_array
+from CNN.HexLayers.ConvHex import ConvHex
+from CNN.HexLayers.neighbor import unpool_array
 from CombinedNet.magicDataset import MagicDataset
 
 POOLING_KERNEL_SIZE = 2

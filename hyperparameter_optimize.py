@@ -4,7 +4,7 @@ import time
 import gc
 import torch
 from CombinedNet.TrainingSupervisor import TrainingSupervisor
-from CNN.ConvolutionLayers.ConvHex import ConvHex
+from CNN.HexLayers.ConvHex import ConvHex
 import torch.nn as nn
 
 from CombinedNet.magicDataset import MagicDataset

@@ -1,4 +1,6 @@
 from typing import NamedTuple
+
+import pandas as pd
 from ctapipe.instrument import CameraGeometry
 from importlib.resources import files
 import torch
@@ -99,7 +101,7 @@ def _get_neighbor_indices(pooling: bool, pooling_kernel_size: int, num_pooling_l
     return neighbors
 
 
-def _get_neighbor_list_by_kernel(kernel_size: int, pooling: bool, pooling_kernel_size: int, num_pooling_layers: int) \
+def get_neighbor_list_by_kernel(kernel_size: int, pooling: bool, pooling_kernel_size: int, num_pooling_layers: int) \
         -> list[list[int]]:
     """
     Get list of neighbors up to specified kernel size rings away
@@ -141,7 +143,7 @@ def get_neighbor_tensor(kernel_size: int, pooling: bool, pooling_kernel_size: in
     cache_key = (kernel_size, pooling, pooling_kernel_size, num_pooling_layers)
 
     if cache_key not in _NEIGHBOR_CACHE:
-        neighbors_list = _get_neighbor_list_by_kernel(kernel_size, pooling, pooling_kernel_size, num_pooling_layers)
+        neighbors_list = get_neighbor_list_by_kernel(kernel_size, pooling, pooling_kernel_size, num_pooling_layers)
         max_neighbors = max(len(neighbors) for neighbors in neighbors_list)
 
         padded_neighbors = [
@@ -152,3 +154,20 @@ def get_neighbor_tensor(kernel_size: int, pooling: bool, pooling_kernel_size: in
         _NEIGHBOR_CACHE[cache_key] = NeighborInfo(tensor, max_neighbors)
 
     return _NEIGHBOR_CACHE[cache_key]
+
+
+def find_center_pixel(cog_x: float, cog_y: float) -> int:
+    """
+    Finds the nearest pixel to the center of gravity coordinates
+    """
+    f = str(files("ctapipe_io_magic").joinpath("resources/MAGICCam.camgeom.fits.gz"))
+    geom = CameraGeometry.from_table(f)
+    pixel_positions = np.column_stack([geom.pix_x, geom.pix_y])
+
+    distances = np.sqrt(
+        (pixel_positions[:, 0] - cog_x) ** 2 +
+        (pixel_positions[:, 1] - cog_y) ** 2
+    )
+    center_idx = np.argmin(distances)
+
+    return center_idx

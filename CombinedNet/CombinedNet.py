@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from CNN.ConvolutionLayers.ConvHex import ConvHex
+from CNN.HexLayers.ConvHex import ConvHex
 
 NUM_OF_HEXAGONS = 1039
 NUM_FEATURES = 59
@@ -16,22 +16,15 @@ class TelescopeCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            ConvHex(1, 14, kernel_size=1, pooling=False, pooling_cnt=0, pooling_kernel_size=2),
-            nn.GroupNorm(7, 14),
+            ConvHex(1, 4, kernel_size=3),
+            nn.GroupNorm(2, 4),
             nn.ReLU(),
-            nn.Dropout1d(0.3601080051216868),
+            nn.Dropout1d(0.2),
 
-            ConvHex(14, 18, kernel_size=4, pooling=False, pooling_cnt=0, pooling_kernel_size=2),
-            nn.GroupNorm(9, 18),
+            ConvHex(4, 8, kernel_size=2),
+            nn.GroupNorm(4, 8),
             nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2),
-            nn.Dropout1d(0.10389074001028657),
-
-            ConvHex(18, 36, kernel_size=1, pooling=True, pooling_cnt=1, pooling_kernel_size=2),
-            nn.GroupNorm(18, 36),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2),
-            nn.Dropout1d(0.35031261571845096),
+            nn.Dropout1d(0.2),
         )
 
     def forward(self, x):
@@ -46,7 +39,7 @@ class CombinedNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(36 * (1039 // (2 ** 2)) * 2, 768),
+            nn.Linear(8 * (1039 // (2 ** 0)) * 2, 768),
             nn.GroupNorm(32, 768),
             nn.ReLU(),
             nn.Dropout(0.4936012148325484),

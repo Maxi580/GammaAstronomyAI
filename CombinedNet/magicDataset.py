@@ -5,6 +5,8 @@ import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
 
+from CNN.HexLayers.neighbor import find_center_pixel, get_neighbor_list_by_kernel
+
 
 def replace_nan(value):
     """Replace missing Values with 0"""
@@ -82,13 +84,37 @@ def extract_features(row: pd.Series) -> torch.Tensor:
     return torch.tensor(features, dtype=torch.float32)
 
 
+def create_neighbor_mask(cog: dict, radius_rings: int = 6) -> torch.Tensor:
+    center_idx = find_center_pixel(cog['x'], cog['y'])
+    neighbors_info = get_neighbor_list_by_kernel(radius_rings, pooling=False, pooling_kernel_size=2,
+                                                 num_pooling_layers=0)
+
+    mask = torch.ones(1039)
+    mask[center_idx] = 0
+
+    for neighbor in neighbors_info[center_idx]:
+        if neighbor >= 0:
+            mask[neighbor] = 0
+
+    return mask
+
+
+def read_parquet_limit(filename, max_rows):
+    parquet_file_stream = pq.ParquetFile(filename).iter_batches(batch_size=max_rows)
+
+    batch = next(parquet_file_stream)
+
+    return batch.to_pandas()
+
+
 class MagicDataset(Dataset):
     GAMMA_LABEL: str = 'gamma'
     PROTON_LABEL: str = 'proton'
 
-    def __init__(self, proton_filename: str, gamma_filename: str, max_samples: Optional[int] = None,
-                 debug_info: bool = True):
+    def __init__(self, proton_filename: str, gamma_filename: str, mask_rings: Optional[int] = None,
+                 max_samples: Optional[int] = None, debug_info: bool = True):
         self.debug_info = debug_info
+        self.mask_rings = mask_rings
 
         if self.debug_info:
             print(f"Initializing dataset from:")
@@ -132,7 +158,7 @@ class MagicDataset(Dataset):
     def __len__(self):
         return self.length
 
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, int]:
         if idx < self.n_protons:
             row = self.proton_data.iloc[idx]
             label = self.PROTON_LABEL
@@ -141,15 +167,23 @@ class MagicDataset(Dataset):
             label = self.GAMMA_LABEL
 
         noisy_m1 = torch.tensor(row['image_m1'], dtype=torch.float32)
-        # clean_m1 = torch.tensor(row['clean_image_m1'], dtype=torch.float32)
+        clean_m1 = torch.tensor(row['clean_image_m1'], dtype=torch.float32)
         noisy_m2 = torch.tensor(row['image_m2'], dtype=torch.float32)
-        # clean_m2 = torch.tensor(row['clean_image_m2'], dtype=torch.float32)
-        # noise_m1 = noisy_m1 - clean_m1
-        # noise_m2 = noisy_m2 - clean_m2
+        clean_m2 = torch.tensor(row['clean_image_m2'], dtype=torch.float32)
+
+        if self.mask_rings is not None:
+            m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
+            m2_cog = {'x': row['hillas_cog_x_m2'], 'y': row['hillas_cog_y_m2']}
+
+            mask_m1 = create_neighbor_mask(m1_cog, self.mask_rings)
+            mask_m2 = create_neighbor_mask(m2_cog, self.mask_rings)
+
+            noisy_m1 = noisy_m1 * mask_m1
+            noisy_m2 = noisy_m2 * mask_m2
 
         features = extract_features(row)
 
-        return noisy_m1, noisy_m2, features, self.labels[label]
+        return noisy_m1, noisy_m2, clean_m1, clean_m2, features, self.labels[label]
 
     def analyze_noise(self):
         stats = {
@@ -252,10 +286,55 @@ class MagicDataset(Dataset):
 
         return {'total_samples': total_samples, 'distribution': distribution}
 
+    def analyze_mask_coverage(self, radius_rings: int = 7):
+        total_m1 = 0
+        total_m2 = 0
+        complete_coverage_m1 = 0
+        complete_coverage_m2 = 0
 
-def read_parquet_limit(filename, max_rows):
-    parquet_file_stream = pq.ParquetFile(filename).iter_batches(batch_size=max_rows)
+        for idx in range(self.length):
+            if idx < self.n_protons:
+                row = self.proton_data.iloc[idx]
+            else:
+                row = self.gamma_data.iloc[idx - self.n_protons]
 
-    batch = next(parquet_file_stream)
+            _, _, clean_m1, clean_m2, _, _ = self[idx]
 
-    return batch.to_pandas()
+            m1_cog = {
+                'x': row['hillas_cog_x_m1'],
+                'y': row['hillas_cog_y_m1']
+            }
+
+            m2_cog = {
+                'x': row['hillas_cog_x_m2'],
+                'y': row['hillas_cog_y_m2']
+            }
+
+            if clean_m1.max() > 0:
+                total_m1 += 1
+                mask_m1 = create_neighbor_mask(m1_cog, radius_rings)
+                masked_m1 = clean_m1 * mask_m1
+
+                if (masked_m1 > clean_m1.max() * 0.1).sum() == 0:
+                    complete_coverage_m1 += 1
+
+            if clean_m2.max() > 0:
+                total_m2 += 1
+                mask_m2 = create_neighbor_mask(m2_cog, radius_rings)
+                masked_m2 = clean_m2 * mask_m2
+
+                if (masked_m2 > clean_m2.max() * 0.1).sum() == 0:
+                    complete_coverage_m2 += 1
+
+        print(f"total_m1: {total_m1}")
+        print(f"total_m1: {total_m2}")
+        print(f"complete_coverage_m1: {complete_coverage_m1}")
+        print(f"complete_coverage_m2: {complete_coverage_m2}")
+
+
+if __name__ == '__main__':
+    proton_file = 'magic-protons.parquet'
+    gamma_file = 'magic-gammas.parquet'
+
+    md = MagicDataset(proton_file, gamma_file, mask_rings=7)
+    md.analyze_mask_coverage()
