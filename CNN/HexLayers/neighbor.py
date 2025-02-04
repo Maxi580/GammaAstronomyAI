@@ -1,6 +1,4 @@
 from typing import NamedTuple
-
-import pandas as pd
 from ctapipe.instrument import CameraGeometry
 from importlib.resources import files
 import torch
@@ -13,6 +11,27 @@ class NeighborInfo(NamedTuple):
 
 
 _NEIGHBOR_CACHE = {}
+_CAMERA_CACHE = None
+
+
+def _get_camera_geometry():
+    global _CAMERA_CACHE
+
+    if _CAMERA_CACHE is None:
+        f = str(files("ctapipe_io_magic").joinpath("resources/MAGICCam.camgeom.fits.gz"))
+        geom = CameraGeometry.from_table(f)
+
+        x_positions = geom.pix_x.to_value()
+        y_positions = geom.pix_y.to_value()
+        pixel_positions = np.column_stack([x_positions, y_positions])
+
+        _CAMERA_CACHE = {
+            'geometry': geom,
+            'pixel_positions': pixel_positions,
+            'neighbors': geom.neighbors
+        }
+
+    return _CAMERA_CACHE
 
 
 def _sort_by_angle(pixel_positions, center_idx: int, neighbor_indices: list[int]) -> list[int]:
@@ -37,7 +56,7 @@ def _get_valid_indices_after_pooling(pooling_kernel_size: int, num_pooling_layer
     return valid_indices
 
 
-def unpool_array(pooled_array: np.ndarray, pooling_kernel_size: int, num_pooling_layers: int) -> np.ndarray:
+def unpool_array(pooled_array: np.ndarray, pooling_kernel_size: int, num_pooling_layers: int) -> [np.ndarray, list[int]]:
     valid_indices = _get_valid_indices_after_pooling(pooling_kernel_size, num_pooling_layers)
 
     unpooled_array = np.zeros(1039)
@@ -84,11 +103,9 @@ def _get_pooled_neighbors(neighbors, pooling_kernel_size, num_pooling_layers, pi
 def _get_neighbor_indices(pooling: bool, pooling_kernel_size: int, num_pooling_layers: int) -> list[list[int]]:
     """Returns a list of Geometrically sorted neighbor indices
        Geometric starts top left and goes clockwise"""
-    f = str(files("ctapipe_io_magic").joinpath("resources/MAGICCam.camgeom.fits.gz"))
-    geom = CameraGeometry.from_table(f)
-
-    pixel_positions = np.column_stack([geom.pix_x, geom.pix_y])
-    neighbors = geom.neighbors
+    camera_cache = _get_camera_geometry()
+    pixel_positions = camera_cache['pixel_positions']
+    neighbors = camera_cache['neighbors']
 
     if pooling:
         neighbors = _get_pooled_neighbors(neighbors, pooling_kernel_size, num_pooling_layers, pixel_positions)
@@ -160,12 +177,8 @@ def find_center_pixel(cog_x: float, cog_y: float) -> int:
     """
     Finds the nearest pixel to the center of gravity coordinates
     """
-    f = str(files("ctapipe_io_magic").joinpath("resources/MAGICCam.camgeom.fits.gz"))
-    geom = CameraGeometry.from_table(f)
-
-    x_positions = geom.pix_x.to_value()
-    y_positions = geom.pix_y.to_value()
-    pixel_positions = np.column_stack([x_positions, y_positions])
+    camera_cache = _get_camera_geometry()
+    pixel_positions = camera_cache['pixel_positions']
 
     distances = np.sqrt(
         (pixel_positions[:, 0] - cog_x) ** 2 +
