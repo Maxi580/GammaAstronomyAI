@@ -162,7 +162,10 @@ def find_center_pixel(cog_x: float, cog_y: float) -> int:
     """
     f = str(files("ctapipe_io_magic").joinpath("resources/MAGICCam.camgeom.fits.gz"))
     geom = CameraGeometry.from_table(f)
-    pixel_positions = np.column_stack([geom.pix_x, geom.pix_y])
+
+    x_positions = geom.pix_x.to_value()
+    y_positions = geom.pix_y.to_value()
+    pixel_positions = np.column_stack([x_positions, y_positions])
 
     distances = np.sqrt(
         (pixel_positions[:, 0] - cog_x) ** 2 +
