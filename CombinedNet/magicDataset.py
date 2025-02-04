@@ -1,11 +1,16 @@
 from typing import Any, Dict, Optional, Tuple
-
+import sys
+import os
 import pandas as pd
 import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
 
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
 from CNN.HexLayers.neighbor import find_center_pixel, get_neighbor_list_by_kernel
+
+NUM_OF_HEXAGONS = 1039
 
 
 def replace_nan(value):
@@ -83,6 +88,10 @@ def extract_features(row: pd.Series) -> torch.Tensor:
 
     return torch.tensor(features, dtype=torch.float32)
 
+def resize_input(image):
+    """Arrays are 1183 long, however the last 144 are always 0"""
+    return image[:, :, :NUM_OF_HEXAGONS]
+
 
 def create_neighbor_mask(cog: dict, radius_rings: int = 6) -> torch.Tensor:
     center_idx = find_center_pixel(cog['x'], cog['y'])
@@ -158,7 +167,7 @@ class MagicDataset(Dataset):
     def __len__(self):
         return self.length
 
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, int]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
         if idx < self.n_protons:
             row = self.proton_data.iloc[idx]
             label = self.PROTON_LABEL
@@ -166,10 +175,8 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        noisy_m1 = torch.tensor(row['image_m1'], dtype=torch.float32)
-        clean_m1 = torch.tensor(row['clean_image_m1'], dtype=torch.float32)
-        noisy_m2 = torch.tensor(row['image_m2'], dtype=torch.float32)
-        clean_m2 = torch.tensor(row['clean_image_m2'], dtype=torch.float32)
+        noisy_m1 = resize_input(torch.tensor(row['image_m1'], dtype=torch.float32))
+        noisy_m2 = resize_input(torch.tensor(row['image_m2'], dtype=torch.float32))
 
         if self.mask_rings is not None:
             m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
@@ -183,7 +190,7 @@ class MagicDataset(Dataset):
 
         features = extract_features(row)
 
-        return noisy_m1, noisy_m2, clean_m1, clean_m2, features, self.labels[label]
+        return noisy_m1, noisy_m2, features, self.labels[label]
 
     def analyze_noise(self):
         stats = {
@@ -298,7 +305,8 @@ class MagicDataset(Dataset):
             else:
                 row = self.gamma_data.iloc[idx - self.n_protons]
 
-            _, _, clean_m1, clean_m2, _, _ = self[idx]
+            clean_m1 = resize_input(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
+            clean_m2 = resize_input(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
 
             m1_cog = {
                 'x': row['hillas_cog_x_m1'],

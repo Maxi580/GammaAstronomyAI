@@ -3,13 +3,7 @@ import torch.nn as nn
 
 from CNN.HexLayers.ConvHex import ConvHex
 
-NUM_OF_HEXAGONS = 1039
 NUM_FEATURES = 59
-
-
-def resize_input(image):
-    """Arrays are 1183 long, however the last 144 are always 0"""
-    return image[:, :, :NUM_OF_HEXAGONS]
 
 
 class TelescopeCNN(nn.Module):
@@ -58,12 +52,8 @@ class CombinedNet(nn.Module):
             )
 
     def forward(self, m1_image, m2_image, measurement_features):
-        # Add Channel Dimension
         m1_image = m1_image.unsqueeze(1)
         m2_image = m2_image.unsqueeze(1)
-        # Throw away 144 0 Values at the end
-        m1_image = resize_input(m1_image)
-        m2_image = resize_input(m2_image)
         m1_features = self.m1_cnn(m1_image)
         m2_features = self.m2_cnn(m2_image)
         m1_features = m1_features.flatten(1)
