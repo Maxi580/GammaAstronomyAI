@@ -177,8 +177,8 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        noisy_m1 = resize_input(torch.tensor(row['image_m1'], dtype=torch.float32))
-        noisy_m2 = resize_input(torch.tensor(row['image_m2'], dtype=torch.float32))
+        noisy_m1 = torch.tensor(row['image_m1'][:NUM_OF_HEXAGONS], dtype=torch.float32)
+        noisy_m2 = torch.tensor(row['image_m2'][:NUM_OF_HEXAGONS], dtype=torch.float32)
 
         if self.mask_rings is not None:
             m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
@@ -187,8 +187,8 @@ class MagicDataset(Dataset):
             mask_m1 = create_neighbor_mask(m1_cog, self.neighbors_info)
             mask_m2 = create_neighbor_mask(m2_cog, self.neighbors_info)
 
-            noisy_m1 = noisy_m1 * mask_m1
-            noisy_m2 = noisy_m2 * mask_m2
+            noisy_m1.mul_(mask_m1)
+            noisy_m2.mul_(mask_m2)
 
         features = extract_features(row)
 
@@ -343,11 +343,3 @@ class MagicDataset(Dataset):
         print(f"total_m1: {total_m2}")
         print(f"complete_coverage_m1: {complete_coverage_m1}")
         print(f"complete_coverage_m2: {complete_coverage_m2}")
-
-
-if __name__ == '__main__':
-    proton_file = 'magic-protons.parquet'
-    gamma_file = 'magic-gammas.parquet'
-
-    md = MagicDataset(proton_file, gamma_file, mask_rings=7)
-    md.analyze_mask_coverage()
