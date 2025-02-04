@@ -94,10 +94,8 @@ def resize_input(image):
     return image[:NUM_OF_HEXAGONS]
 
 
-def create_neighbor_mask(cog: dict, radius_rings: int = 6) -> torch.Tensor:
+def create_neighbor_mask(cog: dict, neighbors_info) -> torch.Tensor:
     center_idx = find_center_pixel(cog['x'], cog['y'])
-    neighbors_info = get_neighbor_list_by_kernel(radius_rings, pooling=False, pooling_kernel_size=2,
-                                                 num_pooling_layers=0)
 
     mask = torch.ones(1039)
     mask[center_idx] = 0
@@ -183,8 +181,11 @@ class MagicDataset(Dataset):
             m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
             m2_cog = {'x': row['hillas_cog_x_m2'], 'y': row['hillas_cog_y_m2']}
 
-            mask_m1 = create_neighbor_mask(m1_cog, self.mask_rings)
-            mask_m2 = create_neighbor_mask(m2_cog, self.mask_rings)
+            neighbors_info = get_neighbor_list_by_kernel(self.mask_rings, pooling=False, pooling_kernel_size=2,
+                                                         num_pooling_layers=0)
+
+            mask_m1 = create_neighbor_mask(m1_cog, neighbors_info)
+            mask_m2 = create_neighbor_mask(m2_cog, neighbors_info)
 
             noisy_m1 = noisy_m1 * mask_m1
             noisy_m2 = noisy_m2 * mask_m2
@@ -319,9 +320,12 @@ class MagicDataset(Dataset):
                 'y': row['hillas_cog_y_m2']
             }
 
+            neighbors_info = get_neighbor_list_by_kernel(self.mask_rings, pooling=False, pooling_kernel_size=2,
+                                                         num_pooling_layers=0)
+
             if clean_m1.max() > 0:
                 total_m1 += 1
-                mask_m1 = create_neighbor_mask(m1_cog, radius_rings)
+                mask_m1 = create_neighbor_mask(m1_cog, neighbors_info)
                 masked_m1 = clean_m1 * mask_m1
 
                 if (masked_m1 > clean_m1.max() * 0.1).sum() == 0:
@@ -329,7 +333,7 @@ class MagicDataset(Dataset):
 
             if clean_m2.max() > 0:
                 total_m2 += 1
-                mask_m2 = create_neighbor_mask(m2_cog, radius_rings)
+                mask_m2 = create_neighbor_mask(m2_cog, neighbors_info)
                 masked_m2 = clean_m2 * mask_m2
 
                 if (masked_m2 > clean_m2.max() * 0.1).sum() == 0:

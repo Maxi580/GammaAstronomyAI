@@ -18,7 +18,7 @@ def main(model_name: str, proton_file: str, gamma_file: str, epochs: int):
     print(f"\t- Epochs = {epochs}")
     print(f"\t- Output = {output_dir}\n")
 
-    dataset = MagicDataset(proton_file, gamma_file)
+    dataset = MagicDataset(proton_file, gamma_file, mask_rings=7)
     supervisor = TrainingSupervisor(model_name, dataset, output_dir, debug_info=True, save_model=True, save_debug_data=True)
     supervisor.train_model(epochs)
 
