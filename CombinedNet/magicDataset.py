@@ -184,16 +184,9 @@ class MagicDataset(Dataset):
         if self.mask_rings is not None:
             clean_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
             clean_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
+            m1_center_idx = torch.argmax(clean_m1).item()
+            m2_center_idx = torch.argmax(clean_m2).item()
 
-            if pd.isna(row['hillas_cog_x_m1']) or pd.isna(row['hillas_cog_y_m1']):
-                m1_center_idx = torch.argmax(clean_m1).item()
-            else:
-                m1_center_idx = find_center_pixel(row['hillas_cog_x_m1'], row['hillas_cog_y_m1'])
-
-            if pd.isna(row['hillas_cog_x_m2']) or pd.isna(row['hillas_cog_y_m2']):
-                m2_center_idx = torch.argmax(clean_m2).item()
-            else:
-                m2_center_idx = find_center_pixel(row['hillas_cog_x_m2'], row['hillas_cog_y_m2'])
 
             mask_m1 = create_neighbor_mask(m1_center_idx, self.neighbors_info)
             mask_m2 = create_neighbor_mask(m2_center_idx, self.neighbors_info)

@@ -171,19 +171,3 @@ def get_neighbor_tensor(kernel_size: int, pooling: bool, pooling_kernel_size: in
         _NEIGHBOR_CACHE[cache_key] = NeighborInfo(tensor, max_neighbors)
 
     return _NEIGHBOR_CACHE[cache_key]
-
-
-def find_center_pixel(cog_x: float, cog_y: float) -> int:
-    """
-    Finds the nearest pixel to the center of gravity coordinates
-    """
-    camera_cache = _get_camera_geometry()
-    pixel_positions = camera_cache['pixel_positions']
-
-    distances = np.sqrt(
-        (pixel_positions[:, 0] - cog_x) ** 2 +
-        (pixel_positions[:, 1] - cog_y) ** 2
-    )
-    center_idx = np.argmin(distances)
-
-    return center_idx
