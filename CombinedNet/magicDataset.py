@@ -8,6 +8,8 @@ import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
 
+from analyze_convolution import reconstruct_image
+
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 from CNN.HexLayers.neighbor import find_center_pixel, get_neighbor_list_by_kernel
@@ -180,14 +182,19 @@ class MagicDataset(Dataset):
         noisy_m1 = resize_image(torch.tensor(row['image_m1'], dtype=torch.float32))
         noisy_m2 = resize_image(torch.tensor(row['image_m2'], dtype=torch.float32))
 
-        clean_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
-        clean_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
-        m1_center_idx = np.argmax(clean_m1)
-        m2_center_idx = np.argmax(clean_m2)
-
         if self.mask_rings is not None:
-            m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
-            m2_cog = {'x': row['hillas_cog_x_m2'], 'y': row['hillas_cog_y_m2']}
+            clean_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
+            clean_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
+
+            if pd.isna(row['hillas_cog_x_m1']) or pd.isna(row['hillas_cog_y_m1']):
+                m1_center_idx = torch.argmax(clean_m1).item()
+            else:
+                m1_center_idx = find_center_pixel(row['hillas_cog_x_m1'], row['hillas_cog_y_m1'])
+
+            if pd.isna(row['hillas_cog_x_m2']) or pd.isna(row['hillas_cog_y_m2']):
+                m2_center_idx = torch.argmax(clean_m2).item()
+            else:
+                m2_center_idx = find_center_pixel(row['hillas_cog_x_m2'], row['hillas_cog_y_m2'])
 
             mask_m1 = create_neighbor_mask(m1_center_idx, self.neighbors_info)
             mask_m2 = create_neighbor_mask(m2_center_idx, self.neighbors_info)
@@ -300,55 +307,6 @@ class MagicDataset(Dataset):
 
         return {'total_samples': total_samples, 'distribution': distribution}
 
-    def analyze_mask_coverage(self, radius_rings: int = 7):
-        total_m1 = 0
-        total_m2 = 0
-        complete_coverage_m1 = 0
-        complete_coverage_m2 = 0
-
-        for idx in range(self.length):
-            if idx < self.n_protons:
-                row = self.proton_data.iloc[idx]
-            else:
-                row = self.gamma_data.iloc[idx - self.n_protons]
-
-            clean_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
-            clean_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
-
-            m1_cog = {
-                'x': row['hillas_cog_x_m1'],
-                'y': row['hillas_cog_y_m1']
-            }
-
-            m2_cog = {
-                'x': row['hillas_cog_x_m2'],
-                'y': row['hillas_cog_y_m2']
-            }
-
-            neighbors_info = get_neighbor_list_by_kernel(self.mask_rings, pooling=False, pooling_kernel_size=2,
-                                                         num_pooling_layers=0)
-
-            if clean_m1.max() > 0:
-                total_m1 += 1
-                mask_m1 = create_neighbor_mask(m1_cog, neighbors_info)
-                masked_m1 = clean_m1 * mask_m1
-
-                if (masked_m1 > clean_m1.max() * 0.1).sum() == 0:
-                    complete_coverage_m1 += 1
-
-            if clean_m2.max() > 0:
-                total_m2 += 1
-                mask_m2 = create_neighbor_mask(m2_cog, neighbors_info)
-                masked_m2 = clean_m2 * mask_m2
-
-                if (masked_m2 > clean_m2.max() * 0.1).sum() == 0:
-                    complete_coverage_m2 += 1
-
-        print(f"total_m1: {total_m1}")
-        print(f"total_m1: {total_m2}")
-        print(f"complete_coverage_m1: {complete_coverage_m1}")
-        print(f"complete_coverage_m2: {complete_coverage_m2}")
-
     def debug_mask(self, row):
         m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
         noisy_m1 = torch.tensor(row['image_m1'][:1039], dtype=torch.float32)
@@ -374,12 +332,29 @@ if __name__ == "__main__":
     gamma_file = "magic-gammas.parquet"
     dataset = MagicDataset(proton_file, gamma_file, mask_rings=10, debug_info=False)
 
-    idx = np.random.randint(len(dataset))
-    noisy_m1, noisy_m2, features, label = dataset[idx]
+    for i in range(3):
+        idx = np.random.randint(len(dataset))
+        noisy_m1, noisy_m2, features, label = dataset[idx]
 
-    if idx < dataset.n_protons:
-        row = dataset.proton_data.iloc[idx]
-    else:
-        row = dataset.gamma_data.iloc[idx - dataset.n_protons]
+        if idx < dataset.n_protons:
+            row = dataset.proton_data.iloc[idx]
+        else:
+            row = dataset.gamma_data.iloc[idx - dataset.n_protons]
 
-    dataset.debug_mask(row)
+        unmasked_m1 = resize_image(torch.tensor(row['image_m1'], dtype=torch.float32))
+        unmasked_m2 = resize_image(torch.tensor(row['image_m2'], dtype=torch.float32))
+
+        clean_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
+        clean_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
+
+        output_dir = f"mask_analysis/image{i}_{label}/"
+        os.makedirs(output_dir, exist_ok=True)
+
+        reconstruct_image(unmasked_m1, output_dir + "m1_unmasked.png", title="M1 Unmasked")
+        reconstruct_image(unmasked_m2, output_dir + "m2_unmasked.png", title="M2 Unmasked")
+
+        reconstruct_image(clean_m1, output_dir + "m1_clean.png", title="M1 Clean")
+        reconstruct_image(clean_m2, output_dir + "m2_clean.png", title="M2 Clean")
+
+        reconstruct_image(noisy_m1, output_dir + "m1_masked.png", title="M1 Masked")
+        reconstruct_image(noisy_m2, output_dir + "m2_masked.png", title="M2 Masked")
