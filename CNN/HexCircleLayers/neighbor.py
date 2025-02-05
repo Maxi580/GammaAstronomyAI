@@ -26,6 +26,20 @@ def axial_to_pixel(q: int, r: int, center: float, hex_radius: float) -> Tuple[fl
     return x, y
 
 
+def get_neighbors_coords(coords: Tuple[int, int], kernel_size: int) -> List[Tuple[int, int]]:
+    n_list: List[Tuple[int, int]] = []
+    q, r = coords
+    # Loop over all candidate offsets in the square defined by the kernel_size.
+    for dq in range(-kernel_size, kernel_size + 1):
+        for dr in range(-kernel_size, kernel_size + 1):
+            # Check if the offset lies within a hexagon shape.
+            # In axial coordinates, the distance can be defined as:
+            #     distance = max(|dq|, |dr|, | -dq - dr| )
+            if max(abs(dq), abs(dr), abs(-dq - dr)) <= kernel_size:
+                n_list.append((q + dq, r + dr))
+    
+    return n_list
+
 def generate_spiral_hexagons(hex_radius: float, outer_radius: float) -> List[Tuple[int, int]]:
     """
     Generate hexagons in spiral order from the center outward.
@@ -77,23 +91,18 @@ def generate_neighbors_from_axial(hexagons: List[Tuple[int, int]], kernel_size: 
     hex_index = {hex_coord: idx for idx, hex_coord in enumerate(hexagons)}
 
     neighbors: List[List[int]] = []
-    for q, r in hexagons:
-        n_list = []
-        # Loop over all candidate offsets in the square defined by the kernel_size.
-        for dq in range(-kernel_size, kernel_size + 1):
-            for dr in range(-kernel_size, kernel_size + 1):
-                # Check if the offset lies within a hexagon shape.
-                # In axial coordinates, the distance can be defined as:
-                #     distance = max(|dq|, |dr|, | -dq - dr| )
-                if max(abs(dq), abs(dr), abs(-dq - dr)) <= kernel_size:
-                    neighbor_coord = (q + dq, r + dr)
-                    if neighbor_coord in hex_index:
-                        n_list.append(hex_index[neighbor_coord])
-                    else:
-                        # -1 means the value is out of range of the hex circle
-                        # required to keep the order of the neighbor indices
-                        n_list.append(-1)
-        neighbors.append(n_list)
+    for coords in hexagons:
+        n_list = get_neighbors_coords(coords, kernel_size)
+        n_list_filtered = []
+        # Loop over all possible coords and check if they exists in the circle
+        for neighbor_coords in n_list:
+            if neighbor_coords in hex_index:
+                n_list_filtered.append(hex_index[neighbor_coords])
+            else:
+                # -1 means the value is out of range of the hex circle
+                # required to keep the order of the neighbor indices
+                n_list_filtered.append(-1)
+        neighbors.append(n_list_filtered)
     return neighbors
 
 
