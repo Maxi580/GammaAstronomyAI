@@ -1,6 +1,8 @@
 from typing import Any, Dict, Optional, Tuple
 import sys
 import os
+
+import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 import torch
@@ -187,8 +189,8 @@ class MagicDataset(Dataset):
             mask_m1 = create_neighbor_mask(m1_cog, self.neighbors_info)
             mask_m2 = create_neighbor_mask(m2_cog, self.neighbors_info)
 
-            noisy_m1.mul_(mask_m1)
-            noisy_m2.mul_(mask_m2)
+            noisy_m1 *= mask_m1
+            noisy_m2 *= mask_m2
 
         features = extract_features(row)
 
@@ -343,3 +345,39 @@ class MagicDataset(Dataset):
         print(f"total_m1: {total_m2}")
         print(f"complete_coverage_m1: {complete_coverage_m1}")
         print(f"complete_coverage_m2: {complete_coverage_m2}")
+
+
+    def debug_mask(self, row):
+        m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
+        noisy_m1 = torch.tensor(row['image_m1'][:1039], dtype=torch.float32)
+
+        center_idx = find_center_pixel(m1_cog['x'], m1_cog['y'])
+        print(f"Center index: {center_idx}")
+        print(f"Value before masking: {noisy_m1[center_idx]}")
+
+        mask_m1 = create_neighbor_mask(m1_cog, self.neighbors_info)
+        noisy_m1 *= mask_m1
+
+        print(f"Value after masking: {noisy_m1[center_idx]}")
+        print(f"Mask value at center: {mask_m1[center_idx]}")
+
+        neighbors = self.neighbors_info[center_idx][:5]
+        print("\nFirst 5 neighbors:")
+        for n in neighbors:
+            print(f"Neighbor {n}: Before={row['image_m1'][n]}, After={noisy_m1[n]}, Mask={mask_m1[n]}")
+
+
+if __name__ == "__main__":
+    proton_file = "magic-protons.parquet"
+    gamma_file = "magic-gammas.parquet"
+    dataset = MagicDataset(proton_file, gamma_file, mask_rings=10, debug_info=False)
+
+    idx = np.random.randint(len(dataset))
+    noisy_m1, noisy_m2, features, label = dataset[idx]
+
+    if idx < dataset.n_protons:
+        row = dataset.proton_data.iloc[idx]
+    else:
+        row = dataset.gamma_data.iloc[idx - dataset.n_protons]
+
+    dataset.debug_mask(row)
