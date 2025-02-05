@@ -1,21 +1,20 @@
 import torch
 import torch.nn as nn
-
-from CNN.HexLayers.ConvHex import ConvHex
+from CNN.MagicConv.MagicConv import MagicConv
 
 NUM_FEATURES = 59
 
 
-class TelescopeCNN(nn.Module):
+class BasicMagicCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            ConvHex(1, 4, kernel_size=3),
+            MagicConv(1, 4, kernel_size=3),
             nn.GroupNorm(2, 4),
             nn.ReLU(),
             nn.Dropout1d(0.2),
 
-            ConvHex(4, 8, kernel_size=2),
+            MagicConv(4, 8, kernel_size=2),
             nn.GroupNorm(4, 8),
             nn.ReLU(),
             nn.Dropout1d(0.2),
@@ -25,12 +24,12 @@ class TelescopeCNN(nn.Module):
         return self.cnn(x)
 
 
-class CombinedNet(nn.Module):
+class BasicMagicNet(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.m1_cnn = TelescopeCNN()
-        self.m2_cnn = TelescopeCNN()
+        self.m1_cnn = BasicMagicCNN()
+        self.m2_cnn = BasicMagicCNN()
 
         self.classifier = nn.Sequential(
             nn.Linear(8 * (1039 // (2 ** 0)) * 2, 768),

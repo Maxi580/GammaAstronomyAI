@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 from torch.nn import init
 
-from CNN.HexLayers.neighbor import get_neighbor_tensor
+from MagicTelescope.NeighborLogic import get_neighbor_tensor
 
 
-class ConvHex(nn.Module):
+class MagicConv(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, pooling=False, pooling_kernel_size=2, pooling_cnt=0,
                  groups=1, bias=True):
         super().__init__()

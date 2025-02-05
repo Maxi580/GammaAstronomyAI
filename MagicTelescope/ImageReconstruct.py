@@ -1,14 +1,12 @@
 import os
-import sys
+import numpy as np
 import matplotlib.pyplot as plt
 from importlib.resources import files
 from ctapipe.instrument import CameraGeometry
 from ctapipe.visualization import CameraDisplay
 import torch
 
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(parent_dir)
-from CNN.HexLayers.neighbor import unpool_array
+from MagicTelescope.NeighborLogic import unpool_array
 
 
 POOLING_KERNEL_SIZE = 2

@@ -14,9 +14,9 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
-from CombinedNet.CombinedNet import CombinedNet
-from CombinedNet.resultsWriter import ResultsWriter
-from CombinedNet.jsonStuff.jsonDataset import jsonDataset
+from CNN.Architectures.BasicMagicCNN import BasicMagicNet
+from TrainingPipeline.ResultsWriter import ResultsWriter
+from ParquetJsonTransformation.jsonDataset import jsonDataset
 
 MetricsDict = TypedDict(
     "MetricsDict",
@@ -165,7 +165,7 @@ class jsonTrainingSupervisor:
     def load_model(self):
         match self.model_name.lower():
             case "combinednet":
-                model = CombinedNet()
+                model = BasicMagicNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
