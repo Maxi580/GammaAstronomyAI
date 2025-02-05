@@ -96,9 +96,7 @@ def resize_image(image):
     return image[:NUM_OF_HEXAGONS]
 
 
-def create_neighbor_mask(cog: dict, neighbors_info) -> torch.Tensor:
-    center_idx = find_center_pixel(cog['x'], cog['y'])
-
+def create_neighbor_mask(center_idx: int, neighbors_info) -> torch.Tensor:
     mask = torch.ones(1039)
     mask[center_idx] = 0
 
@@ -127,7 +125,7 @@ class MagicDataset(Dataset):
         self.mask_rings = mask_rings
         if mask_rings is not None:
             self.neighbors_info = get_neighbor_list_by_kernel(mask_rings, pooling=False, pooling_kernel_size=2,
-                                                     num_pooling_layers=0)
+                                                              num_pooling_layers=0)
 
         if self.debug_info:
             print(f"Initializing dataset from:")
@@ -182,12 +180,17 @@ class MagicDataset(Dataset):
         noisy_m1 = resize_image(torch.tensor(row['image_m1'], dtype=torch.float32))
         noisy_m2 = resize_image(torch.tensor(row['image_m2'], dtype=torch.float32))
 
+        clean_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
+        clean_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
+        m1_center_idx = np.argmax(clean_m1)
+        m2_center_idx = np.argmax(clean_m2)
+
         if self.mask_rings is not None:
             m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
             m2_cog = {'x': row['hillas_cog_x_m2'], 'y': row['hillas_cog_y_m2']}
 
-            mask_m1 = create_neighbor_mask(m1_cog, self.neighbors_info)
-            mask_m2 = create_neighbor_mask(m2_cog, self.neighbors_info)
+            mask_m1 = create_neighbor_mask(m1_center_idx, self.neighbors_info)
+            mask_m2 = create_neighbor_mask(m2_center_idx, self.neighbors_info)
 
             noisy_m1 *= mask_m1
             noisy_m2 *= mask_m2
@@ -345,7 +348,6 @@ class MagicDataset(Dataset):
         print(f"total_m1: {total_m2}")
         print(f"complete_coverage_m1: {complete_coverage_m1}")
         print(f"complete_coverage_m2: {complete_coverage_m2}")
-
 
     def debug_mask(self, row):
         m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
