@@ -1,17 +1,13 @@
 from typing import Any, Dict, Optional, Tuple
-import sys
 import os
-
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
 
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(parent_dir)
-from CNN.HexLayers.neighbor import get_neighbor_list_by_kernel
-from magic_helper_functions import reconstruct_image
+from MagicTelescope.NeighborLogic import get_neighbor_list_by_kernel
+from MagicTelescope.ImageReconstruct import reconstruct_image
 
 NUM_OF_HEXAGONS = 1039
 
@@ -187,7 +183,6 @@ class MagicDataset(Dataset):
             m1_center_idx = torch.argmax(clean_m1).item()
             m2_center_idx = torch.argmax(clean_m2).item()
 
-
             mask_m1 = create_neighbor_mask(m1_center_idx, self.neighbors_info)
             mask_m2 = create_neighbor_mask(m2_center_idx, self.neighbors_info)
 
@@ -298,25 +293,6 @@ class MagicDataset(Dataset):
         }
 
         return {'total_samples': total_samples, 'distribution': distribution}
-
-    def debug_mask(self, row):
-        m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
-        noisy_m1 = torch.tensor(row['image_m1'][:1039], dtype=torch.float32)
-
-        center_idx = find_center_pixel(m1_cog['x'], m1_cog['y'])
-        print(f"Center index: {center_idx}")
-        print(f"Value before masking: {noisy_m1[center_idx]}")
-
-        mask_m1 = create_neighbor_mask(m1_cog, self.neighbors_info)
-        noisy_m1 *= mask_m1
-
-        print(f"Value after masking: {noisy_m1[center_idx]}")
-        print(f"Mask value at center: {mask_m1[center_idx]}")
-
-        neighbors = self.neighbors_info[center_idx][:5]
-        print("\nFirst 5 neighbors:")
-        for n in neighbors:
-            print(f"Neighbor {n}: Before={row['image_m1'][n]}, After={noisy_m1[n]}, Mask={mask_m1[n]}")
 
 
 if __name__ == "__main__":

@@ -10,9 +10,9 @@ from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
 
-from CombinedNet.CombinedNet import CombinedNet
-from CombinedNet.magicDataset import MagicDataset
-from CombinedNet.resultsWriter import ResultsWriter
+from CNN.Architectures.BasicMagicCNN import BasicMagicNet
+from TrainingPipeline.magicDataset import MagicDataset
+from TrainingPipeline.ResultsWriter import ResultsWriter
 
 np.random.seed(42)
 torch.manual_seed(42)
@@ -87,7 +87,7 @@ def print_metrics(labels, metrics: MetricsDict):
 def inference(data_loader, labels, model_path):
     device = torch.device(
         "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
-    model = CombinedNet()
+    model = BasicMagicNet()
 
     model.load_state_dict(torch.load(model_path, weights_only=True, map_location=device))
     model = model.to(device)
@@ -283,7 +283,7 @@ class TrainingSupervisor:
     def load_model(self):
         match self.model_name.lower():
             case "combinednet":
-                model = CombinedNet()
+                model = BasicMagicNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 

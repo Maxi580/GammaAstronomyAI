@@ -37,7 +37,7 @@ All generated Datasets will be saved in `./datasets`.
 You can execute the script `trainModel.py` with the following arguments to train any model:
 
 ```sh
-usage: trainModel.py [-h] [-e epochs] -m modelname -d dataset_name [-i]
+usage: TrainModel.py [-h] [-e epochs] -m modelname -d dataset_name [-i]
 
 options:
   -h, --help            show this help message and exit

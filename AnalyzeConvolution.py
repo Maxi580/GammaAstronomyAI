@@ -4,10 +4,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from CombinedNet.CombinedNet import CombinedNet
-from CNN.HexLayers.ConvHex import ConvHex
-from CombinedNet.magicDataset import MagicDataset
-from magic_helper_functions import reconstruct_image
+from CNN.Architectures.BasicMagicCNN import BasicMagicNet
+from CNN.MagicConv.MagicConv import MagicConv
+from TrainingPipeline.magicDataset import MagicDataset
+from MagicTelescope.ImageReconstruct import reconstruct_image
 
 POOLING_KERNEL_SIZE = 2
 
@@ -26,7 +26,7 @@ def simulate_forward_pass(image, model, output_dir):
     pooling_cnt = 0
 
     for idx, layer in enumerate(model.m1_cnn.cnn):
-        if isinstance(layer, ConvHex):
+        if isinstance(layer, MagicConv):
             image = layer(image)
             extract_conv_arrays(image, idx, pooling_cnt, output_dir)
         elif isinstance(layer, nn.MaxPool1d):
@@ -43,7 +43,7 @@ def debug_forward_pass(model_path, prefix, image_m1, image_m2):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    model = CombinedNet()
+    model = BasicMagicNet()
     model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     model = model.to(device)
     model.eval()

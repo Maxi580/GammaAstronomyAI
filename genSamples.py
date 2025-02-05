@@ -2,10 +2,10 @@ import argparse
 import os
 import sys
 
-from sampleGeneration.NoiseGenerators import SimpleNoiseGenerator, SpikyNoiseGenerator
-from sampleGeneration.PlaneGenerators import HexagonPlaneGenerator
-from sampleGeneration.SampleGenerator import SampleGenerator
-from sampleGeneration.Shapes import Ellipse, Square
+from SimulatedSampleGeneration.NoiseGenerators import SimpleNoiseGenerator, SpikyNoiseGenerator
+from SimulatedSampleGeneration.PlaneGenerators import HexagonPlaneGenerator
+from SimulatedSampleGeneration.SampleGenerator import SampleGenerator
+from SimulatedSampleGeneration.Shapes import Ellipse, Square
 
 
 def main(count: int, name: str, shapes, probabilities):

@@ -5,8 +5,8 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
-from CombinedNet.TrainingSupervisor import TrainingSupervisor
-from CombinedNet.magicDataset import MagicDataset
+from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
+from TrainingPipeline.magicDataset import MagicDataset
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     step_size = 10_000
     max_step = 480_000
     epochs = 10
-    model_name = 'CombinedNet'
+    model_name = 'TrainingPipeline'
 
     main(step_size, max_step, epochs, model_name)
     

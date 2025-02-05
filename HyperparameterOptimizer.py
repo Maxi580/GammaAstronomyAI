@@ -3,11 +3,11 @@ import os
 import time
 import gc
 import torch
-from CombinedNet.TrainingSupervisor import TrainingSupervisor
-from CNN.HexLayers.ConvHex import ConvHex
 import torch.nn as nn
 
-from CombinedNet.magicDataset import MagicDataset
+from TrainingPipeline.magicDataset import MagicDataset
+from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
+from CNN.MagicConv.MagicConv import MagicConv
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 NUM_OF_HEXAGONS = 1039
@@ -59,7 +59,7 @@ def create_model_with_params(trial):
                 needs_pooling = has_previous_pooling or pooling_pattern[i]
 
                 layers.append(
-                    ConvHex(
+                    MagicConv(
                         channels[i],
                         channels[i + 1],
                         kernel_size=trial.suggest_int(f'kernel_size{i + 1}', 1, 5),
