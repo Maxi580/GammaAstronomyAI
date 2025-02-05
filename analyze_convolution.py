@@ -8,7 +8,7 @@ from importlib.resources import files
 from ctapipe.instrument import CameraGeometry
 from ctapipe.visualization import CameraDisplay
 
-from CombinedNet.CombinedNet import CombinedNet, resize_input
+from CombinedNet.CombinedNet import CombinedNet
 from CNN.HexLayers.ConvHex import ConvHex
 from CNN.HexLayers.neighbor import unpool_array
 from CombinedNet.magicDataset import MagicDataset
@@ -88,10 +88,10 @@ def debug_forward_pass(model_path, prefix, image_m1, image_m2):
     model = model.to(device)
     model.eval()
 
-    image_m1 = image_m1.to(device)
-    image_m2 = image_m2.to(device)
-    reconstruct_image(image_m1[:1039], output_dir + "m1_original.png")
-    reconstruct_image(image_m2[:1039], output_dir + "m2_original.png")
+    image_m1 = (image_m1.to(device))[:1039]
+    image_m2 = (image_m2.to(device))[:1039]
+    reconstruct_image(image_m1, output_dir + "m1_original.png")
+    reconstruct_image(image_m2, output_dir + "m2_original.png")
 
     if image_m1.dim() == 1:
         image_m1 = image_m1.unsqueeze(0).unsqueeze(0)
@@ -103,20 +103,17 @@ def debug_forward_pass(model_path, prefix, image_m1, image_m2):
     elif image_m2.dim() == 2:
         image_m2 = image_m2.unsqueeze(0)
 
-    image_m1 = resize_input(image_m1)
-    image_m2 = resize_input(image_m2)
-
     simulate_forward_pass(image_m1, model, output_dir + "/m1/")
     simulate_forward_pass(image_m2, model, output_dir + "/m2/")
 
 
 if __name__ == "__main__":
-    model_path = "trained_model.pth"
+    model_path = "masked_model.pth"
 
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas.parquet"
-    dataset = MagicDataset(proton_file, gamma_file, debug_info=False)
-    num_samples = 1
+    dataset = MagicDataset(proton_file, gamma_file, mask_rings=10, debug_info=False)
+    num_samples = 3
 
     total_samples = len(dataset)
     random_indices = np.random.choice(total_samples, num_samples, replace=False)

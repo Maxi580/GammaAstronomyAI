@@ -89,7 +89,7 @@ def extract_features(row: pd.Series) -> torch.Tensor:
     return torch.tensor(features, dtype=torch.float32)
 
 
-def resize_input(image):
+def resize_image(image):
     """Arrays are 1183 long, however the last 144 are always 0"""
     return image[:NUM_OF_HEXAGONS]
 
@@ -177,8 +177,8 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        noisy_m1 = torch.tensor(row['image_m1'][:NUM_OF_HEXAGONS], dtype=torch.float32)
-        noisy_m2 = torch.tensor(row['image_m2'][:NUM_OF_HEXAGONS], dtype=torch.float32)
+        noisy_m1 = resize_image(torch.tensor(row['image_m1'], dtype=torch.float32))
+        noisy_m2 = resize_image(torch.tensor(row['image_m2'], dtype=torch.float32))
 
         if self.mask_rings is not None:
             m1_cog = {'x': row['hillas_cog_x_m1'], 'y': row['hillas_cog_y_m1']}
@@ -307,8 +307,8 @@ class MagicDataset(Dataset):
             else:
                 row = self.gamma_data.iloc[idx - self.n_protons]
 
-            clean_m1 = resize_input(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
-            clean_m2 = resize_input(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
+            clean_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
+            clean_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
 
             m1_cog = {
                 'x': row['hillas_cog_x_m1'],
