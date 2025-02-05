@@ -8,11 +8,10 @@ import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
 
-from analyze_convolution import reconstruct_image
-
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 from CNN.HexLayers.neighbor import find_center_pixel, get_neighbor_list_by_kernel
+from analyze_convolution import reconstruct_image
 
 NUM_OF_HEXAGONS = 1039
 
