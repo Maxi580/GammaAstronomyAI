@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas.parquet"
-    dataset = MagicDataset(proton_file, gamma_file, mask_rings=10, debug_info=False)
+    dataset = MagicDataset(proton_file, gamma_file, mask_rings=13, debug_info=False)
     num_samples = 3
 
     total_samples = len(dataset)
