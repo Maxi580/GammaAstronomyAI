@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from CNN.HexCircleLayers.pooling import get_clusters
 
-class HexPool(nn.Module):
-    def __init__(self, n_pixels: int, kernel_size: int, mode: str = 'avg'):
+class HexCirclePool(nn.Module):
+    def __init__(self, kernel_size: int, n_pixels: int, mode: str = 'avg'):
         """
         A simple pooling layer for hexagonal grids.
         
@@ -25,12 +25,11 @@ class HexPool(nn.Module):
         self.n_pixels = n_pixels
         self.mode = mode
         
-        # Generate clusters list for given pixels and kernel size and save it in buffer
-        clusters = get_clusters(n_pixels, kernel_size)
-        self.register_buffer('clusters', clusters)
+        # Generate clusters list for given pixels and kernel size and save it
+        self.clusters = get_clusters(n_pixels, kernel_size)
         
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Forward pass.
         
@@ -63,5 +62,4 @@ class HexPool(nn.Module):
 
         # Stack the pooled features along the node dimension.
         # Final shape: (B, C, number_of_clusters)
-        pooled_features = torch.stack(pooled_features, dim=2)
-        return pooled_features
+        return torch.stack(pooled_features, dim=2)

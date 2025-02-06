@@ -62,7 +62,7 @@ class HexCircleConv(nn.Module):
                 bound = 1 / math.sqrt(fan_in)
                 nn.init.uniform_(self.bias, -bound, bound)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Forward pass.
         
@@ -92,11 +92,14 @@ class HexCircleConv(nn.Module):
         neighbors_safe[~valid_mask] = 0  # now all indices are in range [0, N-1]
         
         # Gather neighbor features from x.
-        # x is (B, Cin, N). We need to gather along dimension 2.
+        # x is (B, Cin, N). We expand it to (B, Cin, N, K).
+        x_exp = x.unsqueeze(-1).expand(B, Cin, N, K)
+        
+        # Now, we need to gather along dimension 2.
         # Expand neighbors_safe to shape (B, Cin, N, K) so that each channel is gathered.
         neighbors_safe_exp = neighbors_safe.unsqueeze(1).expand(B, Cin, N, K)
         # Gather features: neighbor_features will have shape (B, Cin, N, K).
-        neighbor_features = torch.gather(x, dim=2, index=neighbors_safe_exp)
+        neighbor_features = torch.gather(x_exp, dim=2, index=neighbors_safe_exp)
         
         # Zero out features from missing neighbors using the valid_mask.
         # .float() converts all Booleans into 1 or 0.
