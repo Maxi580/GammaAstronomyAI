@@ -93,15 +93,15 @@ def resize_image(image):
     return image[:NUM_OF_HEXAGONS]
 
 
-def create_neighbor_mask(center_idx: int, neighbors_info) -> torch.Tensor:
-    mask = torch.ones(1039)
-    mask[center_idx] = 0
+def precalculate_masks(neighbors_info) -> torch.Tensor:
+    all_masks = torch.ones(1039, 1039)
 
-    for neighbor in neighbors_info[center_idx]:
-        if neighbor >= 0:
-            mask[neighbor] = 0
+    for center_idx in range(1039):
+        all_masks[center_idx, center_idx] = 0
+        for neighbor in neighbors_info[center_idx]:
+            all_masks[center_idx, neighbor] = 0
 
-    return mask
+    return all_masks
 
 
 def read_parquet_limit(filename, max_rows):
@@ -121,8 +121,9 @@ class MagicDataset(Dataset):
         self.debug_info = debug_info
         self.mask_rings = mask_rings
         if mask_rings is not None:
-            self.neighbors_info = get_neighbor_list_by_kernel(mask_rings, pooling=False, pooling_kernel_size=2,
-                                                              num_pooling_layers=0)
+            neighbors_info = get_neighbor_list_by_kernel(mask_rings, pooling=False, pooling_kernel_size=2,
+                                                         num_pooling_layers=0)
+            self.all_masks = precalculate_masks(neighbors_info)
 
         if self.debug_info:
             print(f"Initializing dataset from:")
@@ -178,13 +179,14 @@ class MagicDataset(Dataset):
         noisy_m2 = resize_image(torch.tensor(row['image_m2'], dtype=torch.float32))
 
         if self.mask_rings is not None:
+            # Masks are precalculated, but we need to know which to use
             clean_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
             clean_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
             m1_center_idx = torch.argmax(clean_m1).item()
             m2_center_idx = torch.argmax(clean_m2).item()
 
-            mask_m1 = create_neighbor_mask(m1_center_idx, self.neighbors_info)
-            mask_m2 = create_neighbor_mask(m2_center_idx, self.neighbors_info)
+            mask_m1 = self.all_masks[m1_center_idx]
+            mask_m2 = self.all_masks[m2_center_idx]
 
             noisy_m1 *= mask_m1
             noisy_m2 *= mask_m2

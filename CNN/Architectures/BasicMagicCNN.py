@@ -32,7 +32,7 @@ class BasicMagicNet(nn.Module):
         self.m2_cnn = BasicMagicCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(8 * (1039 // (2 ** 0)) * 2, 768),
+            nn.Linear(8 * (1039 // (2 ** 0)), 768),
             nn.GroupNorm(32, 768),
             nn.ReLU(),
             nn.Dropout(0.4936012148325484),
@@ -53,11 +53,9 @@ class BasicMagicNet(nn.Module):
     def forward(self, m1_image, m2_image, measurement_features):
         m1_image = m1_image.unsqueeze(1)
         m2_image = m2_image.unsqueeze(1)
-        m1_features = self.m1_cnn(m1_image)
-        m2_features = self.m2_cnn(m2_image)
-        m1_features = m1_features.flatten(1)
-        m2_features = m2_features.flatten(1)
+        m1_cnn_features = (self.m1_cnn(m1_image)).flatten(1)
+        m2_cnn_features = (self.m2_cnn(m2_image)).flatten(1)
 
-        combined = torch.cat([m1_features, m2_features], dim=1)
+        combined = torch.cat([m1_cnn_features], dim=1)
 
         return self.classifier(combined)
