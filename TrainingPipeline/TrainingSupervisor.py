@@ -282,7 +282,7 @@ class TrainingSupervisor:
 
     def load_model(self):
         match self.model_name.lower():
-            case "combinednet":
+            case "basicmagiccnn":
                 model = BasicMagicNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
