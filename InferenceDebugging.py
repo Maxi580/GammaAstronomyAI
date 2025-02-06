@@ -9,7 +9,7 @@ from TrainingPipeline.MagicDataset import MagicDataset
 
 
 def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=1000):
-    dataset = MagicDataset(proton_file, gamma_file)
+    dataset = MagicDataset(proton_file, gamma_file, mask_rings=17)
 
     device = torch.device("cuda" if torch.cuda.is_available() else
                           "mps" if torch.backends.mps.is_available() else "cpu")
