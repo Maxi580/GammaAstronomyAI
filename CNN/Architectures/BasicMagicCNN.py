@@ -32,7 +32,7 @@ class BasicMagicNet(nn.Module):
         self.m2_cnn = BasicMagicCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(8 * 2, 768),
+            nn.Linear(8 * 2 * 1039, 768),
             nn.GroupNorm(32, 768),
             nn.ReLU(),
             nn.Dropout(0.4936012148325484),
