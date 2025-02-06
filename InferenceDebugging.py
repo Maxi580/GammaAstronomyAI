@@ -33,7 +33,6 @@ def evaluate_multiple_pairs(model_path, proton_file, gamma_file, num_pairs=1000)
             features = features.unsqueeze(0).to(device)
 
             output = model(m1, m2, features)
-            prob = torch.softmax(output, dim=1)[0]
             _, pred = output.max(1)
             proton_correct += (output.item() == label)
 
