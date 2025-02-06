@@ -5,7 +5,9 @@ import pandas as pd
 import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
+import sys
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from MagicTelescope.NeighborLogic import get_neighbor_list_by_kernel
 from MagicTelescope.ImageReconstruct import reconstruct_image
 
@@ -381,8 +383,8 @@ if __name__ == "__main__":
         reconstruct_image(noisy_m1, output_dir + "m1_masked.png", title="M1 Masked")
         reconstruct_image(noisy_m2, output_dir + "m2_masked.png", title="M2 Masked")"""
 
-    proton_file = "../magic-protons.parquet"
-    gamma_file = "../magic-gammas.parquet"
+    proton_file = "magic-protons.parquet"
+    gamma_file = "magic-gammas.parquet"
     dataset = MagicDataset(proton_file, gamma_file, mask_rings=13)
 
     stats = dataset.analyze_mask_coverage()

@@ -5,7 +5,7 @@ import gc
 import torch
 import torch.nn as nn
 
-from TrainingPipeline.magicDataset import MagicDataset
+from TrainingPipeline.MagicDataset import MagicDataset
 from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
 from CNN.MagicConv.MagicConv import MagicConv
 

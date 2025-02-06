@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
-from TrainingPipeline.magicDataset import MagicDataset
+from TrainingPipeline.MagicDataset import MagicDataset
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
