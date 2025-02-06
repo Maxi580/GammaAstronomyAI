@@ -252,9 +252,6 @@ class MagicDataset(Dataset):
                 stats[label][img_name]['min'] = min(stats[label][img_name]['min'], img.min().item())
                 stats[label][img_name]['max'] = max(stats[label][img_name]['max'], img.max().item())
 
-            if idx % 1000 == 0:
-                print(f"Processed {idx}/{self.length} samples...")
-
         for label in [self.PROTON_LABEL, self.GAMMA_LABEL]:
             n = stats[label]['count']
             n_pixels = 1039
@@ -328,9 +325,6 @@ class MagicDataset(Dataset):
             stats['intensity_values']['m2']['total'] += clean_m2.sum().item()
             stats['intensity_values']['m2']['masked'] += masked_m2.sum().item()
 
-            if idx % 1000 == 0:
-                print(f"Processed {idx}/{self.length} samples...")
-
         return stats
 
     def get_distribution(self) -> Dict[str, Any]:
@@ -351,14 +345,14 @@ class MagicDataset(Dataset):
 
 
 if __name__ == "__main__":
-    # Mask Image Debug
-    """proton_file = "magic-protons.parquet"
+    proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas.parquet"
-    dataset = MagicDataset(proton_file, gamma_file, mask_rings=10, debug_info=False)
+    dataset = MagicDataset(proton_file, gamma_file, mask_rings=17, debug_info=False)
 
     for i in range(3):
         idx = np.random.randint(len(dataset))
         noisy_m1, noisy_m2, features, label = dataset[idx]
+        label_name = dataset.GAMMA_LABEL if label == dataset.labels[dataset.GAMMA_LABEL] else dataset.PROTON_LABEL
 
         if idx < dataset.n_protons:
             row = dataset.proton_data.iloc[idx]
@@ -374,18 +368,14 @@ if __name__ == "__main__":
         output_dir = f"mask_analysis/image{i}_{label}/"
         os.makedirs(output_dir, exist_ok=True)
 
-        reconstruct_image(unmasked_m1, output_dir + "m1_unmasked.png", title="M1 Unmasked")
-        reconstruct_image(unmasked_m2, output_dir + "m2_unmasked.png", title="M2 Unmasked")
+        reconstruct_image(unmasked_m1, output_dir + f"m1_unmasked_{label_name}.png", title="M1 Unmasked")
+        reconstruct_image(unmasked_m2, output_dir + f"m2_unmasked_{label_name}.png", title="M2 Unmasked")
 
-        reconstruct_image(clean_m1, output_dir + "m1_clean.png", title="M1 Clean")
-        reconstruct_image(clean_m2, output_dir + "m2_clean.png", title="M2 Clean")
+        reconstruct_image(clean_m1, output_dir + f"m1_clean_{label_name}.png", title="M1 Clean")
+        reconstruct_image(clean_m2, output_dir + f"m2_clean_{label_name}.png", title="M2 Clean")
 
-        reconstruct_image(noisy_m1, output_dir + "m1_masked.png", title="M1 Masked")
-        reconstruct_image(noisy_m2, output_dir + "m2_masked.png", title="M2 Masked")"""
-
-    proton_file = "magic-protons.parquet"
-    gamma_file = "magic-gammas.parquet"
-    dataset = MagicDataset(proton_file, gamma_file, mask_rings=13)
+        reconstruct_image(noisy_m1, output_dir + f"m1_masked_{label_name}.png", title="M1 Masked")
+        reconstruct_image(noisy_m2, output_dir + f"m2_masked_{label_name}.png", title="M2 Masked")
 
     stats = dataset.analyze_mask_coverage()
 
