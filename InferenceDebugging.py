@@ -1,14 +1,10 @@
 import torch
-import os
-import sys
+from magicDataset import MagicDataset
+from BasicMagicNet import BasicMagicNet
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from CNN.Architectures.BasicMagicCNN import BasicMagicNet
-from TrainingPipeline.MagicDataset import MagicDataset
 
-
-def evaluate_multiple_pairs(model_path, proton_file, gamma_file, num_pairs=1000):
+def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=1000):
     dataset = MagicDataset(proton_file, gamma_file)
 
     device = torch.device(
@@ -18,14 +14,14 @@ def evaluate_multiple_pairs(model_path, proton_file, gamma_file, num_pairs=1000)
     model = model.to(device)
     model.eval()
 
-    proton_correct = 0
-    gamma_correct = 0
-    proton_probs = []
-    gamma_probs = []
+    correct = 0
+    all_probs = []
+    predicted_labels = []
+    true_labels = []
 
     with torch.no_grad():
-        for i in range(num_pairs):
-            idx = np.random.randint(0, len(dataset) - 1)
+        for i in range(num_samples):
+            idx = np.random.randint(0, len(dataset))
             m1, m2, features, label = dataset[idx]
 
             m1 = m1.unsqueeze(0).to(device)
@@ -34,24 +30,18 @@ def evaluate_multiple_pairs(model_path, proton_file, gamma_file, num_pairs=1000)
 
             output = model(m1, m2, features)
             _, pred = output.max(1)
-            proton_correct += (output.item() == label)
+
+            correct += (pred.item() == label)
+            predicted_labels.append(pred.item())
+            true_labels.append(label)
 
             if (i + 1) % 100 == 0:
-                print(f"Processed {i + 1}/{num_pairs} pairs")
+                print(f"Processed {i + 1}/{num_samples} samples")
 
-    proton_acc = proton_correct / num_pairs * 100
-    gamma_acc = gamma_correct / num_pairs * 100
-
+    accuracy = (correct / num_samples) * 100
     print("\nEvaluation Results:")
-    print(f"Proton Accuracy: {proton_acc:.2f}%")
-    print(f"Gamma Accuracy: {gamma_acc:.2f}%")
-    print(f"Overall Accuracy: {((proton_correct + gamma_correct) / (2 * num_pairs)) * 100:.2f}%")
+    print(f"Overall Accuracy: {accuracy:.2f}%")
 
-    proton_probs = np.array(proton_probs)
-    gamma_probs = np.array(gamma_probs)
-    print("\nAverage Prediction Probabilities:")
-    print(f"Proton Images - Proton: {proton_probs[:, 0].mean():.3f}, Gamma: {proton_probs[:, 1].mean():.3f}")
-    print(f"Gamma Images - Proton: {gamma_probs[:, 0].mean():.3f}, Gamma: {gamma_probs[:, 1].mean():.3f}")
 
 
 if __name__ == "__main__":
@@ -59,4 +49,4 @@ if __name__ == "__main__":
     PROTON_FILE = "magic-protons.parquet"
     GAMMA_FILE = "magic-gammas.parquet"
 
-    evaluate_multiple_pairs(MODEL_PATH, PROTON_FILE, GAMMA_FILE)
+    evaluate_random_samples(MODEL_PATH, PROTON_FILE, GAMMA_FILE)
