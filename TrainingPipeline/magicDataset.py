@@ -302,12 +302,10 @@ class MagicDataset(Dataset):
             else:
                 row = self.gamma_data.iloc[idx - self.n_protons]
 
-            if idx % 1000:
-                print(f"Processed {idx}/{self.length} samples...")
-
             clean_m1 = torch.tensor(row['clean_image_m1'][:1039], dtype=torch.float32)
             m1_center_idx = torch.argmax(clean_m1).item()
-            mask_m1 = create_neighbor_mask(m1_center_idx, self.neighbors_info)
+
+            mask_m1 = self.all_masks[m1_center_idx]
             masked_m1 = clean_m1 * mask_m1
 
             stats['total']['m1'] += 1
@@ -318,7 +316,8 @@ class MagicDataset(Dataset):
 
             clean_m2 = torch.tensor(row['clean_image_m2'][:1039], dtype=torch.float32)
             m2_center_idx = torch.argmax(clean_m2).item()
-            mask_m2 = create_neighbor_mask(m2_center_idx, self.neighbors_info)
+
+            mask_m2 = self.all_masks[m2_center_idx]
             masked_m2 = clean_m2 * mask_m2
 
             stats['total']['m2'] += 1
