@@ -347,7 +347,7 @@ class MagicDataset(Dataset):
 if __name__ == "__main__":
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas.parquet"
-    dataset = MagicDataset(proton_file, gamma_file, mask_rings=15, debug_info=False)
+    dataset = MagicDataset(proton_file, gamma_file, mask_rings=17, debug_info=False)
 
     for i in range(3):
         idx = np.random.randint(len(dataset))
