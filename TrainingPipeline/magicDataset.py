@@ -278,6 +278,58 @@ class MagicDataset(Dataset):
 
         return stats
 
+    def analyze_mask_coverage(self) -> dict:
+        if self.mask_rings is None:
+            raise ValueError("Dataset must be initialized with mask_rings parameter")
+
+        stats = {
+            'total': {'m1': 0, 'm2': 0},
+            'pixel_counts': {
+                'm1': {'total': 0, 'masked': 0},
+                'm2': {'total': 0, 'masked': 0}
+            },
+            'intensity_values': {
+                'm1': {'total': 0.0, 'masked': 0.0},
+                'm2': {'total': 0.0, 'masked': 0.0}
+            }
+        }
+
+        for idx in range(self.length):
+            if idx < self.n_protons:
+                row = self.proton_data.iloc[idx]
+            else:
+                row = self.gamma_data.iloc[idx - self.n_protons]
+
+            if idx % 1000:
+                print(f"Processed {idx}/{self.length} samples...")
+
+            clean_m1 = torch.tensor(row['clean_image_m1'][:1039], dtype=torch.float32)
+            m1_center_idx = torch.argmax(clean_m1).item()
+            mask_m1 = create_neighbor_mask(m1_center_idx, self.neighbors_info)
+            masked_m1 = clean_m1 * mask_m1
+
+            stats['total']['m1'] += 1
+            stats['pixel_counts']['m1']['total'] += (clean_m1 > 0).sum().item()
+            stats['pixel_counts']['m1']['masked'] += (masked_m1 > 0).sum().item()
+            stats['intensity_values']['m1']['total'] += clean_m1.sum().item()
+            stats['intensity_values']['m1']['masked'] += masked_m1.sum().item()
+
+            clean_m2 = torch.tensor(row['clean_image_m2'][:1039], dtype=torch.float32)
+            m2_center_idx = torch.argmax(clean_m2).item()
+            mask_m2 = create_neighbor_mask(m2_center_idx, self.neighbors_info)
+            masked_m2 = clean_m2 * mask_m2
+
+            stats['total']['m2'] += 1
+            stats['pixel_counts']['m2']['total'] += (clean_m2 > 0).sum().item()
+            stats['pixel_counts']['m2']['masked'] += (masked_m2 > 0).sum().item()
+            stats['intensity_values']['m2']['total'] += clean_m2.sum().item()
+            stats['intensity_values']['m2']['masked'] += masked_m2.sum().item()
+
+            if idx % 1000 == 0:
+                print(f"Processed {idx}/{self.length} samples...")
+
+        return stats
+
     def get_distribution(self) -> Dict[str, Any]:
         total_samples = self.length
 
@@ -296,7 +348,8 @@ class MagicDataset(Dataset):
 
 
 if __name__ == "__main__":
-    proton_file = "magic-protons.parquet"
+    # Mask Image Debug
+    """proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas.parquet"
     dataset = MagicDataset(proton_file, gamma_file, mask_rings=10, debug_info=False)
 
@@ -325,4 +378,20 @@ if __name__ == "__main__":
         reconstruct_image(clean_m2, output_dir + "m2_clean.png", title="M2 Clean")
 
         reconstruct_image(noisy_m1, output_dir + "m1_masked.png", title="M1 Masked")
-        reconstruct_image(noisy_m2, output_dir + "m2_masked.png", title="M2 Masked")
+        reconstruct_image(noisy_m2, output_dir + "m2_masked.png", title="M2 Masked")"""
+
+    proton_file = "../magic-protons.parquet"
+    gamma_file = "../magic-gammas.parquet"
+    dataset = MagicDataset(proton_file, gamma_file, mask_rings=13)
+
+    stats = dataset.analyze_mask_coverage()
+
+    for telescope in ['m1', 'm2']:
+        pixel_percent = (1 - stats['pixel_counts'][telescope]['masked'] / stats['pixel_counts'][telescope][
+            'total']) * 100
+        intensity_percent = (1 - stats['intensity_values'][telescope]['masked'] / stats['intensity_values'][telescope][
+            'total']) * 100
+
+        print(f"\n{telescope.upper()}:")
+        print(f"Pixels removed: {pixel_percent:.1f}%")
+        print(f"Intensity removed: {intensity_percent:.1f}%")
