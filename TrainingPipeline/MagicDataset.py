@@ -347,7 +347,7 @@ class MagicDataset(Dataset):
 if __name__ == "__main__":
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas.parquet"
-    dataset = MagicDataset(proton_file, gamma_file, mask_rings=17, debug_info=False)
+    dataset = MagicDataset(proton_file, gamma_file, mask_rings=15, debug_info=False)
 
     for i in range(3):
         idx = np.random.randint(len(dataset))
@@ -368,8 +368,8 @@ if __name__ == "__main__":
         output_dir = f"mask_analysis/image{i}_{label}/"
         os.makedirs(output_dir, exist_ok=True)
 
-        reconstruct_image(unmasked_m1, output_dir + f"m1_unmasked_{label_name}.png", title="M1 Unmasked")
-        reconstruct_image(unmasked_m2, output_dir + f"m2_unmasked_{label_name}.png", title="M2 Unmasked")
+        reconstruct_image(unmasked_m1, output_dir + f"m1_noisy_{label_name}.png", title="M1 Noise")
+        reconstruct_image(unmasked_m2, output_dir + f"m2_noisy_{label_name}.png", title="M2 Noise")
 
         reconstruct_image(clean_m1, output_dir + f"m1_clean_{label_name}.png", title="M1 Clean")
         reconstruct_image(clean_m2, output_dir + f"m2_clean_{label_name}.png", title="M2 Clean")
