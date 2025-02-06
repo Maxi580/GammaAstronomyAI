@@ -1,7 +1,11 @@
+import os
+import sys
 import torch
-from magicDataset import MagicDataset
-from BasicMagicNet import BasicMagicNet
 import numpy as np
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from CNN.Architectures.BasicMagicCNN import BasicMagicNet
+from TrainingPipeline.MagicDataset import MagicDataset
 
 
 def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=1000):
@@ -21,13 +25,13 @@ def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=100
     with torch.no_grad():
         for i in range(num_samples):
             idx = np.random.randint(0, len(dataset))
-            noisy_m1, noisy_m2, clean_m1, clean_m2, features, label = dataset[idx]
+            m1, m2, features, label = dataset[idx]
 
-            noisy_m1 = noisy_m1.unsqueeze(0).to(device)
-            noisy_m2 = noisy_m2.unsqueeze(0).to(device)
+            m1 = m1.unsqueeze(0).to(device)
+            m2 = m2.unsqueeze(0).to(device)
             features = features.unsqueeze(0).to(device)
 
-            output = model(noisy_m1, noisy_m2, features)
+            output = model(m1, m2, features)
             pred = output.argmax(dim=1).item()
 
             correct += (pred == label)
