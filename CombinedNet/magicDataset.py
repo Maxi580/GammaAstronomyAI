@@ -140,9 +140,9 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        noisy_m1 = torch.tensor(row['image_m1'], dtype=torch.float32)
+        noisy_m1 = torch.tensor(row['clean_image_m1'], dtype=torch.float32)
         # clean_m1 = torch.tensor(row['clean_image_m1'], dtype=torch.float32)
-        noisy_m2 = torch.tensor(row['image_m2'], dtype=torch.float32)
+        noisy_m2 = torch.tensor(row['clean_image_m2'], dtype=torch.float32)
         # clean_m2 = torch.tensor(row['clean_image_m2'], dtype=torch.float32)
         # noise_m1 = noisy_m1 - clean_m1
         # noise_m2 = noisy_m2 - clean_m2

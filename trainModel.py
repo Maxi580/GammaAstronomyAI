@@ -20,6 +20,7 @@ def main(model_name: str, proton_file: str, gamma_file: str, epochs: int):
 
     dataset = MagicDataset(proton_file, gamma_file)
     supervisor = TrainingSupervisor(model_name, dataset, output_dir, debug_info=True, save_model=True, save_debug_data=True)
+    print(f"Model has {supervisor._count_trainable_weights()} weights.")
     supervisor.train_model(epochs)
 
 
@@ -49,4 +50,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[1:])"""
 
-    main("CombinedNet", "magic-protons.parquet", "magic-gammas.parquet", 35)
+    main("HexCircleCombinedNet", "magic-protons.parquet", "magic-gammas.parquet", 15)

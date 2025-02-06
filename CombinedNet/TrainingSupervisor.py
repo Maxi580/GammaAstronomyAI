@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
 
 from CombinedNet.CombinedNet import CombinedNet
+from CombinedNet.HexCircleCombinedNet import HexCircleCombinedNet
 from CombinedNet.magicDataset import MagicDataset
 from CombinedNet.resultsWriter import ResultsWriter
 
@@ -153,7 +154,7 @@ class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
     BATCH_SIZE: int = 32
     LEARNING_RATE: float = 3.812093430784664e-05
-    WEIGHT_DECAY: float = 0.0006479928221462572
+    WEIGHT_DECAY: float = 0.001
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     GRAD_CLIP_NORM: float = 4.818439292946908
@@ -284,6 +285,8 @@ class TrainingSupervisor:
         match self.model_name.lower():
             case "combinednet":
                 model = CombinedNet()
+            case "hexcirclecombinednet":
+                model = HexCircleCombinedNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
