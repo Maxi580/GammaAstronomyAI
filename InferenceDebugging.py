@@ -19,8 +19,6 @@ def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=100
     model.eval()
 
     correct = 0
-    predicted_labels = []
-    true_labels = []
 
     with torch.no_grad():
         for i in range(num_samples):
@@ -35,9 +33,6 @@ def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=100
             pred = output.argmax(dim=1).item()
 
             correct += (pred == label)
-            predicted_labels.append(pred)
-            true_labels.append(label)
-
             if (i + 1) % 100 == 0:
                 print(f"Processed {i + 1}/{num_samples} samples")
 

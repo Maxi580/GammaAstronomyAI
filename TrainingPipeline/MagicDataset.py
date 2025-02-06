@@ -114,13 +114,19 @@ def read_parquet_limit(filename, max_rows):
     return batch.to_pandas()
 
 
+def shuffle_tensor(tensor: torch.Tensor) -> torch.Tensor:
+    indices = torch.randperm(len(tensor))
+    return tensor[indices]
+
+
 class MagicDataset(Dataset):
     GAMMA_LABEL: str = 'gamma'
     PROTON_LABEL: str = 'proton'
 
     def __init__(self, proton_filename: str, gamma_filename: str, mask_rings: Optional[int] = None,
-                 max_samples: Optional[int] = None, debug_info: bool = True):
+                 shuffle: Optional[bool] = None, max_samples: Optional[int] = None, debug_info: bool = True):
         self.debug_info = debug_info
+        self.shuffle = shuffle
         self.mask_rings = mask_rings
         if mask_rings is not None:
             neighbors_info = get_neighbor_list_by_kernel(mask_rings, pooling=False, pooling_kernel_size=2,
@@ -192,6 +198,10 @@ class MagicDataset(Dataset):
 
             noisy_m1 *= mask_m1
             noisy_m2 *= mask_m2
+
+        if self.shuffle:
+            noisy_m1 = shuffle_tensor(noisy_m1)
+            noisy_m2 = shuffle_tensor(noisy_m2)
 
         features = extract_features(row)
 
