@@ -8,7 +8,7 @@ from CNN.Architectures.BasicMagicCNN import BasicMagicNet
 from TrainingPipeline.MagicDataset import MagicDataset
 
 
-def evaluate_multiple_pairs(model_path, proton_file, gamma_file, num_pairs=100):
+def evaluate_multiple_pairs(model_path, proton_file, gamma_file, num_pairs=1000):
     dataset = MagicDataset(proton_file, gamma_file)
 
     device = torch.device(
@@ -25,31 +25,19 @@ def evaluate_multiple_pairs(model_path, proton_file, gamma_file, num_pairs=100):
 
     with torch.no_grad():
         for i in range(num_pairs):
-            proton_idx = np.random.randint(0, dataset.n_protons)
-            gamma_idx = np.random.randint(dataset.n_protons, len(dataset))
+            idx = np.random.randint(0, len(dataset) - 1)
+            m1, m2, features, label = dataset[idx]
 
-            m1_p, m2_p, features_p, label_p = dataset[proton_idx]
-            m1_g, m2_g, features_g, label_g = dataset[gamma_idx]
+            m1 = m1.unsqueeze(0).to(device)
+            m2 = m2.unsqueeze(0).to(device)
+            features = features.unsqueeze(0).to(device)
 
-            m1_p = m1_p.unsqueeze(0).to(device)
-            m2_p = m2_p.unsqueeze(0).to(device)
-            features_p = features_p.unsqueeze(0).to(device)
-            output_p = model(m1_p, m2_p, features_p)
-            probs_p = torch.softmax(output_p, dim=1)[0]
-            _, pred_p = output_p.max(1)
-            proton_correct += (pred_p.item() == label_p)
-            proton_probs.append(probs_p.cpu().numpy())
+            output = model(m1, m2, features)
+            prob = torch.softmax(output, dim=1)[0]
+            _, pred = output.max(1)
+            proton_correct += (output.item() == label)
 
-            m1_g = m1_g.unsqueeze(0).to(device)
-            m2_g = m2_g.unsqueeze(0).to(device)
-            features_g = features_g.unsqueeze(0).to(device)
-            output_g = model(m1_g, m2_g, features_g)
-            probs_g = torch.softmax(output_g, dim=1)[0]
-            _, pred_g = output_g.max(1)
-            gamma_correct += (pred_g.item() == label_g)
-            gamma_probs.append(probs_g.cpu().numpy())
-
-            if (i + 1) % 10 == 0:
+            if (i + 1) % 100 == 0:
                 print(f"Processed {i + 1}/{num_pairs} pairs")
 
     proton_acc = proton_correct / num_pairs * 100
