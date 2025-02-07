@@ -11,7 +11,7 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
         
     n_pixels = [1039]
 
-    class TelescopeCNN(nn.Module):
+    class HexCircleCNN(nn.Module):
         def __init__(self):
             super().__init__()
 
@@ -62,12 +62,12 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
         def forward(self, x):
             return self.cnn(x)
 
-    class CustomCombinedNet(nn.Module):
+    class HexCircleNet(nn.Module):
         def __init__(self):
             super().__init__()
 
-            self.m1_cnn = TelescopeCNN("m1_")
-            self.m2_cnn = TelescopeCNN("m2_")
+            self.m1_cnn = HexCircleCNN()
+            self.m2_cnn = HexCircleCNN()
 
             channels3 = trial.params['cnn_channels3']
             input_size = channels3 * n_pixels[-1] * 2
@@ -101,4 +101,4 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
 
             return self.classifier(combined)
 
-    return CustomCombinedNet()
+    return HexCircleNet()
