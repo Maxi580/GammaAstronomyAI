@@ -6,7 +6,7 @@ import optuna
 
 from CNN.HexCircleLayers.HexCircleConv import HexCircleConv
 from CNN.HexCircleLayers.HexCirclePool import HexCirclePool
-from CNN.HexCircleLayers.pooling import get_clusters
+from CNN.HexCircleLayers.pooling import _get_clusters
 
 
 def parameterize_HexCircleNet(trial: optuna.Trial):
@@ -50,16 +50,13 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
                 ])
                 
                 if pooling_pattern[i]:
-                    p_kernel = trial.suggest_int(f'pooling_layer{i+1}_kernel', 1, 3)
-                    p_mode = trial.suggest_categorical(f'pooling_layer{i+1}_mode', ["max", "avg"])
-                    
                     layers.append(HexCirclePool(
-                        p_kernel,
+                        trial.suggest_int(f'pooling_layer{i+1}_kernel', 1, 3),
                         n_pixels[-1],
-                        p_mode,
+                        trial.suggest_categorical(f'pooling_layer{i+1}_mode', ["max", "avg"]),
                     ))
                     
-                    n_pixels.append(len(get_clusters(n_pixels[-1], p_kernel)))
+                    n_pixels.append(len(_get_clusters(n_pixels[-1], trial.params[f'pooling_layer{i+1}_kernel'])))
                 
                 layers.append(nn.Dropout1d(
                     trial.suggest_float(f'dropout_cnn_{i + 1}', 0.05, 0.6)
