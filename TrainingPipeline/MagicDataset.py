@@ -388,16 +388,18 @@ def plot_distributions(stats, metrics):
     for metric in metrics:
         plt.figure(figsize=(10, 6))
 
-        for label in ['proton', 'gamma']:
-            for telescope in ['m1', 'm2']:
+        for label, color in [('proton', 'blue'), ('gamma', 'red')]:
+            for telescope, linestyle in [('m1', '-'), ('m2', '--')]:
                 data = stats[label][telescope][metric]
-                plt.plot(data, alpha=0.5, label=f'{label} {telescope.upper()}')
+                plt.plot(data, alpha=0.7, label=f'{label} {telescope.upper()}',
+                         color=color, linestyle=linestyle)
 
         plt.title(f'Distribution of {metric}')
         plt.xlabel('Sample Index')
         plt.ylabel(metric)
         plt.legend()
-        plt.savefig(f'distribution_{metric}.png')
+        plt.grid(True, alpha=0.3)
+        plt.savefig(f'distribution_{metric}.png', dpi=300, bbox_inches='tight')
         plt.close()
 
 
