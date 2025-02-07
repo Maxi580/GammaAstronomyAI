@@ -2,18 +2,18 @@ import torch
 import torch.nn as nn
 
 
-def get_stats(img):
-    return torch.tensor([
-        img.mean(),
-        img.std(),
-        (img < 0).float().mean(),
-        img.min(),
-        img.max(),
-        (img ** 2).mean(),
-        torch.quantile(img, 0.25),
-        torch.quantile(img, 0.5),
-        torch.quantile(img, 0.75)
-    ], device=img.device)
+def get_batch_stats(img_batch):
+    return torch.stack([
+        img_batch.mean(dim=1),
+        img_batch.std(dim=1),
+        (img_batch < 0).float().mean(dim=1),
+        img_batch.min(dim=1).values,
+        img_batch.max(dim=1).values,
+        (img_batch ** 2).mean(dim=1),
+        torch.quantile(img_batch, 0.25, dim=1),
+        torch.quantile(img_batch, 0.5, dim=1),
+        torch.quantile(img_batch, 0.75, dim=1)
+    ], dim=1)
 
 
 class StatsMagicNet(nn.Module):
@@ -27,10 +27,6 @@ class StatsMagicNet(nn.Module):
         )
 
     def forward(self, m1_image, m2_image, measurement_features):
-        batch_stats = []
-        for i in range(m1_image.size(0)):
-            m1_stats = get_stats(m1_image[i])
-            m2_stats = get_stats(m2_image[i])
-            combined = torch.cat([m1_stats, m2_stats])
-            batch_stats.append(combined)
-        return self.classifier(torch.stack(batch_stats))
+        m1_stats = get_batch_stats(m1_image)
+        m2_stats = get_batch_stats(m2_image)
+        return self.classifier(torch.cat([m1_stats, m2_stats], dim=1))
