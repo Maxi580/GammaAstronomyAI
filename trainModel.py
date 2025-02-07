@@ -2,6 +2,7 @@ import os
 import time
 from CombinedNet.TrainingSupervisor import TrainingSupervisor
 from CombinedNet.magicDataset import MagicDataset
+from CombinedNet.noiseDataset import NoiseDataset
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
@@ -18,7 +19,7 @@ def main(model_name: str, proton_file: str, gamma_file: str, epochs: int):
     print(f"\t- Epochs = {epochs}")
     print(f"\t- Output = {output_dir}\n")
 
-    dataset = MagicDataset(proton_file, gamma_file)
+    dataset = NoiseDataset(proton_file, gamma_file, max_samples=500000)
     supervisor = TrainingSupervisor(model_name, dataset, output_dir, debug_info=True, save_model=True, save_debug_data=True)
     print(f"Model has {supervisor._count_trainable_weights()} weights.")
     supervisor.train_model(epochs)
@@ -50,4 +51,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[1:])"""
 
-    main("HexCircleCombinedNet", "magic-protons.parquet", "magic-gammas.parquet", 15)
+    main("CombinedNet1D", "magic-protons-noiseonly.parquet", "magic-gammas-noiseonly.parquet", 10)

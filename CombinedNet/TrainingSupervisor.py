@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader, Subset
 
 from CombinedNet.CombinedNet import CombinedNet
 from CombinedNet.HexCircleCombinedNet import HexCircleCombinedNet
+from CombinedNet.CombinedNet1D import CombinedNet1D
 from CombinedNet.magicDataset import MagicDataset
 from CombinedNet.resultsWriter import ResultsWriter
 
@@ -287,6 +288,8 @@ class TrainingSupervisor:
                 model = CombinedNet()
             case "hexcirclecombinednet":
                 model = HexCircleCombinedNet()
+            case "combinednet1d":
+                model = CombinedNet1D()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
