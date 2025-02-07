@@ -370,6 +370,9 @@ def collect_stats(dataset):
         stats[label_name]['m1'].append(calculate_stats(m1))
         stats[label_name]['m2'].append(calculate_stats(m2))
 
+        if idx % 10000:
+            print(f"Collected {idx} / {len(dataset)}%...")
+
     return {label: {tel: pd.DataFrame(data)
                     for tel, data in telescopes.items()}
             for label, telescopes in stats.items()}
@@ -430,6 +433,8 @@ def plot_neg_ratio_distributions(stats):
 if __name__ == '__main__':
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
     stats = collect_stats(dataset)
+    print("Stats Collected")
     # metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
     print_metric_ranges(stats)
+    print("Plotting...")
     plot_neg_ratio_distributions(stats)
