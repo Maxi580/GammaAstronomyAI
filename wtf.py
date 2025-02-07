@@ -61,15 +61,21 @@ def main():
         'incorrect': {}
     }
 
-    print("Analyzing samples...")
+    inputs_list = []
 
+    print("Analyzing samples...")
     with torch.no_grad():
         for m1, m2, _, labels in loader:
-            if samples_processed >= 50000:
+            if samples_processed >= 5000:
                 break
 
             outputs, _ = analyzer(m1, m2, None)
             preds = outputs.argmax(dim=1)
+
+            m1_stats = get_batch_stats(m1)
+            m2_stats = get_batch_stats(m2)
+            combined_stats = torch.cat([m1_stats, m2_stats], dim=1)
+            inputs_list.append(combined_stats.cpu().numpy())
 
             correct += torch.sum(torch.eq(preds, labels)).item()
 
@@ -88,23 +94,41 @@ def main():
     accuracy = 100 * correct / samples_processed
     print(f"\nAccuracy on {samples_processed} samples: {accuracy:.2f}%")
 
-    print("\nNeuron Analysis:")
-    for layer_name in all_activations['correct'].keys():
-        correct_acts = np.vstack(all_activations['correct'][layer_name])
-        incorrect_acts = np.vstack(all_activations['incorrect'][layer_name])
+    print("\nFeature Impact Analysis:")
 
-        correct_mean = correct_acts.mean(axis=0)
-        incorrect_mean = incorrect_acts.mean(axis=0)
+    feature_names = [
+        'M1 Mean', 'M1 Std', 'M1 Neg Ratio', 'M1 Min', 'M1 Max',
+        'M1 Square Mean', 'M1 25%', 'M1 50%', 'M1 75%',
+        'M2 Mean', 'M2 Std', 'M2 Neg Ratio', 'M2 Min', 'M2 Max',
+        'M2 Square Mean', 'M2 25%', 'M2 50%', 'M2 75%'
+    ]
 
-        neuron_diffs = correct_mean - incorrect_mean
-        most_discriminative = np.argsort(np.abs(neuron_diffs))[-5:]
+    inputs = np.vstack(inputs_list)
 
-        print(f"\n{layer_name}:")
-        for neuron_idx in most_discriminative[::-1]:
-            diff = neuron_diffs[neuron_idx]
-            print(f"Neuron {neuron_idx}: activation diff = {diff:.3f} "
-                  f"(correct: {correct_mean[neuron_idx]:.3f}, "
-                  f"incorrect: {incorrect_mean[neuron_idx]:.3f})")
+    correct_mask = np.array([True] * len(inputs))
+    incorrect_mask = ~correct_mask
+
+    feature_impacts = {}
+    for i, feature_name in enumerate(feature_names):
+        correct_mean = inputs[correct_mask, i].mean()
+        incorrect_mean = inputs[incorrect_mask, i].mean()
+        diff = correct_mean - incorrect_mean
+
+        feature_impacts[feature_name] = {
+            'correct_mean': correct_mean,
+            'incorrect_mean': incorrect_mean,
+            'diff': diff,
+            'abs_diff': abs(diff)
+        }
+
+    sorted_features = sorted(feature_impacts.items(), key=lambda x: x[1]['abs_diff'], reverse=True)
+
+    print("\nFeature Importance (sorted by impact):")
+    for feature_name, impact in sorted_features:
+        print(f"\n{feature_name}:")
+        print(f"  Correct predictions avg: {impact['correct_mean']:.3f}")
+        print(f"  Incorrect predictions avg: {impact['incorrect_mean']:.3f}")
+        print(f"  Impact (difference): {impact['diff']:.3f}")
 
 
 if __name__ == "__main__":
