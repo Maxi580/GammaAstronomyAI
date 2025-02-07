@@ -20,10 +20,15 @@ class StatsMagicNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.classifier = nn.Sequential(
-            nn.Linear(18, 9),
+            nn.Linear(18, 32),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.Dropout(0.4),
-            nn.Linear(9, 2),
+            nn.Dropout(0.2),
+            nn.Linear(32, 16),
+            nn.BatchNorm1d(16),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(16, 2)
         )
 
     def forward(self, m1_image, m2_image, measurement_features):
