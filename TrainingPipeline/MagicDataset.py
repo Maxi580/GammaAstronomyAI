@@ -124,7 +124,7 @@ class MagicDataset(Dataset):
     PROTON_LABEL: str = 'proton'
 
     def __init__(self, proton_filename: str, gamma_filename: str, mask_rings: Optional[int] = None,
-                 shuffle: Optional[bool] = None, max_samples: Optional[int] = None, debug_info: bool = True):
+                 shuffle: Optional[bool] = False, max_samples: Optional[int] = None, debug_info: bool = True):
         self.debug_info = debug_info
         self.shuffle = shuffle
         self.mask_rings = mask_rings

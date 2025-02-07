@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
 
 from CNN.Architectures.BasicMagicCNN import BasicMagicNet
+from CNN.Architectures.MLP import MLP
 from TrainingPipeline.MagicDataset import MagicDataset
 from TrainingPipeline.ResultsWriter import ResultsWriter
 
@@ -284,6 +285,8 @@ class TrainingSupervisor:
         match self.model_name.lower():
             case "basicmagiccnn":
                 model = BasicMagicNet()
+            case "mlp":
+                model = MLP()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
