@@ -42,7 +42,7 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
                 
                 if pooling_pattern[i]:
                     p_kernel = trial.suggest_int(f'pooling_layer{i+1}_kernel', 1, 3)
-                    p_mode = trial.suggest_categorical(f'pooling_layer{i+1}_mode', ["max", "mean"])
+                    p_mode = trial.suggest_categorical(f'pooling_layer{i+1}_mode', ["max", "avg"])
                     
                     layers.append(HexCirclePool(
                         p_kernel,
