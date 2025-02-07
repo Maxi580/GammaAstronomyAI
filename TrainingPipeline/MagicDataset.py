@@ -386,19 +386,25 @@ def collect_stats(dataset):
 
 def plot_distributions(stats, metrics):
     for metric in metrics:
-        plt.figure(figsize=(10, 6))
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
 
-        for label, color in [('proton', 'blue'), ('gamma', 'red')]:
-            for telescope, linestyle in [('m1', '-'), ('m2', '--')]:
-                data = stats[label][telescope][metric]
-                plt.plot(data, alpha=0.7, label=f'{label} {telescope.upper()}',
-                         color=color, linestyle=linestyle)
+        ax1.plot(stats['proton']['m1'][metric], alpha=0.7, color='blue')
+        ax1.set_title(f'Proton M1 {metric}')
+        ax1.grid(True, alpha=0.3)
 
-        plt.title(f'Distribution of {metric}')
-        plt.xlabel('Sample Index')
-        plt.ylabel(metric)
-        plt.legend()
-        plt.grid(True, alpha=0.3)
+        ax2.plot(stats['proton']['m2'][metric], alpha=0.7, color='red')
+        ax2.set_title(f'Proton M2 {metric}')
+        ax2.grid(True, alpha=0.3)
+
+        ax3.plot(stats['gamma']['m1'][metric], alpha=0.7, color='blue')
+        ax3.set_title(f'Gamma M1 {metric}')
+        ax3.grid(True, alpha=0.3)
+
+        ax4.plot(stats['gamma']['m2'][metric], alpha=0.7, color='red')
+        ax4.set_title(f'Gamma M2 {metric}')
+        ax4.grid(True, alpha=0.3)
+
+        plt.tight_layout()
         plt.savefig(f'distribution_{metric}.png', dpi=300, bbox_inches='tight')
         plt.close()
 
