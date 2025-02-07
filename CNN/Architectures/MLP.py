@@ -9,20 +9,35 @@ class MLP(nn.Module):
         super().__init__()
 
         self.classifier = nn.Sequential(
-            nn.Linear(2 * 1039, 768),
+            nn.Linear(2 * 1039, 1536),
+            nn.GroupNorm(32, 1536),
+            nn.ReLU(),
+            nn.Dropout(0.4),
+
+            nn.Linear(1536, 1024),
+            nn.GroupNorm(32, 1024),
+            nn.ReLU(),
+            nn.Dropout(0.4),
+
+            nn.Linear(1024, 768),
             nn.GroupNorm(32, 768),
             nn.ReLU(),
-            nn.Dropout(0.4936012148325484),
+            nn.Dropout(0.4),
 
-            nn.Linear(768, 384),
-            nn.GroupNorm(16, 384),
+            nn.Linear(768, 512),
+            nn.GroupNorm(16, 512),
             nn.ReLU(),
-            nn.Dropout(0.5340424416693821),
+            nn.Dropout(0.4),
 
-            nn.Linear(384, 128),
+            nn.Linear(512, 256),
+            nn.GroupNorm(8, 256),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+
+            nn.Linear(256, 128),
             nn.GroupNorm(8, 128),
             nn.ReLU(),
-            nn.Dropout(0.21686133182097764),
+            nn.Dropout(0.2),
 
             nn.Linear(128, 2)
         )

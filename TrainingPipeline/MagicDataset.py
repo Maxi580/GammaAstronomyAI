@@ -166,8 +166,6 @@ class MagicDataset(Dataset):
         self.length = self.n_protons + self.n_gammas
         self.labels = {self.PROTON_LABEL: 0, self.GAMMA_LABEL: 1}
 
-        self.random_labels = torch.randint(0, 2, (self.length,))
-
         if self.debug_info:
             print(f"\nDataset initialized with {self.length} total samples:")
             print(f"Protons: {self.n_protons}")
@@ -207,7 +205,7 @@ class MagicDataset(Dataset):
 
         features = extract_features(row)
 
-        return noisy_m1, noisy_m2, features, self.random_labels[idx].item()
+        return noisy_m1, noisy_m2, features, self.labels[label]
 
     def analyze_noise(self):
         stats = {
