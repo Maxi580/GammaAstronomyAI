@@ -1,6 +1,7 @@
-# Test data
+# Test data and other datasets
 datasets/
 reconstructed_images/
+*.parquet
 
 # Trained models
 trained_models/

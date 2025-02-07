@@ -1,0 +1,2 @@
+from ParameterTuning.BasicMagicCNN import parameterize_BasicMagicNet
+from ParameterTuning.HexCircleCNN import parameterize_HexCircleNet

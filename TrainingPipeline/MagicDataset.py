@@ -9,8 +9,7 @@ from torch.utils.data import Dataset
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from MagicTelescope.NeighborLogic import get_neighbor_list_by_kernel
-from MagicTelescope.ImageReconstruct import reconstruct_image
+from CNN.MagicConv.NeighborLogic import get_neighbor_list_by_kernel
 
 NUM_OF_HEXAGONS = 1039
 
@@ -26,14 +25,6 @@ def replace_nan(value):
 
 def extract_features(row: pd.Series) -> torch.Tensor:
     features = []
-
-    true_features = [
-        'true_energy', 'true_theta', 'true_phi',
-        'true_telescope_theta', 'true_telescope_phi',
-        'true_first_interaction_height',
-        'true_impact_m1', 'true_impact_m2'
-    ]
-    features.extend([replace_nan(row[col]) for col in true_features])
 
     hillas_m1_features = [
         'hillas_length_m1', 'hillas_width_m1', 'hillas_delta_m1',
@@ -86,7 +77,7 @@ def extract_features(row: pd.Series) -> torch.Tensor:
     ]
     features.extend([replace_nan(row[col]) for col in source_m2_features])
 
-    assert len(features) == 59, "Total features count mismatch"
+    assert len(features) == 51, "Total features count mismatch"
 
     return torch.tensor(features, dtype=torch.float32)
 
