@@ -3,24 +3,10 @@ import torch.nn as nn
 import numpy as np
 from collections import defaultdict
 from torch.utils.data import DataLoader
-from typing import Dict, List, Tuple
+from typing import Dict
 
-from CNN.Architectures.StatsModel import StatsMagicNet
+from CNN.Architectures.StatsModel import get_batch_stats, StatsMagicNet
 from TrainingPipeline.MagicDataset import MagicDataset
-
-
-def get_batch_stats(img_batch):
-    return torch.stack([
-        img_batch.mean(dim=1),
-        img_batch.std(dim=1),
-        (img_batch < 0).float().mean(dim=1),
-        img_batch.min(dim=1).values,
-        img_batch.max(dim=1).values,
-        (img_batch ** 2).mean(dim=1),
-        torch.quantile(img_batch, 0.25, dim=1),
-        torch.quantile(img_batch, 0.5, dim=1),
-        torch.quantile(img_batch, 0.75, dim=1)
-    ], dim=1)
 
 
 class MLPActivationAnalyzer:
@@ -60,6 +46,7 @@ class MLPActivationAnalyzer:
                 module.register_forward_hook(self._activation_hook(f"{name}"))
 
     def analyze_batch(self, dataloader: DataLoader, num_samples: int = 1000) -> Dict:
+        """Analyze model behavior on a batch of data"""
         samples_processed = 0
         all_predictions = []
         all_labels = []
@@ -73,12 +60,15 @@ class MLPActivationAnalyzer:
                 m1 = m1.to(self.device)
                 m2 = m2.to(self.device)
 
+                # Get statistical features
                 m1_stats = get_batch_stats(m1)
                 m2_stats = get_batch_stats(m2)
                 combined_stats = torch.cat([m1_stats, m2_stats], dim=1)
 
+                # Store inputs for analysis
                 all_inputs.append(combined_stats.cpu())
 
+                # Get predictions
                 outputs = self.model.classifier(combined_stats)
                 preds = outputs.argmax(dim=1)
 
@@ -87,6 +77,7 @@ class MLPActivationAnalyzer:
 
                 samples_processed += len(labels)
 
+        # Convert to numpy arrays
         predictions = np.array(all_predictions)
         labels = np.array(all_labels)
         inputs = torch.cat(all_inputs, dim=0).numpy()
@@ -95,6 +86,7 @@ class MLPActivationAnalyzer:
 
     def _analyze_results(self, predictions: np.ndarray, labels: np.ndarray,
                          inputs: np.ndarray) -> Dict:
+        """Analyze the results and compute feature importance"""
         correct_mask = predictions == labels
 
         results = {
@@ -104,7 +96,9 @@ class MLPActivationAnalyzer:
             "feature_correlations": {}
         }
 
+        # Analyze input features
         for i, feature_name in enumerate(self.feature_names):
+            # Compute feature importance based on prediction correctness
             correct_mean = inputs[correct_mask, i].mean()
             incorrect_mean = inputs[~correct_mask, i].mean()
             importance = abs(correct_mean - incorrect_mean)
@@ -115,22 +109,28 @@ class MLPActivationAnalyzer:
                 "importance": importance
             }
 
+        # Analyze layer activations
         for layer_name, acts in self.activations.items():
-            if not acts:
+            if not acts:  # Skip if no activations stored
                 continue
 
+            # Concatenate all batches
             layer_acts = torch.cat(acts, dim=0).numpy()
 
+            # Compute statistics for correct vs incorrect predictions
             correct_acts = layer_acts[correct_mask]
             incorrect_acts = layer_acts[~correct_mask]
 
             results["layer_activations"][layer_name] = {
-                "mean_diff": np.mean(np.abs(correct_acts - incorrect_acts)),
+                "mean_diff": np.abs(np.mean(correct_acts, axis=0) - np.mean(incorrect_acts, axis=0)).mean(),
                 "correct_mean": np.mean(correct_acts),
                 "incorrect_mean": np.mean(incorrect_acts),
+                "correct_std": np.std(correct_acts),
+                "incorrect_std": np.std(incorrect_acts),
                 "activation_std": np.std(layer_acts)
             }
 
+        # Compute feature correlations with correctness
         correlations = []
         for i in range(inputs.shape[1]):
             correlation = np.corrcoef(inputs[:, i], correct_mask)[0, 1]
@@ -142,6 +142,7 @@ class MLPActivationAnalyzer:
             reverse=True
         ))
 
+        # Clear stored activations
         self.activations.clear()
 
         return results
@@ -176,13 +177,17 @@ def print_analysis(results: Dict):
 
 
 def main():
+    # Initialize dataset and analyzer
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet")
     analyzer = MLPActivationAnalyzer("trained_model.pth")
 
-    loader = DataLoader(dataset, batch_size=128, shuffle=True)
+    # Create dataloader
+    loader = DataLoader(dataset, batch_size=32, shuffle=True)
 
+    # Run analysis
     results = analyzer.analyze_batch(loader, num_samples=1000)
 
+    # Print results
     print_analysis(results)
 
 
