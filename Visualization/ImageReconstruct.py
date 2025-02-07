@@ -6,7 +6,7 @@ from ctapipe.instrument import CameraGeometry
 from ctapipe.visualization import CameraDisplay
 import torch
 
-from MagicTelescope.NeighborLogic import unpool_array
+from CNN.MagicConv.NeighborLogic import unpool_array
 
 
 POOLING_KERNEL_SIZE = 2

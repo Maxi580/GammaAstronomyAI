@@ -16,6 +16,7 @@ from TrainingPipeline.ResultsWriter import ResultsWriter
 from CNN.Architectures.BasicMagicCNN import BasicMagicNet
 from CNN.Architectures.MLP import MLP
 from CNN.Architectures.StatsModel import StatsMagicNet
+from CNN.Architectures.HexCircleCNN import HexCircleNet
 
 np.random.seed(42)
 torch.manual_seed(42)
@@ -285,12 +286,14 @@ class TrainingSupervisor:
 
     def load_model(self):
         match self.model_name.lower():
-            case "basicmagiccnn":
+            case "basicmagicnet":
                 model = BasicMagicNet()
             case "mlp":
                 model = MLP()
             case "statsmagicnet":
                 model = StatsMagicNet()
+            case "hexcirclenet":
+                model = HexCircleNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
