@@ -15,9 +15,8 @@ def parameterize_BasicMagicNet(trial: optuna.Trial):
         return min(divisors, key=lambda x: abs(x - suggested_number_of_groups))
 
     class BasicMagicCNN(nn.Module):
-        def __init__(self, prefix):
+        def __init__(self):
             super().__init__()
-            self.prefix = prefix
 
             pooling_pattern = [
                 trial.suggest_categorical(f'pooling_layer_{i}', [True, False])
@@ -73,8 +72,8 @@ def parameterize_BasicMagicNet(trial: optuna.Trial):
         def __init__(self):
             super().__init__()
 
-            self.m1_cnn = BasicMagicCNN("m1_")
-            self.m2_cnn = BasicMagicCNN("m2_")
+            self.m1_cnn = BasicMagicCNN()
+            self.m2_cnn = BasicMagicCNN()
 
             channels3 = trial.params['cnn_channels3']
             num_pooling = sum(1 for i in range(3) if trial.params[f'pooling_layer_{i}'])
