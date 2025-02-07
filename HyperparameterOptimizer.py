@@ -104,6 +104,7 @@ if __name__ == "__main__":
     gamma_file = "magic-gammas.parquet"
 
     main(
+        model_name,
         proton_file,
         gamma_file,
         epochs=10,
