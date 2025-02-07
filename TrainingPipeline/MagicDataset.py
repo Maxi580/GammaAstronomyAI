@@ -355,71 +355,54 @@ class MagicDataset(Dataset):
         return {'total_samples': total_samples, 'distribution': distribution}
 
 
-if __name__ == '__main__':
-    proton_file = "../magic-protons.parquet"
-    gamma_file = "../magic-gammas.parquet"
-    dataset = MagicDataset(proton_file, gamma_file, debug_info=False)
-
-    stats = {
-        'proton': {'m1': [], 'm2': []},
-        'gamma': {'m1': [], 'm2': []}
+def calculate_stats(tensor):
+    return {
+        'mean': tensor.mean().item(),
+        'std': tensor.std().item(),
+        'neg_ratio': (tensor < 0).float().mean().item(),
+        'min': tensor.min().item(),
+        'max': tensor.max().item(),
+        'squared_mean': (tensor ** 2).mean().item(),
+        'q25': torch.quantile(tensor, 0.25).item(),
+        'q50': torch.quantile(tensor, 0.50).item(),
+        'q75': torch.quantile(tensor, 0.75).item()
     }
+
+
+def collect_stats(dataset):
+    stats = {'proton': {'m1': [], 'm2': []}, 'gamma': {'m1': [], 'm2': []}}
 
     for idx in range(len(dataset)):
         m1, m2, _, label = dataset[idx]
         label_name = 'gamma' if label == dataset.labels[dataset.GAMMA_LABEL] else 'proton'
 
-        m1_stats = {
-            'mean': m1.mean().item(),
-            'std': m1.std().item(),
-            'neg_ratio': (m1 < 0).float().mean().item(),
-            'min': m1.min().item(),
-            'max': m1.max().item(),
-            'squared_mean': (m1 ** 2).mean().item(),
-            'q25': torch.quantile(m1, 0.25).item(),
-            'q50': torch.quantile(m1, 0.50).item(),
-            'q75': torch.quantile(m1, 0.75).item()
-        }
+        stats[label_name]['m1'].append(calculate_stats(m1))
+        stats[label_name]['m2'].append(calculate_stats(m2))
 
-        m2_stats = {
-            'mean': m2.mean().item(),
-            'std': m2.std().item(),
-            'neg_ratio': (m2 < 0).float().mean().item(),
-            'min': m2.min().item(),
-            'max': m2.max().item(),
-            'squared_mean': (m2 ** 2).mean().item(),
-            'q25': torch.quantile(m2, 0.25).item(),
-            'q50': torch.quantile(m2, 0.50).item(),
-            'q75': torch.quantile(m2, 0.75).item()
-        }
+    return {label: {tel: pd.DataFrame(data)
+                    for tel, data in telescopes.items()}
+            for label, telescopes in stats.items()}
 
-        stats[label_name]['m1'].append(m1_stats)
-        stats[label_name]['m2'].append(m2_stats)
 
-    for label in ['proton', 'gamma']:
-        for telescope in ['m1', 'm2']:
-            stats[label][telescope] = pd.DataFrame(stats[label][telescope])
-
-    fig, axes = plt.subplots(3, 3, figsize=(15, 15))
-    fig.suptitle('Feature Distributions: Proton vs Gamma')
-
-    metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
+def plot_distributions(stats, metrics):
     for metric in metrics:
         plt.figure(figsize=(10, 6))
 
-        proton_m1_data = [d[metric] for d in stats['proton']['m1']]
-        gamma_m1_data = [d[metric] for d in stats['gamma']['m1']]
-        proton_m2_data = [d[metric] for d in stats['proton']['m2']]
-        gamma_m2_data = [d[metric] for d in stats['gamma']['m2']]
-
-        plt.hist(proton_m1_data, alpha=0.5, label='Proton M1', bins=50)
-        plt.hist(gamma_m1_data, alpha=0.5, label='Gamma M1', bins=50)
-        plt.hist(proton_m2_data, alpha=0.5, label='Proton M2', bins=50)
-        plt.hist(gamma_m2_data, alpha=0.5, label='Gamma M2', bins=50)
+        for label in ['proton', 'gamma']:
+            for telescope in ['m1', 'm2']:
+                data = stats[label][telescope][metric]
+                plt.plot(data, alpha=0.5, label=f'{label} {telescope.upper()}')
 
         plt.title(f'Distribution of {metric}')
-        plt.xlabel(metric)
-        plt.ylabel('Count')
+        plt.xlabel('Sample Index')
+        plt.ylabel(metric)
         plt.legend()
         plt.savefig(f'distribution_{metric}.png')
         plt.close()
+
+
+if __name__ == '__main__':
+    dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
+    stats = collect_stats(dataset)
+    metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
+    plot_distributions(stats, metrics)
