@@ -10,10 +10,12 @@ from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
 
-from CNN.Architectures.BasicMagicCNN import BasicMagicNet
-from CNN.Architectures.MLP import MLP
 from TrainingPipeline.MagicDataset import MagicDataset
 from TrainingPipeline.ResultsWriter import ResultsWriter
+
+from CNN.Architectures.BasicMagicCNN import BasicMagicNet
+from CNN.Architectures.MLP import MLP
+from CNN.Architectures.StatsModel import StatsMagicNet
 
 np.random.seed(42)
 torch.manual_seed(42)
@@ -287,6 +289,8 @@ class TrainingSupervisor:
                 model = BasicMagicNet()
             case "mlp":
                 model = MLP()
+            case "statsmagicnet":
+                model = StatsMagicNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
