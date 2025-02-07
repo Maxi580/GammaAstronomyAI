@@ -27,7 +27,10 @@ class StatsMagicNet(nn.Module):
         )
 
     def forward(self, m1_image, m2_image, measurement_features):
-        m1_stats = get_stats(m1_image)
-        m2_stats = get_stats(m2_image)
-        combined = torch.cat([m1_stats, m2_stats])
-        return self.classifier(combined.unsqueeze(0))
+        batch_stats = []
+        for i in range(m1_image.size(0)):
+            m1_stats = get_stats(m1_image[i])
+            m2_stats = get_stats(m2_image[i])
+            combined = torch.cat([m1_stats, m2_stats])
+            batch_stats.append(combined)
+        return self.classifier(torch.stack(batch_stats))
