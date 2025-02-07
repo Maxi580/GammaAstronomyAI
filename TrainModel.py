@@ -7,7 +7,7 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
 
 def main(model_name: str, proton_file: str, gamma_file: str, epochs: int):
-    nametag = f"{model_name}__{time.strftime('%Y-%m-%d_%H-%M-%S')}"
+    nametag = f"{model_name}__{time.strftime('%d-%m-%Y-%H-%M-%S')}"
     proton_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), proton_file)
     gamma_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), gamma_file)
     output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "trained_models", nametag)
