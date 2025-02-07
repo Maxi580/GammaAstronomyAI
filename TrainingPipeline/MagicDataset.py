@@ -9,8 +9,7 @@ from torch.utils.data import Dataset
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from MagicTelescope.NeighborLogic import get_neighbor_list_by_kernel
-from MagicTelescope.ImageReconstruct import reconstruct_image
+from CNN.MagicConv.NeighborLogic import get_neighbor_list_by_kernel
 
 NUM_OF_HEXAGONS = 1039
 

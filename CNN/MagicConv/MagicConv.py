@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import init
 
-from MagicTelescope.NeighborLogic import get_neighbor_tensor
+from CNN.MagicConv.NeighborLogic import get_neighbor_tensor
 
 
 class MagicConv(nn.Module):

@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 from CNN.MagicConv.MagicConv import MagicConv
 
-NUM_FEATURES = 59
-
 
 class BasicMagicCNN(nn.Module):
     def __init__(self):
@@ -48,7 +46,7 @@ class BasicMagicNet(nn.Module):
             nn.Dropout(0.21686133182097764),
 
             nn.Linear(128, 2)
-            )
+        )
 
     def forward(self, m1_image, m2_image, measurement_features):
         m1_image = m1_image.unsqueeze(1)
