@@ -15,15 +15,15 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
         def __init__(self):
             super().__init__()
 
-            num_layers = trial.suggest_int('cnn_layers', 1, 4)
+            num_layers = trial.suggest_int('cnn_layers', 1, 3)
 
             channels = [1]
             for i in range(1, num_layers+1):
-                channels.append(trial.suggest_int(f'cnn_channels{i}', channels[-1]+1, channels[-1]*8))
+                channels.append(trial.suggest_int(f'cnn_channels{i}', channels[-1]+1, channels[-1]*2))
                 
             
             pooling_pattern = [
-                trial.suggest_int(f'pooling_layer_{i+1}', [True, False])
+                trial.suggest_categorical(f'pooling_layer_{i+1}', [True, False])
                 for i in range(num_layers)
             ]
 
@@ -42,7 +42,7 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
                 
                 if pooling_pattern[i]:
                     p_kernel = trial.suggest_int(f'pooling_layer{i+1}_kernel', 1, 3)
-                    p_mode = trial.suggest_categorical(f'pooling_layer{i+1}_mode', ["max", "mean"])
+                    p_mode = trial.suggest_categorical(f'pooling_layer{i+1}_mode', ["max", "avg"])
                     
                     layers.append(HexCirclePool(
                         p_kernel,
@@ -68,9 +68,11 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
 
             self.m1_cnn = HexCircleCNN()
             self.m2_cnn = HexCircleCNN()
+            
+            num_layers = trial.params['cnn_layers']
 
-            channels3 = trial.params['cnn_channels3']
-            input_size = channels3 * n_pixels[-1] * 2
+            final_channels = trial.params[f'cnn_channels{num_layers}']
+            input_size = final_channels * n_pixels[-1] * 2
             
             num_layers = trial.suggest_int('linear_layers', 1, 4)
 

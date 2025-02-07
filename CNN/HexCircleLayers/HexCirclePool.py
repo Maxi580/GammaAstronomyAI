@@ -54,7 +54,7 @@ class HexCirclePool(nn.Module):
             # Gather features for these indices. The result has shape (B, C, len(cluster)).
             cluster_features = x.index_select(dim=2, index=indices)
             
-            if self.mode == 'mean':
+            if self.mode == 'avg':
                 pooled = cluster_features.mean(dim=2)  # shape: (B, C)
             elif self.mode == 'max':
                 pooled, _ = cluster_features.max(dim=2)
