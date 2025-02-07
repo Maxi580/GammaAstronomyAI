@@ -166,7 +166,7 @@ class MagicDataset(Dataset):
         self.length = self.n_protons + self.n_gammas
         self.labels = {self.PROTON_LABEL: 0, self.GAMMA_LABEL: 1}
 
-        self.random_labels = torch.randint(0, 2, (len(self.length),))
+        self.random_labels = torch.randint(0, 2, (self.length,))
 
         if self.debug_info:
             print(f"\nDataset initialized with {self.length} total samples:")
