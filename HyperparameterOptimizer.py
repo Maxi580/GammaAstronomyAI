@@ -52,7 +52,7 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
         return avg_accuracy
 
     except Exception as e:
-        print(f"Trial {trial.number} failed with error: {str(e)}")
+        print(f"Trial {trial.number} failed with error:", e)
         raise optuna.exceptions.TrialPruned()
 
     finally:
@@ -77,6 +77,8 @@ def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_t
             sampler=optuna.samplers.TPESampler(seed=42),
         )
         print("Creating new study")
+
+    optuna.logging.set_verbosity(optuna.logging.ERROR)
 
     study.optimize(
         lambda trial: objective(trial, model, dataset, study_name, epochs),
