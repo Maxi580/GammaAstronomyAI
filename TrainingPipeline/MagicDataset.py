@@ -370,7 +370,7 @@ def collect_stats(dataset):
         stats[label_name]['m1'].append(calculate_stats(m1))
         stats[label_name]['m2'].append(calculate_stats(m2))
 
-        if idx % 10000:
+        if idx % 10000 == 0:
             print(f"Collected {idx} / {len(dataset)}%...")
 
     return {label: {tel: pd.DataFrame(data)
