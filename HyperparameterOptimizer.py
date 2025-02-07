@@ -78,8 +78,6 @@ def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_t
         )
         print("Creating new study")
 
-    optuna.logging.set_verbosity(optuna.logging.ERROR)
-
     study.optimize(
         lambda trial: objective(trial, model, dataset, study_name, epochs),
         n_trials=n_trials

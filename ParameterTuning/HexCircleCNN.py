@@ -1,3 +1,5 @@
+import copy
+
 import torch
 import torch.nn as nn
 import optuna
@@ -8,18 +10,25 @@ from CNN.HexCircleLayers.pooling import get_clusters
 
 
 def parameterize_HexCircleNet(trial: optuna.Trial):
-        
-    n_pixels = [1039]
 
     class HexCircleCNN(nn.Module):
+        def __init__(self, layers):
+            super().__init__()
+            self.cnn = nn.Sequential(*layers)
+
+        def forward(self, x):
+            return self.cnn(x)
+
+    class HexCircleNet(nn.Module):
         def __init__(self):
             super().__init__()
 
+            n_pixels = [1039]
             num_layers = trial.suggest_int('cnn_layers', 1, 3)
 
             channels = [1]
             for i in range(1, num_layers+1):
-                channels.append(trial.suggest_int(f'cnn_channels{i}', channels[-1]+1, channels[-1]*2))
+                channels.append(trial.suggest_int(f'cnn_channels{i}', channels[-1]+1, channels[-1]*8))
                 
             
             pooling_pattern = [
@@ -56,18 +65,8 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
                     trial.suggest_float(f'dropout_cnn_{i + 1}', 0.05, 0.6)
                 ))
 
-
-            self.cnn = nn.Sequential(*layers)
-
-        def forward(self, x):
-            return self.cnn(x)
-
-    class HexCircleNet(nn.Module):
-        def __init__(self):
-            super().__init__()
-
-            self.m1_cnn = HexCircleCNN()
-            self.m2_cnn = HexCircleCNN()
+            self.m1_cnn = HexCircleCNN(copy.deepcopy(layers))
+            self.m2_cnn = HexCircleCNN(copy.deepcopy(layers))
             
             num_layers = trial.params['cnn_layers']
 
