@@ -286,7 +286,7 @@ class TrainingSupervisor:
 
     def load_model(self):
         match self.model_name.lower():
-            case "basicmagiccnn":
+            case "basicmagicnet":
                 model = BasicMagicNet()
             case "mlp":
                 model = MLP()
