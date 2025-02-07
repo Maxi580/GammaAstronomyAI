@@ -21,10 +21,8 @@ class StatsMagicNet(nn.Module):
         super().__init__()
         self.classifier = nn.Sequential(
             nn.Linear(18, 9),
-            nn.GroupNorm(3, 9),
             nn.ReLU(),
             nn.Dropout(0.4),
-
             nn.Linear(9, 2),
         )
 
@@ -32,5 +30,4 @@ class StatsMagicNet(nn.Module):
         m1_stats = get_stats(m1_image)
         m2_stats = get_stats(m2_image)
         combined = torch.cat([m1_stats, m2_stats])
-
-        return self.classifier(combined)
+        return self.classifier(combined.unsqueeze(0))
