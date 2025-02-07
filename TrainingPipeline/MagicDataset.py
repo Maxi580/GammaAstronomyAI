@@ -375,6 +375,20 @@ def collect_stats(dataset):
             for label, telescopes in stats.items()}
 
 
+def print_metric_ranges(stats):
+    metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
+
+    for particle in ['proton', 'gamma']:
+        print(f"\n{particle.upper()} STATISTICS:")
+        for telescope in ['m1', 'm2']:
+            print(f"\n{telescope.upper()}:")
+            df = stats[particle][telescope]
+            for metric in metrics:
+                min_val = df[metric].min()
+                max_val = df[metric].max()
+                print(f"{metric:12} - Min: {min_val:10.6f}, Max: {max_val:10.6f}")
+
+
 def plot_distributions(stats, metrics):
     for metric in metrics:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
@@ -416,5 +430,6 @@ def plot_neg_ratio_distributions(stats):
 if __name__ == '__main__':
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
     stats = collect_stats(dataset)
-    metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
+    # metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
+    print_metric_ranges(stats)
     plot_neg_ratio_distributions(stats)
