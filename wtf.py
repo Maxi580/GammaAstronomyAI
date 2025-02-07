@@ -1,9 +1,11 @@
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 import numpy as np
 from typing import Tuple
+from TrainingPipeline.MagicDataset import MagicDataset
 
 
 def get_batch_stats(img_batch):
@@ -76,19 +78,45 @@ class StatsSVM:
 
 
 def main():
-    from TrainingPipeline.MagicDataset import MagicDataset
-    from torch.utils.data import random_split
-
     print("Loading dataset...")
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet")
 
-    train_size = int(0.7 * len(dataset))
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    print("Creating stratified split...")
 
+    n_protons = dataset.n_protons
+    n_gammas = dataset.n_gammas
+    labels = np.full(n_protons + n_gammas, dataset.labels[dataset.PROTON_LABEL])
+    labels[n_protons:] = dataset.labels[dataset.GAMMA_LABEL]
+
+    # Perform stratified split
+    indices = np.arange(len(dataset))
+    train_indices, val_indices = train_test_split(
+        indices,
+        test_size=0.2,
+        stratify=labels,
+        random_state=42
+    )
+
+    train_dataset = Subset(dataset, train_indices)
+    val_dataset = Subset(dataset, val_indices)
+
+    # Create data loaders
     train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=128, shuffle=False)
 
+    # Print distribution information
+    train_labels = labels[train_indices]
+    val_labels = labels[val_indices]
+
+    print("\nData Distribution:")
+    print("Training set:")
+    print(f"Protons: {np.sum(train_labels == 0)} ({np.mean(train_labels == 0) * 100:.1f}%)")
+    print(f"Gammas: {np.sum(train_labels == 1)} ({np.mean(train_labels == 1) * 100:.1f}%)")
+    print("\nValidation set:")
+    print(f"Protons: {np.sum(val_labels == 0)} ({np.mean(val_labels == 0) * 100:.1f}%)")
+    print(f"Gammas: {np.sum(val_labels == 1)} ({np.mean(val_labels == 1) * 100:.1f}%)")
+
+    # Create and train SVM
     print("\nInitializing SVM classifier...")
     svm_classifier = StatsSVM(kernel='rbf')
 
