@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
+import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset
 import sys
@@ -354,47 +355,71 @@ class MagicDataset(Dataset):
         return {'total_samples': total_samples, 'distribution': distribution}
 
 
-if __name__ == "__main__":
-    proton_file = "magic-protons.parquet"
-    gamma_file = "magic-gammas.parquet"
-    dataset = MagicDataset(proton_file, gamma_file, mask_rings=17, debug_info=False)
+if __name__ == '__main__':
+    proton_file = "../magic-protons.parquet"
+    gamma_file = "../magic-gammas.parquet"
+    dataset = MagicDataset(proton_file, gamma_file, debug_info=False)
 
-    for i in range(3):
-        idx = np.random.randint(len(dataset))
-        noisy_m1, noisy_m2, features, label = dataset[idx]
-        label_name = dataset.GAMMA_LABEL if label == dataset.labels[dataset.GAMMA_LABEL] else dataset.PROTON_LABEL
+    stats = {
+        'proton': {'m1': [], 'm2': []},
+        'gamma': {'m1': [], 'm2': []}
+    }
 
-        if idx < dataset.n_protons:
-            row = dataset.proton_data.iloc[idx]
-        else:
-            row = dataset.gamma_data.iloc[idx - dataset.n_protons]
+    for idx in range(len(dataset)):
+        m1, m2, _, label = dataset[idx]
+        label_name = 'gamma' if label == dataset.labels[dataset.GAMMA_LABEL] else 'proton'
 
-        unmasked_m1 = resize_image(torch.tensor(row['image_m1'], dtype=torch.float32))
-        unmasked_m2 = resize_image(torch.tensor(row['image_m2'], dtype=torch.float32))
+        m1_stats = {
+            'mean': m1.mean().item(),
+            'std': m1.std().item(),
+            'neg_ratio': (m1 < 0).float().mean().item(),
+            'min': m1.min().item(),
+            'max': m1.max().item(),
+            'squared_mean': (m1 ** 2).mean().item(),
+            'q25': torch.quantile(m1, 0.25).item(),
+            'q50': torch.quantile(m1, 0.50).item(),
+            'q75': torch.quantile(m1, 0.75).item()
+        }
 
-        clean_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
-        clean_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
+        m2_stats = {
+            'mean': m2.mean().item(),
+            'std': m2.std().item(),
+            'neg_ratio': (m2 < 0).float().mean().item(),
+            'min': m2.min().item(),
+            'max': m2.max().item(),
+            'squared_mean': (m2 ** 2).mean().item(),
+            'q25': torch.quantile(m2, 0.25).item(),
+            'q50': torch.quantile(m2, 0.50).item(),
+            'q75': torch.quantile(m2, 0.75).item()
+        }
 
-        output_dir = f"mask_analysis/image{i}_{label}/"
-        os.makedirs(output_dir, exist_ok=True)
+        stats[label_name]['m1'].append(m1_stats)
+        stats[label_name]['m2'].append(m2_stats)
 
-        reconstruct_image(unmasked_m1, output_dir + f"m1_noisy_{label_name}.png", title="M1 Noise")
-        reconstruct_image(unmasked_m2, output_dir + f"m2_noisy_{label_name}.png", title="M2 Noise")
+    for label in ['proton', 'gamma']:
+        for telescope in ['m1', 'm2']:
+            stats[label][telescope] = pd.DataFrame(stats[label][telescope])
 
-        reconstruct_image(clean_m1, output_dir + f"m1_clean_{label_name}.png", title="M1 Clean")
-        reconstruct_image(clean_m2, output_dir + f"m2_clean_{label_name}.png", title="M2 Clean")
+    fig, axes = plt.subplots(3, 3, figsize=(15, 15))
+    fig.suptitle('Feature Distributions: Proton vs Gamma')
 
-        reconstruct_image(noisy_m1, output_dir + f"m1_masked_{label_name}.png", title="M1 Masked")
-        reconstruct_image(noisy_m2, output_dir + f"m2_masked_{label_name}.png", title="M2 Masked")
+    metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
+    for metric in metrics:
+        plt.figure(figsize=(10, 6))
 
-    stats = dataset.analyze_mask_coverage()
+        proton_m1_data = [d[metric] for d in stats['proton']['m1']]
+        gamma_m1_data = [d[metric] for d in stats['gamma']['m1']]
+        proton_m2_data = [d[metric] for d in stats['proton']['m2']]
+        gamma_m2_data = [d[metric] for d in stats['gamma']['m2']]
 
-    for telescope in ['m1', 'm2']:
-        pixel_percent = (1 - stats['pixel_counts'][telescope]['masked'] / stats['pixel_counts'][telescope][
-            'total']) * 100
-        intensity_percent = (1 - stats['intensity_values'][telescope]['masked'] / stats['intensity_values'][telescope][
-            'total']) * 100
+        plt.hist(proton_m1_data, alpha=0.5, label='Proton M1', bins=50)
+        plt.hist(gamma_m1_data, alpha=0.5, label='Gamma M1', bins=50)
+        plt.hist(proton_m2_data, alpha=0.5, label='Proton M2', bins=50)
+        plt.hist(gamma_m2_data, alpha=0.5, label='Gamma M2', bins=50)
 
-        print(f"\n{telescope.upper()}:")
-        print(f"Pixels removed: {pixel_percent:.1f}%")
-        print(f"Intensity removed: {intensity_percent:.1f}%")
+        plt.title(f'Distribution of {metric}')
+        plt.xlabel(metric)
+        plt.ylabel('Count')
+        plt.legend()
+        plt.savefig(f'distribution_{metric}.png')
+        plt.close()
