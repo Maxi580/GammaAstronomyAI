@@ -400,8 +400,21 @@ def plot_distributions(stats, metrics):
         plt.close()
 
 
+def plot_neg_ratio_distributions(stats):
+    for telescope in ['m1', 'm2']:
+        for particle in ['proton', 'gamma']:
+            plt.figure(figsize=(15, 5))
+            plt.plot(stats[particle][telescope]['neg_ratio'], linewidth=0.5, alpha=1.0)
+            plt.title(f'{particle.capitalize()} {telescope.upper()} Negative Ratio')
+            plt.xlabel('Sample Index')
+            plt.ylabel('Negative Ratio')
+            plt.grid(True, alpha=0.3)
+            plt.savefig(f'neg_ratio_{particle}_{telescope}.png', dpi=300, bbox_inches='tight')
+            plt.close()
+
+
 if __name__ == '__main__':
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
     stats = collect_stats(dataset)
     metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
-    plot_distributions(stats, metrics)
+    plot_neg_ratio_distributions(stats)
