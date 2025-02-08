@@ -40,7 +40,7 @@ class StatsMagicNetAnalyzer:
             if isinstance(module, (nn.Linear, nn.ReLU)):
                 module.register_forward_hook(self._activation_hook(f"{name}"))
 
-    def analyze_batch(self, dataloader: DataLoader, num_samples: int = 1000) -> Dict:
+    def analyze_batch(self, dataloader: DataLoader) -> Dict:
         samples_processed = 0
         all_predictions = []
         all_labels = []
@@ -48,20 +48,15 @@ class StatsMagicNetAnalyzer:
 
         with torch.no_grad():
             for m1, m2, _, labels in dataloader:
-                if samples_processed >= num_samples:
-                    break
-
                 m1 = m1.to(self.device)
                 m2 = m2.to(self.device)
 
-                # Calculate stats directly using get_batch_stats
                 m1_stats = get_batch_stats(m1)
                 m2_stats = get_batch_stats(m2)
                 combined_stats = torch.cat([m1_stats, m2_stats], dim=1)
                 all_stats.append(combined_stats.cpu())
 
-                # Get model predictions
-                outputs = self.model(m1, m2, None)  # Note: features parameter is unused in StatsMagicNet
+                outputs = self.model(m1, m2, None)
                 preds = outputs.argmax(dim=1)
 
                 all_predictions.extend(preds.cpu().numpy())
@@ -193,8 +188,8 @@ def main():
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet")
     analyzer = StatsMagicNetAnalyzer("trained_model.pth")
 
-    loader = DataLoader(dataset, batch_size=32, shuffle=True)
-    results = analyzer.analyze_batch(loader, num_samples=5000)
+    loader = DataLoader(dataset, batch_size=128, shuffle=True)
+    results = analyzer.analyze_batch(loader)
 
     print_analysis(results)
 
