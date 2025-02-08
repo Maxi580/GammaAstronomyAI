@@ -2,14 +2,16 @@ import os
 import sys
 from torch.utils.data import DataLoader
 from TrainingPipeline.MagicDataset import MagicDataset
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from CNN.Architectures.StatsModel import get_batch_stats
 from wtf.minmaxclassifier import rule_based_minmax_classifier
+from wtf.derivation import rule_based_derivation_classifier
+from TrainingPipeline.MagicDataset import collect_statistics
 
 
-def evaluate_classifier_with_certainty(dataset):
+def evaluate_classifier_with_certainty(dataset, dataset_stats):
     loader = DataLoader(dataset, batch_size=128, shuffle=True)
 
     true_labels_certain = []
@@ -25,7 +27,9 @@ def evaluate_classifier_with_certainty(dataset):
 
         for i in range(len(labels)):
             total_samples += 1
-            pred = rule_based_minmax_classifier(m1_stats[i], m2_stats[i])
+            pred = rule_based_minmax_classifier(m1_stats[i], m2_stats[i], dataset_stats)
+            if pred == -1:
+                pred = rule_based_derivation_classifier(m1_stats[i], m2_stats[i], dataset_stats)
 
             if pred != -1:
                 certain += 1
@@ -54,9 +58,11 @@ def evaluate_classifier_with_certainty(dataset):
 
 
 def main():
-    dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
+    dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False, max_samples=1000)
+    print(f"Gathering Statistics")
+    dataset_stats = collect_statistics(dataset)
     print("Evaluating rule-based classifier...")
-    evaluate_classifier_with_certainty(dataset)
+    evaluate_classifier_with_certainty(dataset, dataset_stats)
 
 
 if __name__ == "__main__":
