@@ -58,7 +58,7 @@ def evaluate_classifier_with_certainty(dataset, dataset_stats):
 
 
 def main():
-    dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False, max_samples=1000)
+    dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
     print(f"Gathering Statistics")
     dataset_stats = collect_statistics(dataset)
     print("Evaluating rule-based classifier...")
