@@ -394,46 +394,80 @@ def print_metric_ranges(stats):
                 print(f"{metric:12} - Min: {min_val:10.6f}, Max: {max_val:10.6f}")
 
 
-def plot_distributions(stats, metrics):
+def plot_distributions(stats, metrics, sample_size=100000):
     for metric in metrics:
         plt.figure(figsize=(10, 6))
 
         proton_m1_data = np.array(stats['proton']['m1'][metric])
-        proton_m2_data = np.array(stats['proton']['m2'][metric])
         gamma_m1_data = np.array(stats['gamma']['m1'][metric])
-        gamma_m2_data = np.array(stats['gamma']['m2'][metric])
 
-        all_data = np.concatenate([proton_m1_data, proton_m2_data, gamma_m1_data, gamma_m2_data])
-        min_val = np.min(all_data)
-        max_val = np.max(all_data)
+        if len(proton_m1_data) > sample_size:
+            proton_m1_data = np.random.choice(proton_m1_data, sample_size, replace=False)
+        if len(gamma_m1_data) > sample_size:
+            gamma_m1_data = np.random.choice(gamma_m1_data, sample_size, replace=False)
 
+        all_data_m1 = np.concatenate([proton_m1_data, gamma_m1_data])
+        min_val = np.min(all_data_m1)
+        max_val = np.max(all_data_m1)
         range_padding = (max_val - min_val) * 0.1
         bin_range = (min_val - range_padding, max_val + range_padding)
         bins = np.linspace(bin_range[0], bin_range[1], 100)
 
-        plt.hist(proton_m1_data, bins=bins, histtype='step', label='M1 Protons',
+        plt.hist(proton_m1_data, bins=bins, histtype='step', label='Protons',
                  color='blue', linewidth=2, density=False)
-        plt.hist(gamma_m1_data, bins=bins, histtype='step', label='M1 Gammas',
+        plt.hist(gamma_m1_data, bins=bins, histtype='step', label='Gammas',
                  color='orange', linewidth=2, density=False)
-        plt.hist(proton_m2_data, bins=bins, histtype='step', label='M2 Protons',
-                 color='green', linewidth=2, density=False)
-        plt.hist(gamma_m2_data, bins=bins, histtype='step', label='M2 Gammas',
-                 color='red', linewidth=2, density=False)
 
         plt.grid(True, alpha=0.3)
         plt.xlabel('Value')
-        plt.ylabel('Counts')
-        plt.title(f'Distribution of {metric}')
+        plt.ylabel('Counts (1e6)')
+        plt.title(f'Distribution of {metric} - M1 Telescope')
         plt.legend()
 
-        current_values = plt.gca().get_yticks()
         plt.gca().yaxis.set_major_formatter(lambda x, pos: f'{x / 1e6:.1f}')
-        plt.gca().set_ylabel('Counts (1e6)')
 
         plt.ticklabel_format(axis='x', style='sci', scilimits=(-2, 2))
 
         plt.tight_layout()
-        plt.savefig(f'distribution_{metric}.png', dpi=300, bbox_inches='tight')
+        plt.savefig(f'distribution_{metric}_M1.png', dpi=300, bbox_inches='tight')
+        plt.close()
+
+        plt.figure(figsize=(10, 6))
+
+        proton_m2_data = np.array(stats['proton']['m2'][metric])
+        gamma_m2_data = np.array(stats['gamma']['m2'][metric])
+
+        if len(proton_m2_data) > sample_size:
+            proton_m2_data = np.random.choice(proton_m2_data, sample_size, replace=False)
+        if len(gamma_m2_data) > sample_size:
+            gamma_m2_data = np.random.choice(gamma_m2_data, sample_size, replace=False)
+
+        all_data_m2 = np.concatenate([proton_m2_data, gamma_m2_data])
+        min_val = np.min(all_data_m2)
+        max_val = np.max(all_data_m2)
+        range_padding = (max_val - min_val) * 0.1
+        bin_range = (min_val - range_padding, max_val + range_padding)
+        bins = np.linspace(bin_range[0], bin_range[1], 100)
+
+        plt.hist(proton_m2_data, bins=bins, histtype='step', label='Protons',
+                 color='blue', linewidth=2, density=False)
+        plt.hist(gamma_m2_data, bins=bins, histtype='step', label='Gammas',
+                 color='orange', linewidth=2, density=False)
+
+        plt.grid(True, alpha=0.3)
+        plt.xlabel('Value')
+        plt.ylabel('Counts (1e6)')
+        plt.title(f'Distribution of {metric} - M2 Telescope')
+        plt.legend()
+
+        # Format y-axis to show values in millions
+        plt.gca().yaxis.set_major_formatter(lambda x, pos: f'{x / 1e6:.1f}')
+
+        # Add scientific notation for very small/large numbers on x-axis if needed
+        plt.ticklabel_format(axis='x', style='sci', scilimits=(-2, 2))
+
+        plt.tight_layout()
+        plt.savefig(f'distribution_{metric}_M2.png', dpi=300, bbox_inches='tight')
         plt.close()
 
 
