@@ -1,6 +1,5 @@
 from typing import Any, Dict, Optional, Tuple
 import os
-import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 import matplotlib.pyplot as plt
@@ -392,6 +391,48 @@ def print_metric_ranges(stats):
                 print(f"{metric:12} - Min: {min_val:10.6f}, Max: {max_val:10.6f}")
 
 
+def plot_metric_distributions(stats, metrics):
+    for metric in metrics:
+        fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+        fig.suptitle(f'Distribution of {metric}', fontsize=16)
+
+        # Proton M1
+        ax1 = axes[0, 0]
+        ax1.hist(stats['proton']['m1'][metric], bins=50, color='blue', alpha=0.7)
+        ax1.set_title('Proton M1')
+        ax1.set_xlabel(metric)
+        ax1.set_ylabel('Count')
+        ax1.grid(True, alpha=0.3)
+
+        # Proton M2
+        ax2 = axes[0, 1]
+        ax2.hist(stats['proton']['m2'][metric], bins=50, color='red', alpha=0.7)
+        ax2.set_title('Proton M2')
+        ax2.set_xlabel(metric)
+        ax2.set_ylabel('Count')
+        ax2.grid(True, alpha=0.3)
+
+        # Gamma M1
+        ax3 = axes[1, 0]
+        ax3.hist(stats['gamma']['m1'][metric], bins=50, color='blue', alpha=0.7)
+        ax3.set_title('Gamma M1')
+        ax3.set_xlabel(metric)
+        ax3.set_ylabel('Count')
+        ax3.grid(True, alpha=0.3)
+
+        # Gamma M2
+        ax4 = axes[1, 1]
+        ax4.hist(stats['gamma']['m2'][metric], bins=50, color='red', alpha=0.7)
+        ax4.set_title('Gamma M2')
+        ax4.set_xlabel(metric)
+        ax4.set_ylabel('Count')
+        ax4.grid(True, alpha=0.3)
+
+        plt.tight_layout(rect=(0.0, 0.0, 1.0, 0.96))
+        plt.savefig(f'distribution_histogram_{metric}.png', dpi=300, bbox_inches='tight')
+        plt.close()
+
+
 def plot_distributions(stats, metrics):
     for metric in metrics:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
@@ -434,7 +475,7 @@ if __name__ == '__main__':
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
     stats = collect_stats(dataset)
     print("Stats Collected")
-    # metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
+    metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
     print_metric_ranges(stats)
     print("Plotting...")
-    plot_neg_ratio_distributions(stats)
+    plot_metric_distributions(stats, metrics)
