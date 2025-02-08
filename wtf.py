@@ -239,6 +239,7 @@ def evaluate_classifier_with_certainty(dataset, dataset_stats):
     print(f"\nTotal samples: {total_samples}")
     print(f"Certain: {certain} ({certain / total_samples * 100:.2f}%)")
     print(f"Uncertain: {uncertain} ({uncertain / total_samples * 100:.2f}%)")
+    classifier.print_decision_statistics()
 
     if true_labels_certain:
         accuracy = accuracy_score(true_labels_certain, predicted_labels_certain)
