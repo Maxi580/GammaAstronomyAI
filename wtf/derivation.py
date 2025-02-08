@@ -61,7 +61,7 @@ def classify_m2_stats(stats, telescope_stats):
     return -1
 
 
-def rule_based_classifier(stats_m1, stats_m2, telescope_stats):
+def rule_based_derivation_classifier(stats_m1, stats_m2, telescope_stats):
     """
     Classify based on both M1 and M2 telescope statistics using provided population statistics.
     Returns: 
