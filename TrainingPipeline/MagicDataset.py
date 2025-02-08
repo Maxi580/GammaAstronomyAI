@@ -460,10 +460,8 @@ def plot_distributions(stats, metrics, sample_size=100000):
         plt.title(f'Distribution of {metric} - M2 Telescope')
         plt.legend()
 
-        # Format y-axis to show values in millions
         plt.gca().yaxis.set_major_formatter(lambda x, pos: f'{x / 1e6:.1f}')
 
-        # Add scientific notation for very small/large numbers on x-axis if needed
         plt.ticklabel_format(axis='x', style='sci', scilimits=(-2, 2))
 
         plt.tight_layout()
