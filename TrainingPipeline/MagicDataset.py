@@ -7,8 +7,10 @@ import pandas as pd
 import pyarrow.parquet as pq
 import matplotlib.pyplot as plt
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import sys
+
+from CNN.Architectures.StatsModel import get_batch_stats
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from CNN.MagicConv.NeighborLogic import get_neighbor_list_by_kernel
@@ -348,132 +350,111 @@ class MagicDataset(Dataset):
         return {'total_samples': total_samples, 'distribution': distribution}
 
 
-def calculate_stats(tensor):
+def collect_statistics(dataset, target_samples=5000):
+    loader = DataLoader(dataset, batch_size=128, shuffle=True)
+
+    m1_proton_stats = []
+    m2_proton_stats = []
+    m1_gamma_stats = []
+    m2_gamma_stats = []
+
+    sample_count = 0
+
+    for m1, m2, _, labels in loader:
+        if sample_count >= target_samples:
+            break
+
+        proton_mask = labels == 0
+        gamma_mask = labels == 1
+
+        if proton_mask.any():
+            m1_proton_stats.append(get_batch_stats(m1[proton_mask]))
+            m2_proton_stats.append(get_batch_stats(m2[proton_mask]))
+
+        if gamma_mask.any():
+            m1_gamma_stats.append(get_batch_stats(m1[gamma_mask]))
+            m2_gamma_stats.append(get_batch_stats(m2[gamma_mask]))
+
+        sample_count += len(m1)
+        if sample_count % 1000 == 0:
+            print(f"Processed {sample_count} samples")
+
+    m1_proton_stats = torch.cat(m1_proton_stats, dim=0)[:target_samples]
+    m2_proton_stats = torch.cat(m2_proton_stats, dim=0)[:target_samples]
+    m1_gamma_stats = torch.cat(m1_gamma_stats, dim=0)[:target_samples]
+    m2_gamma_stats = torch.cat(m2_gamma_stats, dim=0)[:target_samples]
+
     return {
-        'mean': tensor.mean().item(),
-        'std': tensor.std().item(),
-        'neg_ratio': (tensor < 0).float().mean().item(),
-        'min': tensor.min().item(),
-        'max': tensor.max().item(),
-        'squared_mean': (tensor ** 2).mean().item(),
-        'q25': torch.quantile(tensor, 0.25).item(),
-        'q50': torch.quantile(tensor, 0.50).item(),
-        'q75': torch.quantile(tensor, 0.75).item()
+        "m1_proton": m1_proton_stats.numpy(),
+        "m2_proton": m2_proton_stats.numpy(),
+        "m1_gamma": m1_gamma_stats.numpy(),
+        "m2_gamma": m2_gamma_stats.numpy()
     }
 
 
-def collect_stats(dataset):
-    stats = {'proton': {'m1': [], 'm2': []}, 'gamma': {'m1': [], 'm2': []}}
+def print_summary_statistics(stats_dict):
+    metrics = [
+        "mean", "std", "neg_ratio", "min", "max",
+        "squared_mean", "nonzero_ratio", "q25", "q50", "q75"
+    ]
 
-    for idx in range(len(dataset)):
-        m1, m2, _, label = dataset[idx]
-        label_name = 'gamma' if label == dataset.labels[dataset.GAMMA_LABEL] else 'proton'
-
-        stats[label_name]['m1'].append(calculate_stats(m1))
-        stats[label_name]['m2'].append(calculate_stats(m2))
-
-        if idx % 10000 == 0:
-            print(f"Collected {idx} / {len(dataset)}%...")
-
-    return {label: {tel: pd.DataFrame(data)
-                    for tel, data in telescopes.items()}
-            for label, telescopes in stats.items()}
+    for telescope_type, stats in stats_dict.items():
+        print(f"\nSummary for {telescope_type}:")
+        for i, metric in enumerate(metrics):
+            values = stats[:, i]
+            print(f"{metric:15} - Min: {values.min():10.6f}, Max: {values.max():10.6f}, "
+                  f"Avg: {values.mean():10.6f}, Std: {values.std():10.6f}")
 
 
-def print_metric_ranges(stats):
-    metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
+def plot_metric_distributions(stats_dict, output_dir="plots"):
+    os.makedirs(output_dir, exist_ok=True)
 
-    for particle in ['proton', 'gamma']:
-        print(f"\n{particle.upper()} STATISTICS:")
-        for telescope in ['m1', 'm2']:
-            print(f"\n{telescope.upper()}:")
-            df = stats[particle][telescope]
-            for metric in metrics:
-                min_val = df[metric].min()
-                max_val = df[metric].max()
-                print(f"{metric:12} - Min: {min_val:10.6f}, Max: {max_val:10.6f}")
+    metrics = [
+        "mean", "std", "neg_ratio", "min", "max",
+        "squared_mean", "nonzero_ratio", "q25", "q50", "q75"
+    ]
 
+    for metric_idx, metric_name in enumerate(metrics):
+        for telescope_type, stats in stats_dict.items():
+            plt.figure(figsize=(10, 6))
+            values = stats[:, metric_idx]
 
-def plot_distributions(stats, metrics, sample_size=100000):
-    for metric in metrics:
-        plt.figure(figsize=(10, 6))
+            plt.plot(range(len(values)), values, linewidth=1)
 
-        proton_m1_data = np.array(stats['proton']['m1'][metric])
-        gamma_m1_data = np.array(stats['gamma']['m1'][metric])
+            plt.title(f"{metric_name} Distribution - {telescope_type}")
+            plt.xlabel("Sample Index")
+            plt.ylabel(metric_name)
+            plt.grid(True, alpha=0.3)
 
-        if len(proton_m1_data) > sample_size:
-            proton_m1_data = np.random.choice(proton_m1_data, sample_size, replace=False)
-        if len(gamma_m1_data) > sample_size:
-            gamma_m1_data = np.random.choice(gamma_m1_data, sample_size, replace=False)
+            mean_val = values.mean()
+            std_val = values.std()
+            plt.axhline(y=mean_val, color='r', linestyle='--', alpha=0.5,
+                        label=f'Mean: {mean_val:.4f}')
+            plt.axhline(y=mean_val + std_val, color='g', linestyle=':', alpha=0.5,
+                        label=f'Mean ± Std')
+            plt.axhline(y=mean_val - std_val, color='g', linestyle=':', alpha=0.5)
 
-        all_data_m1 = np.concatenate([proton_m1_data, gamma_m1_data])
-        min_val = np.min(all_data_m1)
-        max_val = np.max(all_data_m1)
-        range_padding = (max_val - min_val) * 0.1
-        bin_range = (min_val - range_padding, max_val + range_padding)
-        bins = np.linspace(bin_range[0], bin_range[1], 100)
+            plt.legend()
+            plt.tight_layout()
 
-        plt.hist(proton_m1_data, bins=bins, histtype='step', label='Protons',
-                 color='blue', linewidth=2, density=False)
-        plt.hist(gamma_m1_data, bins=bins, histtype='step', label='Gammas',
-                 color='orange', linewidth=2, density=False)
-
-        plt.grid(True, alpha=0.3)
-        plt.xlabel('Value')
-        plt.ylabel('Counts (1e6)')
-        plt.title(f'Distribution of {metric} - M1 Telescope')
-        plt.legend()
-
-        plt.gca().yaxis.set_major_formatter(lambda x, pos: f'{x / 1e6:.1f}')
-
-        plt.ticklabel_format(axis='x', style='sci', scilimits=(-2, 2))
-
-        plt.tight_layout()
-        plt.savefig(f'distribution_{metric}_M1.png', dpi=300, bbox_inches='tight')
-        plt.close()
-
-        plt.figure(figsize=(10, 6))
-
-        proton_m2_data = np.array(stats['proton']['m2'][metric])
-        gamma_m2_data = np.array(stats['gamma']['m2'][metric])
-
-        if len(proton_m2_data) > sample_size:
-            proton_m2_data = np.random.choice(proton_m2_data, sample_size, replace=False)
-        if len(gamma_m2_data) > sample_size:
-            gamma_m2_data = np.random.choice(gamma_m2_data, sample_size, replace=False)
-
-        all_data_m2 = np.concatenate([proton_m2_data, gamma_m2_data])
-        min_val = np.min(all_data_m2)
-        max_val = np.max(all_data_m2)
-        range_padding = (max_val - min_val) * 0.1
-        bin_range = (min_val - range_padding, max_val + range_padding)
-        bins = np.linspace(bin_range[0], bin_range[1], 100)
-
-        plt.hist(proton_m2_data, bins=bins, histtype='step', label='Protons',
-                 color='blue', linewidth=2, density=False)
-        plt.hist(gamma_m2_data, bins=bins, histtype='step', label='Gammas',
-                 color='orange', linewidth=2, density=False)
-
-        plt.grid(True, alpha=0.3)
-        plt.xlabel('Value')
-        plt.ylabel('Counts (1e6)')
-        plt.title(f'Distribution of {metric} - M2 Telescope')
-        plt.legend()
-
-        plt.gca().yaxis.set_major_formatter(lambda x, pos: f'{x / 1e6:.1f}')
-
-        plt.ticklabel_format(axis='x', style='sci', scilimits=(-2, 2))
-
-        plt.tight_layout()
-        plt.savefig(f'distribution_{metric}_M2.png', dpi=300, bbox_inches='tight')
-        plt.close()
+            plt.savefig(os.path.join(output_dir, f"{metric_name}_{telescope_type}.png"),
+                        dpi=300, bbox_inches='tight')
+            plt.close()
 
 
-if __name__ == '__main__':
+def main():
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
-    stats = collect_stats(dataset)
-    print("Stats Collected")
-    metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
-    print_metric_ranges(stats)
-    print("Plotting...")
-    plot_distributions(stats, metrics)
+
+    print("Collecting statistics...")
+    stats_dict = collect_statistics(dataset, target_samples=5000)
+
+    print("\nPrinting summary statistics...")
+    print_summary_statistics(stats_dict)
+
+    print("\nCreating plots...")
+    plot_metric_distributions(stats_dict)
+    print("Done! Plots have been saved to the 'plots' directory.")
+
+
+if __name__ == "__main__":
+    main()
