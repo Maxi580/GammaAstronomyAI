@@ -1,8 +1,5 @@
 from typing import Any, Dict, Optional, Tuple
 import os
-import seaborn as sns
-
-import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 import matplotlib.pyplot as plt
@@ -10,10 +7,10 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import sys
 
-from CNN.Architectures.StatsModel import get_batch_stats
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from CNN.MagicConv.NeighborLogic import get_neighbor_list_by_kernel
+from CNN.Architectures.StatsModel import get_batch_stats
+
 
 NUM_OF_HEXAGONS = 1039
 
