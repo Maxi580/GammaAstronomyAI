@@ -27,7 +27,11 @@ class HexCirclePool(nn.Module):
         
         # Generate clusters list for given pixels and kernel size and save it
         self.clusters = get_clusters(n_pixels, kernel_size)
-        
+
+    def extra_repr(self):
+        return (
+            "kernel_size={kernel_size}, n_pixels={n_pixels}, mode={mode}".format(**self.__dict__)
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """

@@ -53,6 +53,11 @@ class HexCircleConv(nn.Module):
             self.register_parameter("bias", None)
         
         self.reset_parameters()
+    
+    def extra_repr(self):
+        return (
+            "{in_channels}, {out_channels}, kernel_size={kernel_size}, n_pixels={n_pixels}".format(**self.__dict__)
+        )
 
     def reset_parameters(self):
         nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))

@@ -39,6 +39,11 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
                 raise ValueError(f"Invalid Modelname for parameterization: '{model}'")
 
         supervisor.model = parameterize_func(trial).to(supervisor.device)
+        weights = supervisor._count_trainable_weights()
+        
+        # Throw away trial if it has too many weights
+        if weights > 20_000_000:
+            raise optuna.exceptions.TrialPruned(f"Too many weights: {weights}")
 
         supervisor.LEARNING_RATE = trial.suggest_float('learning_rate', 1e-6, 1e-2, log=True)
         supervisor.WEIGHT_DECAY = trial.suggest_float('weight_decay', 1e-4, 1e-2, log=True)
