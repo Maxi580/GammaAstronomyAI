@@ -396,28 +396,41 @@ def print_metric_ranges(stats):
 
 def plot_distributions(stats, metrics):
     for metric in metrics:
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
+        plt.figure(figsize=(10, 6))
 
         proton_m1_data = np.array(stats['proton']['m1'][metric])
         proton_m2_data = np.array(stats['proton']['m2'][metric])
         gamma_m1_data = np.array(stats['gamma']['m1'][metric])
         gamma_m2_data = np.array(stats['gamma']['m2'][metric])
 
-        sns.kdeplot(data=proton_m1_data, ax=ax1, color='blue', fill=True, alpha=0.3)
-        ax1.set_title(f'Proton M1 {metric}')
-        ax1.grid(True, alpha=0.3)
+        all_data = np.concatenate([proton_m1_data, proton_m2_data, gamma_m1_data, gamma_m2_data])
+        min_val = np.min(all_data)
+        max_val = np.max(all_data)
 
-        sns.kdeplot(data=proton_m2_data, ax=ax2, color='red', fill=True, alpha=0.3)
-        ax2.set_title(f'Proton M2 {metric}')
-        ax2.grid(True, alpha=0.3)
+        range_padding = (max_val - min_val) * 0.1
+        bin_range = (min_val - range_padding, max_val + range_padding)
+        bins = np.linspace(bin_range[0], bin_range[1], 100)
 
-        sns.kdeplot(data=gamma_m1_data, ax=ax3, color='blue', fill=True, alpha=0.3)
-        ax3.set_title(f'Gamma M1 {metric}')
-        ax3.grid(True, alpha=0.3)
+        plt.hist(proton_m1_data, bins=bins, histtype='step', label='M1 Protons',
+                 color='blue', linewidth=2, density=False)
+        plt.hist(gamma_m1_data, bins=bins, histtype='step', label='M1 Gammas',
+                 color='orange', linewidth=2, density=False)
+        plt.hist(proton_m2_data, bins=bins, histtype='step', label='M2 Protons',
+                 color='green', linewidth=2, density=False)
+        plt.hist(gamma_m2_data, bins=bins, histtype='step', label='M2 Gammas',
+                 color='red', linewidth=2, density=False)
 
-        sns.kdeplot(data=gamma_m2_data, ax=ax4, color='red', fill=True, alpha=0.3)
-        ax4.set_title(f'Gamma M2 {metric}')
-        ax4.grid(True, alpha=0.3)
+        plt.grid(True, alpha=0.3)
+        plt.xlabel('Value')
+        plt.ylabel('Counts')
+        plt.title(f'Distribution of {metric}')
+        plt.legend()
+
+        current_values = plt.gca().get_yticks()
+        plt.gca().yaxis.set_major_formatter(lambda x, pos: f'{x / 1e6:.1f}')
+        plt.gca().set_ylabel('Counts (1e6)')
+
+        plt.ticklabel_format(axis='x', style='sci', scilimits=(-2, 2))
 
         plt.tight_layout()
         plt.savefig(f'distribution_{metric}.png', dpi=300, bbox_inches='tight')
