@@ -3,13 +3,13 @@ import torch.nn as nn
 import numpy as np
 from collections import defaultdict
 from torch.utils.data import DataLoader
-from typing import Dict, List, Tuple
+from typing import Dict
 
 from CNN.Architectures.StatsModel import get_batch_stats, StatsMagicNet
 from TrainingPipeline.MagicDataset import MagicDataset
 
 
-class MLPActivationAnalyzer:
+class StatsMagicNetAnalyzer:
     def __init__(self, model_path: str):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = StatsMagicNet()
@@ -18,11 +18,13 @@ class MLPActivationAnalyzer:
         self.model = self.model.to(self.device)
 
         self.activations = defaultdict(list)
+        self.stats = defaultdict(list)
+
         self.feature_names = [
             'M1 Mean', 'M1 Std', 'M1 Neg Ratio', 'M1 Min', 'M1 Max',
-            'M1 Square Mean', 'M1 25%', 'M1 50%', 'M1 75%',
+            'M1 Square Mean', 'M1 NonZero Ratio', 'M1 25%', 'M1 50%', 'M1 75%',
             'M2 Mean', 'M2 Std', 'M2 Neg Ratio', 'M2 Min', 'M2 Max',
-            'M2 Square Mean', 'M2 25%', 'M2 50%', 'M2 75%'
+            'M2 Square Mean', 'M2 NonZero Ratio', 'M2 25%', 'M2 50%', 'M2 75%'
         ]
 
         self._register_hooks()
@@ -42,7 +44,7 @@ class MLPActivationAnalyzer:
         samples_processed = 0
         all_predictions = []
         all_labels = []
-        all_inputs = []
+        all_stats = []
 
         with torch.no_grad():
             for m1, m2, _, labels in dataloader:
@@ -52,12 +54,14 @@ class MLPActivationAnalyzer:
                 m1 = m1.to(self.device)
                 m2 = m2.to(self.device)
 
+                # Calculate stats directly using get_batch_stats
                 m1_stats = get_batch_stats(m1)
                 m2_stats = get_batch_stats(m2)
                 combined_stats = torch.cat([m1_stats, m2_stats], dim=1)
+                all_stats.append(combined_stats.cpu())
 
-                all_inputs.append(combined_stats.cpu())
-                outputs = self.model.classifier(combined_stats)
+                # Get model predictions
+                outputs = self.model(m1, m2, None)  # Note: features parameter is unused in StatsMagicNet
                 preds = outputs.argmax(dim=1)
 
                 all_predictions.extend(preds.cpu().numpy())
@@ -67,14 +71,12 @@ class MLPActivationAnalyzer:
 
         predictions = np.array(all_predictions)
         labels = np.array(all_labels)
-        inputs = torch.cat(all_inputs, dim=0).numpy()
+        stats = torch.cat(all_stats, dim=0).numpy()
 
-        return self._analyze_results(predictions, labels, inputs)
+        return self._analyze_results(predictions, labels, stats)
 
     def _analyze_results(self, predictions: np.ndarray, labels: np.ndarray,
                          inputs: np.ndarray) -> Dict:
-        """Analyze results with class-balanced metrics"""
-
         # Split data by true class
         proton_mask = labels == 0
         gamma_mask = labels == 1
@@ -102,21 +104,16 @@ class MLPActivationAnalyzer:
             }
         }
 
-        # Analyze features separately for each class
+        # Analyze features
         for i, feature_name in enumerate(self.feature_names):
-            # Proton analysis
             proton_correct = proton_inputs[proton_preds == 0][:, i]
             proton_incorrect = proton_inputs[proton_preds == 1][:, i]
-
-            # Gamma analysis
             gamma_correct = gamma_inputs[gamma_preds == 1][:, i]
             gamma_incorrect = gamma_inputs[gamma_preds == 0][:, i]
 
-            # Calculate normalized importance scores
             proton_importance = abs(np.mean(proton_correct) - np.mean(proton_incorrect))
             gamma_importance = abs(np.mean(gamma_correct) - np.mean(gamma_incorrect))
 
-            # Store per-class statistics
             results["per_class_stats"]["proton"][feature_name] = {
                 "correct_mean": np.mean(proton_correct),
                 "incorrect_mean": np.mean(proton_incorrect),
@@ -129,24 +126,19 @@ class MLPActivationAnalyzer:
                 "importance": gamma_importance
             }
 
-            # Calculate balanced importance score
-            balanced_importance = (proton_importance + gamma_importance) / 2
-
             results["feature_importance"][feature_name] = {
-                "balanced_importance": balanced_importance,
+                "balanced_importance": (proton_importance + gamma_importance) / 2,
                 "proton_importance": proton_importance,
                 "gamma_importance": gamma_importance
             }
 
-        # Analyze layer activations with class balance
+        # Analyze layer activations
         for layer_name, acts in self.activations.items():
             layer_acts = torch.cat(acts, dim=0).numpy()
 
-            # Split activations by class
             proton_acts = layer_acts[proton_mask]
             gamma_acts = layer_acts[gamma_mask]
 
-            # Calculate class-specific activation statistics
             results["layer_activations"][layer_name] = {
                 "proton": {
                     "mean": np.mean(proton_acts),
@@ -199,7 +191,7 @@ def print_analysis(results: Dict):
 
 def main():
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet")
-    analyzer = MLPActivationAnalyzer("trained_model.pth")
+    analyzer = StatsMagicNetAnalyzer("trained_model.pth")
 
     loader = DataLoader(dataset, batch_size=32, shuffle=True)
     results = analyzer.analyze_batch(loader, num_samples=5000)
