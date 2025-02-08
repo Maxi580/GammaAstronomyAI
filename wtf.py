@@ -1,8 +1,7 @@
 import os
 import sys
 import numpy as np
-from fontTools.misc.classifyTools import Classifier
-from sklearn.multiclass import OneVsRestClassifier
+from collections import defaultdict
 from torch.utils.data import DataLoader
 from TrainingPipeline.MagicDataset import MagicDataset
 from sklearn.metrics import accuracy_score, confusion_matrix
@@ -61,58 +60,113 @@ class OptimizedClassifier:
         self.m2_gamma_std_lower = self.m2_gamma_means - self.m2_gamma_stds
         self.m2_gamma_std_upper = self.m2_gamma_means + self.m2_gamma_stds
 
+        self.decision_stats = {
+            'minmax_m1': defaultdict(int),
+            'minmax_m2': defaultdict(int),
+            'std_m1': defaultdict(int),
+            'std_m2': defaultdict(int),
+            'metric_decisions': defaultdict(int)
+        }
+
+        self.metric_names = [
+            'mean', 'std', 'neg_ratio', 'min_val', 'max_val',
+            'squared_mean', 'unused', 'q25', 'q50', 'q75'
+        ]
+
     def classify_m1_minmax(self, stats):
         stats = np.array(stats)
 
-        if np.any((stats < self.m1_gamma_min) | (stats > self.m1_gamma_max)):
+        gamma_violations = (stats < self.m1_gamma_min) | (stats > self.m1_gamma_max)
+        proton_violations = (stats < self.m1_proton_min) | (stats > self.m1_proton_max)
+
+        if np.any(gamma_violations):
+            for idx, is_violation in enumerate(gamma_violations):
+                if is_violation:
+                    self.decision_stats['metric_decisions'][f'M1_minmax_proton_{self.metric_names[idx]}'] += 1
+            self.decision_stats['minmax_m1']['proton'] += 1
             return 0
 
-        if np.any((stats < self.m1_proton_min) | (stats > self.m1_proton_max)):
+        if np.any(proton_violations):
+            for idx, is_violation in enumerate(proton_violations):
+                if is_violation:
+                    self.decision_stats['metric_decisions'][f'M1_minmax_gamma_{self.metric_names[idx]}'] += 1
+            self.decision_stats['minmax_m1']['gamma'] += 1
             return 1
 
+        self.decision_stats['minmax_m1']['uncertain'] += 1
         return -1
 
     def classify_m2_minmax(self, stats):
         stats = np.array(stats)
 
-        if np.any((stats < self.m2_gamma_min) | (stats > self.m2_gamma_max)):
+        gamma_violations = (stats < self.m2_gamma_min) | (stats > self.m2_gamma_max)
+        proton_violations = (stats < self.m2_proton_min) | (stats > self.m2_proton_max)
+
+        if np.any(gamma_violations):
+            for idx, is_violation in enumerate(gamma_violations):
+                if is_violation:
+                    self.decision_stats['metric_decisions'][f'M2_minmax_proton_{self.metric_names[idx]}'] += 1
+            self.decision_stats['minmax_m2']['proton'] += 1
             return 0
 
-        if np.any((stats < self.m2_proton_min) | (stats > self.m2_proton_max)):
+        if np.any(proton_violations):
+            for idx, is_violation in enumerate(proton_violations):
+                if is_violation:
+                    self.decision_stats['metric_decisions'][f'M2_minmax_gamma_{self.metric_names[idx]}'] += 1
+            self.decision_stats['minmax_m2']['gamma'] += 1
             return 1
 
+        self.decision_stats['minmax_m2']['uncertain'] += 1
         return -1
 
     def classify_m1_std(self, stats):
         stats = np.array(stats)
 
-        proton_matches = np.sum(
-            (stats >= self.m1_proton_std_lower) & (stats <= self.m1_proton_std_upper)
-        )
-        gamma_matches = np.sum(
-            (stats >= self.m1_gamma_std_lower) & (stats <= self.m1_gamma_std_upper)
-        )
+        proton_matches = (stats >= self.m1_proton_std_lower) & (stats <= self.m1_proton_std_upper)
+        gamma_matches = (stats >= self.m1_gamma_std_lower) & (stats <= self.m1_gamma_std_upper)
 
-        if proton_matches > gamma_matches:
+        proton_count = np.sum(proton_matches)
+        gamma_count = np.sum(gamma_matches)
+
+        if proton_count > gamma_count:
+            for idx, is_match in enumerate(proton_matches):
+                if is_match:
+                    self.decision_stats['metric_decisions'][f'M1_std_proton_{self.metric_names[idx]}'] += 1
+            self.decision_stats['std_m1']['proton'] += 1
             return 0
-        elif gamma_matches > proton_matches:
+        elif gamma_count > proton_count:
+            for idx, is_match in enumerate(gamma_matches):
+                if is_match:
+                    self.decision_stats['metric_decisions'][f'M1_std_gamma_{self.metric_names[idx]}'] += 1
+            self.decision_stats['std_m1']['gamma'] += 1
             return 1
+
+        self.decision_stats['std_m1']['uncertain'] += 1
         return -1
 
     def classify_m2_std(self, stats):
         stats = np.array(stats)
 
-        proton_matches = np.sum(
-            (stats >= self.m2_proton_std_lower) & (stats <= self.m2_proton_std_upper)
-        )
-        gamma_matches = np.sum(
-            (stats >= self.m2_gamma_std_lower) & (stats <= self.m2_gamma_std_upper)
-        )
+        proton_matches = (stats >= self.m2_proton_std_lower) & (stats <= self.m2_proton_std_upper)
+        gamma_matches = (stats >= self.m2_gamma_std_lower) & (stats <= self.m2_gamma_std_upper)
 
-        if proton_matches > gamma_matches:
+        proton_count = np.sum(proton_matches)
+        gamma_count = np.sum(gamma_matches)
+
+        if proton_count > gamma_count:
+            for idx, is_match in enumerate(proton_matches):
+                if is_match:
+                    self.decision_stats['metric_decisions'][f'M2_std_proton_{self.metric_names[idx]}'] += 1
+            self.decision_stats['std_m2']['proton'] += 1
             return 0
-        elif gamma_matches > proton_matches:
+        elif gamma_count > proton_count:
+            for idx, is_match in enumerate(gamma_matches):
+                if is_match:
+                    self.decision_stats['metric_decisions'][f'M2_std_gamma_{self.metric_names[idx]}'] += 1
+            self.decision_stats['std_m2']['gamma'] += 1
             return 1
+
+        self.decision_stats['std_m2']['uncertain'] += 1
         return -1
 
     def classify_minmax(self, stats_m1, stats_m2):
@@ -124,6 +178,31 @@ class OptimizedClassifier:
         m1_result = self.classify_m1_std(stats_m1)
         m2_result = self.classify_m2_std(stats_m2)
         return combine_results(m1_result, m2_result)
+
+    def print_decision_statistics(self):
+        print("\nClassification Decision Statistics:")
+        print("\nMin-Max Classification Decisions:")
+        for telescope in ['minmax_m1', 'minmax_m2']:
+            print(f"\n{telescope.upper()}:")
+            total = sum(self.decision_stats[telescope].values())
+            for decision, count in self.decision_stats[telescope].items():
+                print(f"  {decision}: {count} ({count / total * 100:.2f}%)")
+
+        print("\nStandard Deviation Classification Decisions:")
+        for telescope in ['std_m1', 'std_m2']:
+            print(f"\n{telescope.upper()}:")
+            total = sum(self.decision_stats[telescope].values())
+            for decision, count in self.decision_stats[telescope].items():
+                print(f"  {decision}: {count} ({count / total * 100:.2f}%)")
+
+        print("\nMost Influential Metrics in Decisions:")
+        metrics_sorted = sorted(self.decision_stats['metric_decisions'].items(),
+                                key=lambda x: x[1], reverse=True)
+        total_metric_decisions = sum(count for _, count in metrics_sorted)
+
+        print("\nTop 20 most influential metrics:")
+        for metric, count in metrics_sorted[:20]:
+            print(f"  {metric}: {count} ({count / total_metric_decisions * 100:.2f}%)")
 
 
 def evaluate_classifier_with_certainty(dataset, dataset_stats):
