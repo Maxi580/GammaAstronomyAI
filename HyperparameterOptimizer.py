@@ -96,11 +96,13 @@ def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int):
     dataset = MagicDataset(proton, gamma, max_samples=100000, debug_info=False)
     study = start_or_resume_study(dataset, model, study_name, epochs, n_trials)
 
-    print("Best trial:")
-    print(f" Value (Val Accuracy): {study.best_trial.value}")
-    print(" Params:")
-    for key, value in study.best_trial.params.items():
-        print(f" {key}: {value}")
+    print("Best 3 trials:")
+    for trial in study.best_trials[:3]:
+        print(f"Trial #{trial.number}")
+        print(f"  Values: {trial.values}")
+        print("  Params:")
+        for key, value in trial.params.items():
+            print(f"    {key}: {value}")
 
 
 if __name__ == "__main__":
