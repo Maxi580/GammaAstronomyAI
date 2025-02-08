@@ -1,5 +1,8 @@
 from typing import Any, Dict, Optional, Tuple
 import os
+import seaborn as sns
+
+import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 import matplotlib.pyplot as plt
@@ -437,19 +440,24 @@ def plot_distributions(stats, metrics):
     for metric in metrics:
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
 
-        ax1.plot(stats['proton']['m1'][metric], alpha=0.7, color='blue')
+        proton_m1_data = np.array(stats['proton']['m1'][metric])
+        proton_m2_data = np.array(stats['proton']['m2'][metric])
+        gamma_m1_data = np.array(stats['gamma']['m1'][metric])
+        gamma_m2_data = np.array(stats['gamma']['m2'][metric])
+
+        sns.kdeplot(data=proton_m1_data, ax=ax1, color='blue', fill=True, alpha=0.3)
         ax1.set_title(f'Proton M1 {metric}')
         ax1.grid(True, alpha=0.3)
 
-        ax2.plot(stats['proton']['m2'][metric], alpha=0.7, color='red')
+        sns.kdeplot(data=proton_m2_data, ax=ax2, color='red', fill=True, alpha=0.3)
         ax2.set_title(f'Proton M2 {metric}')
         ax2.grid(True, alpha=0.3)
 
-        ax3.plot(stats['gamma']['m1'][metric], alpha=0.7, color='blue')
+        sns.kdeplot(data=gamma_m1_data, ax=ax3, color='blue', fill=True, alpha=0.3)
         ax3.set_title(f'Gamma M1 {metric}')
         ax3.grid(True, alpha=0.3)
 
-        ax4.plot(stats['gamma']['m2'][metric], alpha=0.7, color='red')
+        sns.kdeplot(data=gamma_m2_data, ax=ax4, color='red', fill=True, alpha=0.3)
         ax4.set_title(f'Gamma M2 {metric}')
         ax4.grid(True, alpha=0.3)
 
