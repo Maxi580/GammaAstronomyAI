@@ -16,7 +16,6 @@ NUM_OF_HEXAGONS = 1039
 
 
 def replace_nan(value):
-    """Replace missing Values with 0"""
     try:
         val = float(value)
         return 0.0 if pd.isna(val) else val
@@ -348,34 +347,56 @@ class MagicDataset(Dataset):
 
 
 def collect_statistics(dataset, target_samples=5000):
-    loader = DataLoader(dataset, batch_size=128, shuffle=True)
+    # Ensure even split between classes
+    samples_per_class = target_samples // 2
+    loader = DataLoader(dataset, batch_size=32, shuffle=True)
 
+    # Storage for statistics
     m1_proton_stats = []
     m2_proton_stats = []
     m1_gamma_stats = []
     m2_gamma_stats = []
 
-    sample_count = 0
+    proton_count = 0
+    gamma_count = 0
 
     for m1, m2, _, labels in loader:
-        if sample_count >= target_samples:
+        if proton_count >= samples_per_class and gamma_count >= samples_per_class:
             break
 
+        # Split batch into proton and gamma
         proton_mask = labels == 0
         gamma_mask = labels == 1
 
-        if proton_mask.any():
-            m1_proton_stats.append(get_batch_stats(m1[proton_mask]))
-            m2_proton_stats.append(get_batch_stats(m2[proton_mask]))
+        # Calculate stats for protons if we need more
+        if proton_count < samples_per_class and proton_mask.any():
+            batch_proton_stats_m1 = get_batch_stats(m1[proton_mask])
+            batch_proton_stats_m2 = get_batch_stats(m2[proton_mask])
 
-        if gamma_mask.any():
-            m1_gamma_stats.append(get_batch_stats(m1[gamma_mask]))
-            m2_gamma_stats.append(get_batch_stats(m2[gamma_mask]))
+            remaining_protons = samples_per_class - proton_count
+            stats_to_take = min(len(batch_proton_stats_m1), remaining_protons)
 
-        sample_count += len(m1)
-        if sample_count % 1000 == 0:
-            print(f"Processed {sample_count} samples")
+            m1_proton_stats.append(batch_proton_stats_m1[:stats_to_take])
+            m2_proton_stats.append(batch_proton_stats_m2[:stats_to_take])
+            proton_count += stats_to_take
 
+        # Calculate stats for gammas if we need more
+        if gamma_count < samples_per_class and gamma_mask.any():
+            batch_gamma_stats_m1 = get_batch_stats(m1[gamma_mask])
+            batch_gamma_stats_m2 = get_batch_stats(m2[gamma_mask])
+
+            remaining_gammas = samples_per_class - gamma_count
+            stats_to_take = min(len(batch_gamma_stats_m1), remaining_gammas)
+
+            m1_gamma_stats.append(batch_gamma_stats_m1[:stats_to_take])
+            m2_gamma_stats.append(batch_gamma_stats_m2[:stats_to_take])
+            gamma_count += stats_to_take
+
+        total_processed = proton_count + gamma_count
+        if total_processed % 1000 == 0:
+            print(f"Processed {total_processed} samples (Protons: {proton_count}, Gammas: {gamma_count})")
+
+    # Combine all stats and trim to target size
     m1_proton_stats = torch.cat(m1_proton_stats, dim=0)[:target_samples]
     m2_proton_stats = torch.cat(m2_proton_stats, dim=0)[:target_samples]
     m1_gamma_stats = torch.cat(m1_gamma_stats, dim=0)[:target_samples]
@@ -443,7 +464,7 @@ def main():
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
 
     print("Collecting statistics...")
-    stats_dict = collect_statistics(dataset, target_samples=5000)
+    stats_dict = collect_statistics(dataset, target_samples=4000)
 
     print("\nPrinting summary statistics...")
     print_summary_statistics(stats_dict)
