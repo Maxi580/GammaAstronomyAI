@@ -13,12 +13,12 @@ class TelescopeCNN(nn.Module):
             nn.MaxPool1d(kernel_size=2, stride=2),
             nn.Dropout1d(p=0.29336358072696656),
 
-            MagicConv(15, 17, kernel_size=3),
+            MagicConv(15, 17, kernel_size=3, pooling=True, pooling_kernel_size=2, pooling_cnt=1),
             nn.GroupNorm(1, 17),
             nn.ReLU(),
             nn.Dropout1d(p=0.23143340912286325),
 
-            MagicConv(17, 42, kernel_size=3),
+            MagicConv(17, 42, kernel_size=3, pooling=True, pooling_kernel_size=2, pooling_cnt=1),
             nn.GroupNorm(3, 42),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=2, stride=2),
