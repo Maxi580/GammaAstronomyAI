@@ -52,7 +52,7 @@ class MagicDataset(Dataset):
 # 2) PATCH + POSITIONAL ENCODING (unchanged)
 # -----------------------------------------------------
 class PatchEmbedding(nn.Module):
-    def __init__(self, in_dim=1039, patch_size=8, emb_dim=128):
+    def __init__(self, in_dim=1039, patch_size=1, emb_dim=128):
         super().__init__()
         self.patch_size = patch_size
         self.proj = nn.Linear(patch_size, emb_dim)
@@ -89,7 +89,7 @@ class PositionalEncoding(nn.Module):
 class ShapeTransformer(nn.Module):
     def __init__(self, emb_dim=128, n_heads=8, ff_dim=256, n_layers=4, n_classes=2, max_len=2000):
         super().__init__()
-        self.patch_embedding = PatchEmbedding(in_dim=1039, patch_size=8, emb_dim=emb_dim)
+        self.patch_embedding = PatchEmbedding(in_dim=1039, patch_size=1, emb_dim=emb_dim)
         self.pos_encoder = PositionalEncoding(emb_dim, max_len)
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=emb_dim,
@@ -206,9 +206,9 @@ def report_misclassified(model, dataset, device):
 # 6) MAIN
 # -----------------------------------------------------
 if __name__ == "__main__":
-    BATCH_SIZE = 256
-    LR = 1e-5
-    EPOCHS = 10
+    BATCH_SIZE = 64
+    LR = 1e-4
+    EPOCHS = 2
     device = torch.device(
         "mps" if torch.backends.mps.is_available() else
         "cuda" if torch.cuda.is_available() else
@@ -216,8 +216,8 @@ if __name__ == "__main__":
     )
     print("Using device:", device)
     # Files
-    gamma_file = "../magic-gammas.parquet"
-    proton_file = "../magic-protons.parquet"
+    gamma_file = "../magic-gammas_small_part1.parquet"
+    proton_file = "../magic-protons_small_part1.parquet"
 
     # Dataset + split
     #dataset = MaxiDataset(gamma_filename=gamma_file, proton_filename=proton_file)
@@ -230,10 +230,10 @@ if __name__ == "__main__":
 
     # Two-branch model
     model = CombinedTransformer(
-        emb_dim=512,
-        n_heads=8,
-        ff_dim=1024,
-        n_layers=4,
+        emb_dim=32,
+        n_heads=1,
+        ff_dim=1, #128
+        n_layers=1,
         n_classes=2
     ).to(device)
 
