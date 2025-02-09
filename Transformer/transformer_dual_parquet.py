@@ -33,13 +33,6 @@ class MagicDataset(Dataset):
         x_m1 = torch.tensor(row["image_m1"][:1039] - row["clean_image_m1"][:1039], dtype=torch.float32)
         x_m2 = torch.tensor(row["image_m2"][:1039] - row["clean_image_m2"][:1039], dtype=torch.float32)
         y = torch.tensor(row["label"], dtype=torch.long)
-
-        mid = len(x_m1) // 2
-
-        # Set second half to zero
-        #x_m1[:mid + mid - 50] = 0
-        #x_m2[:mid + mid - 50] = 0
-
         #x_m1[0] = y
         #x_m2[0] = y
         #if self.transform:

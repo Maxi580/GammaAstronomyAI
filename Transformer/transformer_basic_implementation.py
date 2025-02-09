@@ -144,7 +144,7 @@ if __name__ == "__main__":
     EPOCHS = 50
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    direc = "../simulated_data_10k_nn/"
+    direc = "../simulated_data_15k_gn/"
 
     dataset = ShapeDataset(
         data_dir= direc + "arrays",
