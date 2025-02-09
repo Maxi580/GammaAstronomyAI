@@ -257,6 +257,7 @@ def evaluate_classifier_with_certainty(dataset, dataset_stats):
 
 def main():
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
+    print(f"Dataset loaded")
 
     indices = np.arange(len(dataset))
     train_indices, test_indices = train_test_split(
@@ -270,13 +271,11 @@ def main():
     test_dataset = Subset(dataset, test_indices)
     print(f"Training set size: {len(train_dataset)}")
     print(f"Test set size: {len(test_dataset)}")
-    train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
 
     print(f"Gathering Statistics")
-    dataset_stats = collect_statistics(train_loader)
+    dataset_stats = collect_statistics(train_dataset)
     print("Evaluating rule-based classifier...")
-    evaluate_classifier_with_certainty(test_loader, dataset_stats)
+    evaluate_classifier_with_certainty(test_dataset, dataset_stats)
 
 
 if __name__ == "__main__":
