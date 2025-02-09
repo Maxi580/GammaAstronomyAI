@@ -175,8 +175,8 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        noisy_m1 = resize_image(torch.tensor(row['image_m1'], dtype=torch.float32))
-        noisy_m2 = resize_image(torch.tensor(row['image_m2'], dtype=torch.float32))
+        noisy_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
+        noisy_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
 
         if self.mask_rings is not None:
             # Masks are precalculated, but we need to know which to use

@@ -51,4 +51,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[1:])"""
 
-    main("statsmagicnet", "magic-protons.parquet", "magic-gammas.parquet", 20)
+    main("magiccleannet", "magic-protons.parquet", "magic-gammas.parquet", 35)
