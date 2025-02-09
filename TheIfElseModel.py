@@ -2,7 +2,9 @@ import os
 import sys
 import numpy as np
 from collections import defaultdict
-from torch.utils.data import DataLoader
+
+from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, Subset
 from TrainingPipeline.MagicDataset import MagicDataset
 from sklearn.metrics import accuracy_score, confusion_matrix
 
@@ -255,10 +257,26 @@ def evaluate_classifier_with_certainty(dataset, dataset_stats):
 
 def main():
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
+
+    indices = np.arange(len(dataset))
+    train_indices, test_indices = train_test_split(
+        indices,
+        test_size=0.3,
+        random_state=42,
+        shuffle=True
+    )
+
+    train_dataset = Subset(dataset, train_indices)
+    test_dataset = Subset(dataset, test_indices)
+    print(f"Training set size: {len(train_dataset)}")
+    print(f"Test set size: {len(test_dataset)}")
+    train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+
     print(f"Gathering Statistics")
-    dataset_stats = collect_statistics(dataset)
+    dataset_stats = collect_statistics(train_loader)
     print("Evaluating rule-based classifier...")
-    evaluate_classifier_with_certainty(dataset, dataset_stats)
+    evaluate_classifier_with_certainty(test_loader, dataset_stats)
 
 
 if __name__ == "__main__":
