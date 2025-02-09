@@ -176,7 +176,7 @@ if __name__ == "__main__":
     EPOCHS = 50
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    direc = "../simulated_data_10k_nn/"
+    direc = "../simulated_data_15k_gn/"
 
     dataset = ShapeDataset(
         data_dir= direc + "arrays",
@@ -216,7 +216,7 @@ if __name__ == "__main__":
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model.state_dict(), "best_model.pt")
+            #torch.save(model.state_dict(), "best_model.pt")
 
 
     # -------- Model Saving (Paste these lines at the end of main) --------
