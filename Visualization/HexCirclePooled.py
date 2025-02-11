@@ -1,6 +1,8 @@
+import sys, os
 from PIL import Image, ImageDraw
 import numpy as np
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from SimulatedSampleGeneration.PlaneGenerators import HexagonPlaneGenerator
 from CNN.HexCircleLayers.pooling import _get_clusters
  
