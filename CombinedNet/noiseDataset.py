@@ -127,8 +127,6 @@ class NoiseDataset(Dataset):
         # self.gamma_data = pd.read_parquet(gamma_filename, engine='fastparquet', rows=self.n_gammas)
         self.length = self.n_protons + self.n_gammas
         self.labels = {self.PROTON_LABEL: 0, self.GAMMA_LABEL: 1}
-        
-        self.random_labels = torch.randint(0, 2, (self.length,))
 
         if self.debug_info:
             print(f"\nDataset initialized with {self.length} total samples:")
@@ -159,7 +157,7 @@ class NoiseDataset(Dataset):
 
         features = torch.tensor([])
 
-        return noisy_m1, noisy_m2, features, self.random_labels[idx].item()
+        return noisy_m1, noisy_m2, features, self.labels[label]
 
     def get_distribution(self) -> Dict[str, Any]:
         total_samples = self.length
