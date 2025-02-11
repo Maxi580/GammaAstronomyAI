@@ -1,5 +1,5 @@
 # Test data and other datasets
-datasets/
+datasets/*
 reconstructed_images/
 *.parquet
 
@@ -8,6 +8,7 @@ trained_models/
 
 # AI/ML Models
 *.pth
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

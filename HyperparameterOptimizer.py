@@ -4,7 +4,7 @@ import time
 import gc
 import torch
 
-from TrainingPipeline.MagicDataset import MagicDataset
+from TrainingPipeline.Datasets.MagicDataset import MagicDataset
 from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
 
 from ParameterTuning import *

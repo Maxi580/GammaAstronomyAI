@@ -1,4 +1,4 @@
-from TrainingPipeline.MagicDataset import MagicDataset
+from TrainingPipeline.Datasets.MagicDataset import MagicDataset
 
 
 def evaluate_simple_classifier(dataset, n_samples=1000):
