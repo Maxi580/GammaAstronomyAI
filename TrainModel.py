@@ -1,7 +1,7 @@
 import os
 import time
 from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
-from TrainingPipeline.MagicDataset import MagicDataset
+from TrainingPipeline.Datasets.MagicDataset import MagicDataset
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
@@ -21,6 +21,7 @@ def main(model_name: str, proton_file: str, gamma_file: str, epochs: int):
     dataset = MagicDataset(proton_file, gamma_file)
     supervisor = TrainingSupervisor(model_name, dataset, output_dir, debug_info=True, save_model=True,
                                     save_debug_data=True)
+
     print(f"Model has {supervisor._count_trainable_weights()} trainable weights.")
     supervisor.train_model(epochs)
 
@@ -51,4 +52,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[1:])"""
 
-    main("statsmagicnet", "magic-protons.parquet", "magic-gammas.parquet", 20)
+    main("hexcirclenet", "magic-protons.parquet", "magic-gammas.parquet", 10)
