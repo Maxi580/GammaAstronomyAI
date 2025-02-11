@@ -9,30 +9,17 @@ class HexCircleCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            HexCircleConv(1, 8, kernel_size=3, n_pixels=1039),
+            HexCircleConv(1, 8, kernel_size=5, n_pixels=1039),
             nn.BatchNorm1d(8),
             nn.ReLU(),
-            # HexCirclePool(1, 1039, mode='max'),
-            nn.Dropout1d(0.2),
-            
-            
-            HexCircleConv(8, 16, kernel_size=1, n_pixels=1039),
-            nn.BatchNorm1d(16),
-            nn.ReLU(),
-            HexCirclePool(1, 1039, mode='max'),
-            nn.Dropout1d(0.2),
+            HexCirclePool(1, 1039, mode='avg'),
+            nn.Dropout1d(0.06664789059481752),
 
-            HexCircleConv(16, 16, kernel_size=1, n_pixels=163),
-            nn.BatchNorm1d(16),
+            HexCircleConv(8, 40, kernel_size=2, n_pixels=163),
+            nn.BatchNorm1d(40),
             nn.ReLU(),
-            HexCirclePool(1, 163, mode='max'),
-            nn.Dropout1d(0.2),
-
-            # HexConv(18, 36, kernel_size=1, n_pixels=1039),
-            # nn.GroupNorm(18, 36),
-            # nn.ReLU(),
-            # nn.MaxPool1d(kernel_size=2),
-            # nn.Dropout1d(0.35031261571845096),
+            HexCirclePool(3, 163, mode='max'),
+            nn.Dropout1d(0.08472856027638453),
         )
 
     def forward(self, x):
@@ -47,22 +34,19 @@ class HexCircleNet(nn.Module):
         self.m2_cnn = HexCircleCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(16 * 31 * 2, 256),
-            # nn.GroupNorm(32, 768),
+            nn.Linear(40 * 7 * 2, 446),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.40370243392755745),
 
-            nn.Linear(256, 32),
-            # nn.GroupNorm(16, 384),
+            nn.Linear(446, 330),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.25437384755300974),
 
-            # nn.Linear(384, 128),
-            # nn.GroupNorm(8, 128),
-            # nn.ReLU(),
-            # nn.Dropout(0.21686133182097764),
+            nn.Linear(330, 192),
+            nn.ReLU(),
+            nn.Dropout(0.37123397581958945),
 
-            nn.Linear(32, 2)
+            nn.Linear(192, 2)
         )
 
     def forward(self, m1_image, m2_image, measurement_features):
