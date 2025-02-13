@@ -293,6 +293,8 @@ class TrainingSupervisor:
                 model = HexCircleNet()
             case "hexagdlynet":
                 model = HexagdlyNet()
+            case "simple1dnet":
+                model = Simple1dNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
