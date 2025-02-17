@@ -37,7 +37,7 @@ class HexMagicNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(21756 + 51, 512),
+            nn.Linear(21756, 512),
             nn.GroupNorm(64, 512),
             nn.ReLU(),
             nn.Dropout(p=0.15421243805878218),
@@ -62,6 +62,6 @@ class HexMagicNet(nn.Module):
         m1_cnn_features = (self.m1_cnn(m1_image)).flatten(1)
         m2_cnn_features = (self.m2_cnn(m2_image)).flatten(1)
 
-        combined = torch.cat([m1_cnn_features, m2_cnn_features, measurement_features], dim=1)
+        combined = torch.cat([m1_cnn_features, m2_cnn_features], dim=1)
 
         return self.classifier(combined)
