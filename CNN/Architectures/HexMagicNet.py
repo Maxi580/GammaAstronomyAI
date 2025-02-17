@@ -29,7 +29,7 @@ class TelescopeCNN(nn.Module):
         return self.cnn(x)
 
 
-class MagicCleanNet(nn.Module):
+class HexMagicNet(nn.Module):
     def __init__(self):
         super().__init__()
 

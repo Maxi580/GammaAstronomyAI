@@ -17,7 +17,7 @@ from CNN.Architectures.BasicMagicCNN import BasicMagicNet
 from CNN.Architectures.MLP import MLP
 from CNN.Architectures.StatsModel import StatsMagicNet
 from CNN.Architectures.HexCircleCNN import HexCircleNet
-from CNN.Architectures.MagicCleanCNN import MagicCleanNet
+from CNN.Architectures.HexMagicNet import HexMagicNet
 
 np.random.seed(42)
 torch.manual_seed(42)
@@ -295,8 +295,8 @@ class TrainingSupervisor:
                 model = StatsMagicNet()
             case "hexcirclenet":
                 model = HexCircleNet()
-            case "magiccleannet":
-                model = MagicCleanNet()
+            case "hexmagicnet":
+                model = HexMagicNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
