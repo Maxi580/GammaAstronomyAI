@@ -50,7 +50,6 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
 
         last_n_accuracies = [metrics['accuracy'] for metrics in supervisor.validation_metrics[-3:]]
         avg_accuracy = sum(last_n_accuracies) / len(last_n_accuracies)
-        print(f"num_params = {supervisor._count_trainable_weights()}")
 
         return avg_accuracy
 
@@ -65,21 +64,19 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
 
 def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_trials: int):
     try:
-        study = optuna.load_study(
-            study_name=study_name,
-            storage="sqlite:///optuna_study.db"
-        )
-        print("Resuming existing study")
-
-    except KeyError:
         study = optuna.create_study(
             study_name=study_name,
             storage="sqlite:///optuna_study.db",
-            directions="maximize",
+            load_if_exists=True,
+            direction="maximize",
             pruner=optuna.pruners.MedianPruner(),
             sampler=optuna.samplers.TPESampler(seed=42),
         )
-        print("Creating new study")
+        print("Study loaded/created")
+
+    except Exception as e:
+        print(f"Error creating/loading study: {e}")
+        return None
 
     study.optimize(
         lambda trial: objective(trial, model, dataset, study_name, epochs),
