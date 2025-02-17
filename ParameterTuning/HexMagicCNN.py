@@ -25,7 +25,8 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
 
             channels = [1]
             for i in range(1, num_layers + 1):
-                channels.append(trial.suggest_int(f'cnn_channels{i}', 1, 64))
+                channels.append(trial.suggest_int(f'cnn_channels{i}', 1, 32))
+                print(f"Layer {i}: Input channels {channels[i - 1]}, Output channels {channels[i]}")
 
             pooling_pattern = [
                 trial.suggest_categorical(f'pooling_layer_{i + 1}', [True, False])
@@ -36,10 +37,14 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
             has_been_pooled = False
             pooling_ctr = 0
             for i in range(num_layers):
+                in_channels = channels[i]
+                out_channels = channels[i + 1]
+                print(f"Creating MagicConv layer {i}: in_channels={in_channels}, out_channels={out_channels}")
+
                 layers.extend([
                     MagicConv(
-                        channels[i],
-                        channels[i + 1],
+                        in_channels,
+                        out_channels = channels[i + 1],
                         kernel_size=trial.suggest_int(f'kernel_size{i + 1}', 1, 5),
                         pooling=has_been_pooled,
                         pooling_cnt=pooling_ctr,
