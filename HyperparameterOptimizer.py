@@ -50,9 +50,9 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
 
         last_n_accuracies = [metrics['accuracy'] for metrics in supervisor.validation_metrics[-3:]]
         avg_accuracy = sum(last_n_accuracies) / len(last_n_accuracies)
-        num_params = supervisor._count_trainable_weights()
+        print(f"num_params = {supervisor._count_trainable_weights()}")
 
-        return avg_accuracy, num_params
+        return avg_accuracy
 
     except Exception as e:
         print(f"Trial {trial.number} failed with error:", e)
@@ -75,7 +75,7 @@ def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_t
         study = optuna.create_study(
             study_name=study_name,
             storage="sqlite:///optuna_study.db",
-            directions=["maximize", "minimize"],
+            directions="maximize",
             pruner=optuna.pruners.MedianPruner(),
             sampler=optuna.samplers.TPESampler(seed=42),
         )

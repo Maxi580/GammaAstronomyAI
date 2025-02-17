@@ -11,7 +11,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from CNN.MagicConv.NeighborLogic import get_neighbor_list_by_kernel
 from CNN.Architectures.StatsModel import get_batch_stats
 
-
 NUM_OF_HEXAGONS = 1039
 
 
@@ -456,6 +455,7 @@ def plot_metric_distributions(stats_dict, output_dir="plots"):
 
 def main():
     dataset = MagicDataset("magic-protons.parquet", "magic-gammas-new.parquet", debug_info=True)
+
 
 if __name__ == "__main__":
     main()
