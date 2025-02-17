@@ -296,7 +296,7 @@ class TrainingSupervisor:
             case "hexcirclenet":
                 model = HexCircleNet()
             case "hexmagicnet":
-                model = None
+                model = BasicMagicNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
