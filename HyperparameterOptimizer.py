@@ -4,6 +4,7 @@ import time
 import gc
 import torch
 
+from ParameterTuning.HexMagicCNN import parameterize_hex_magicnet
 from TrainingPipeline.MagicDataset import MagicDataset
 from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
 
@@ -16,7 +17,6 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 def clean_memory():
     gc.collect()
     torch.cuda.empty_cache()
-    # Force a sync with GPU
     if torch.cuda.is_available():
         torch.cuda.synchronize()
 
@@ -24,7 +24,7 @@ def clean_memory():
 def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int):
     supervisor = None
     try:
-        nametag = f"{study_name}_WTF_{time.strftime('%Y-%m-%d_%H-%M-%S')}_trial_{trial.number}"
+        nametag = f"{study_name}_{time.strftime('%Y-%m-%d_%H-%M-%S')}_trial_{trial.number}"
         output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                   f"parameter_tuning/{study_name}", nametag)
 
@@ -35,6 +35,8 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
                 parameterize_func = parameterize_BasicMagicNet
             case "hexcirclenet":
                 parameterize_func = parameterize_HexCircleNet
+            case "hexmagicnet":
+                parameterize_func = parameterize_hex_magicnet
             case _:
                 raise ValueError(f"Invalid Modelname for parameterization: '{model}'")
 
@@ -99,9 +101,9 @@ def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int):
 
 
 if __name__ == "__main__":
-    model_name = "hexcirclenet"
+    model_name = "hexmagicnet"
     proton_file = "magic-protons.parquet"
-    gamma_file = "magic-gammas.parquet"
+    gamma_file = "magic-gammas-new.parquet"
 
     main(
         model_name,
