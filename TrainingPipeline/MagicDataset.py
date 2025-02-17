@@ -455,18 +455,7 @@ def plot_metric_distributions(stats_dict, output_dir="plots"):
 
 
 def main():
-    dataset = MagicDataset("magic-protons.parquet", "magic-gammas-new.parquet", debug_info=False)
-
-    print("Collecting statistics...")
-    stats_dict = collect_statistics(dataset)
-
-    print("\nPrinting summary statistics...")
-    print_summary_statistics(stats_dict)
-
-    print("\nCreating plots...")
-    plot_metric_distributions(stats_dict)
-    print("Done! Plots have been saved to the 'plots' directory.")
-
+    dataset = MagicDataset("magic-protons.parquet", "magic-gammas-new.parquet", debug_info=True)
 
 if __name__ == "__main__":
     main()
