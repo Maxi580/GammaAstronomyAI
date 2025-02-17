@@ -175,10 +175,10 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        noisy_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
-        noisy_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
+        m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
+        m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
 
-        if self.mask_rings is not None:
+        """if self.mask_rings is not None:
             # Masks are precalculated, but we need to know which to use
             clean_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
             clean_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
@@ -193,11 +193,11 @@ class MagicDataset(Dataset):
 
         if self.shuffle:
             noisy_m1 = shuffle_tensor(noisy_m1)
-            noisy_m2 = shuffle_tensor(noisy_m2)
+            noisy_m2 = shuffle_tensor(noisy_m2)"""
 
         features = extract_features(row)
 
-        return noisy_m1, noisy_m2, features, self.labels[label]
+        return m1, m2, features, self.labels[label]
 
     def analyze_noise(self):
         stats = {
