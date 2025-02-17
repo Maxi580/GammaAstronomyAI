@@ -81,12 +81,8 @@ def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_t
         )
         print("Creating new study")
 
-    def objective_wrapper(trial):
-        accuracy, num_params = objective(trial, model, dataset, study_name, epochs)
-        return accuracy, num_params
-
     study.optimize(
-        objective_wrapper,
+        lambda trial: objective(trial, model, dataset, study_name, epochs),
         n_trials=n_trials
     )
 
