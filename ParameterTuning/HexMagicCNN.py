@@ -86,7 +86,7 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
             sizes = [input_size]
             for i in range(mlp_additional_layers):
                 max_size = min(sizes[-1], max_neuron)
-                min_size = max(8, sizes[-1] // 8)
+                min_size = min(max(8, sizes[-1] // 8), max_size)
 
                 next_size = trial.suggest_int(f'linear{i}_size', min_size, max_size)
                 sizes.append(next_size)
