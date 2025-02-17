@@ -25,7 +25,7 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
 
             channels = [1]
             for i in range(1, num_layers + 1):
-                channels.append(trial.suggest_int(f'cnn_channels{i}', channels[-1] + 1, channels[-1] * 8))
+                channels.append(trial.suggest_int(f'cnn_channels{i}', 1, 64))
 
             pooling_pattern = [
                 trial.suggest_categorical(f'pooling_layer_{i + 1}', [True, False])
