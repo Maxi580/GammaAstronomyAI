@@ -82,7 +82,6 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
             final_channels = self.hyperparams['channels'][-1]
             input_size = final_channels * (1039 // (2 ** pooling_ctr)) * 2
             mlp_additional_layers = trial.suggest_int('mlp_additional_layers', 1, 4)
-            self.hyperparams['mlp']['layer_sizes'] = [input_size]
 
             sizes = [input_size]
             for i in range(mlp_additional_layers):
