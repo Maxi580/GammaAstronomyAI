@@ -85,9 +85,16 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
 
             num_layers = trial.suggest_int('linear_layers', 1, 4)
 
-            sizes = [input_size]
+            MAX_NEURONS = 4096
+            sizes = [min(input_size, MAX_NEURONS)]
             for i in range(1, num_layers + 1):
-                sizes.append(trial.suggest_int(f'linear{i}_size', max(2, sizes[-1] // 8), sizes[-1]))
+                max_size = min(
+                    sizes[-1],
+                    MAX_NEURONS // (2 ** i)
+                )
+                min_size = max(2, sizes[-1] // 8)
+
+                sizes.append(trial.suggest_int(f'linear{i}_size', min_size, max_size))
 
             layers = []
             for i in range(num_layers):
