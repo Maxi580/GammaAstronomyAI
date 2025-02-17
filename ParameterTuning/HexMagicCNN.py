@@ -78,30 +78,28 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
             self.m1_cnn = HexMagicCNN(copy.deepcopy(layers))
             self.m2_cnn = HexMagicCNN(copy.deepcopy(layers))
 
-            num_layers = trial.params['cnn_layers']
-
-            final_channels = trial.params[f'cnn_channels{num_layers}']
+            max_neuron = 4096
+            final_channels = self.hyperparams['channels'][-1]
             input_size = final_channels * (1039 // (2 ** pooling_ctr)) * 2
+            mlp_additional_layers = trial.suggest_int('mlp_additional_layers', 1, 4)
+            self.hyperparams['mlp']['layer_sizes'] = [input_size]
 
-            num_layers = trial.suggest_int('linear_layers', 1, 4)
+            sizes = [input_size]
+            for i in range(mlp_additional_layers):
+                max_size = min(sizes[-1], max_neuron)
+                min_size = max(8, sizes[-1] // 8)
 
-            MAX_NEURONS = 4096
-            sizes = [min(input_size, MAX_NEURONS)]
-            for i in range(1, num_layers + 1):
-                max_size = min(
-                    sizes[-1],
-                    MAX_NEURONS // (2 ** i)
-                )
-                min_size = max(2, sizes[-1] // 8)
+                next_size = trial.suggest_int(f'linear{i}_size', min_size, max_size)
+                sizes.append(next_size)
 
-                sizes.append(trial.suggest_int(f'linear{i}_size', min_size, max_size))
+                max_neuron = max_neuron // (2 ** i)
 
             layers = []
-            for i in range(num_layers):
+            for i in range(mlp_additional_layers):
                 layers.extend([
                     nn.Linear(sizes[i], sizes[i + 1]),
                     nn.ReLU(),
-                    nn.Dropout(trial.suggest_float(f'linear{i}_dropout', 0.05, 0.6))
+                    nn.Dropout(trial.suggest_float(f'dropout_{i}', 0.05, 0.6))
                 ])
 
             self.classifier = nn.Sequential(
