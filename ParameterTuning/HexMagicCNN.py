@@ -20,47 +20,59 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
         def __init__(self):
             super().__init__()
 
-            n_pixels = 1039
-            num_layers = trial.suggest_int('cnn_layers', 1, 3)
+            self.hyperparams = {
+                'num_layers': trial.suggest_int('cnn_layers', 1, 3),
+                'channels': [1],
+                'kernel_sizes': [],
+                'dropout_rates': [],
+                'pooling_pattern': []
+            }
 
-            channels = [1]
-            for i in range(1, num_layers + 1):
-                channels.append(trial.suggest_int(f'cnn_channels{i}', 1, 32))
-                print(f"Layer {i}: Input channels {channels[i - 1]}, Output channels {channels[i]}")
+            for i in range(1, self.hyperparams['num_layers'] + 1):
+                self.hyperparams['channels'].append(
+                    trial.suggest_int(f'cnn_channels{i}', 1, 32)
+                )
 
-            pooling_pattern = [
-                trial.suggest_categorical(f'pooling_layer_{i + 1}', [True, False])
-                for i in range(num_layers)
-            ]
+            for i in range(1, self.hyperparams['num_layers'] + 1):
+                self.hyperparams['kernel_sizes'].append(
+                    trial.suggest_int(f'kernel_size{i}', 1, 5)
+                )
+
+            for i in range(1, self.hyperparams['num_layers'] + 1):
+                self.hyperparams['dropout_rates'].append(
+                    trial.suggest_float(f'dropout_cnn_{i}', 0.05, 0.6)
+                )
+
+            for i in range(self.hyperparams['num_layers']):
+                self.hyperparams['pooling_pattern'].append(
+                    trial.suggest_categorical(f'pooling_layer_{i + 1}', [True, False])
+                )
 
             layers = []
             has_been_pooled = False
             pooling_ctr = 0
-            for i in range(num_layers):
-                in_channels = channels[i]
-                out_channels = channels[i + 1]
-                print(f"Creating MagicConv layer {i}: in_channels={in_channels}, out_channels={out_channels}")
 
+            for i in range(self.hyperparams['num_layers']):
                 layers.extend([
                     MagicConv(
-                        in_channels,
-                        out_channels = channels[i + 1],
-                        kernel_size=trial.suggest_int(f'kernel_size{i + 1}', 1, 5),
+                        self.hyperparams['channels'][i],
+                        self.hyperparams['channels'][i + 1],
+                        kernel_size=self.hyperparams['kernel_sizes'][i],
                         pooling=has_been_pooled,
                         pooling_cnt=pooling_ctr,
                         pooling_kernel_size=2,
                     ),
-                    nn.BatchNorm1d(channels[i + 1]),
+                    nn.BatchNorm1d(self.hyperparams['channels'][i + 1]),
                     nn.ReLU(),
                 ])
 
-                if pooling_pattern[i]:
-                    layers.append(nn.MaxPool2d(kernel_size=2))
+                if self.hyperparams['pooling_pattern'][i]:
+                    layers.append(nn.MaxPool1d(kernel_size=2))
                     pooling_ctr += 1
                     has_been_pooled = True
 
                 layers.append(nn.Dropout1d(
-                    trial.suggest_float(f'dropout_cnn_{i + 1}', 0.05, 0.6)
+                    self.hyperparams['dropout_rates'][i]
                 ))
 
             self.m1_cnn = HexMagicCNN(copy.deepcopy(layers))
@@ -69,7 +81,7 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
             num_layers = trial.params['cnn_layers']
 
             final_channels = trial.params[f'cnn_channels{num_layers}']
-            input_size = final_channels * (n_pixels // (2 ** pooling_ctr)) * 2
+            input_size = final_channels * (1039 // (2 ** pooling_ctr)) * 2
 
             num_layers = trial.suggest_int('linear_layers', 1, 4)
 
