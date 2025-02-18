@@ -7,22 +7,17 @@ class TelescopeCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            MagicConv(1, 15, kernel_size=3),
-            nn.GroupNorm(3, 15),
+            MagicConv(1, 16, kernel_size=3),
+            nn.GroupNorm(8, 16),
             nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Dropout1d(p=0.29336358072696656),
+            nn.MaxPool1d(kernel_size=2),
+            nn.Dropout1d(p=0.2),
 
-            MagicConv(15, 17, kernel_size=3, pooling=True, pooling_kernel_size=2, pooling_cnt=1),
-            nn.GroupNorm(1, 17),
+            MagicConv(16, 32, kernel_size=2),
+            nn.GroupNorm(16, 32),
             nn.ReLU(),
-            nn.Dropout1d(p=0.23143340912286325),
-
-            MagicConv(17, 42, kernel_size=3, pooling=True, pooling_kernel_size=2, pooling_cnt=1),
-            nn.GroupNorm(3, 42),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
-            nn.Dropout1d(p=0.07056170312260002),
+            nn.MaxPool1d(kernel_size=2),
+            nn.Dropout1d(p=0.2),
         )
 
     def forward(self, x):
@@ -37,22 +32,22 @@ class HexMagicNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(21756, 512),
-            nn.GroupNorm(64, 512),
+            nn.Linear(32 * (1039 // (2**2)) * 2, 4096),
+            nn.GroupNorm(128, 4096),
             nn.ReLU(),
-            nn.Dropout(p=0.15421243805878218),
+            nn.Dropout(p=0.2),
 
-            nn.Linear(512, 512),
-            nn.GroupNorm(64, 512),
+            nn.Linear(4096, 512),
+            nn.GroupNorm(32, 512),
             nn.ReLU(),
-            nn.Dropout(p=0.25303929962985794),
+            nn.Dropout(p=0.3),
 
-            nn.Linear(512, 256),
-            nn.GroupNorm(32, 256),
+            nn.Linear(512, 128),
+            nn.GroupNorm(8, 128),
             nn.ReLU(),
-            nn.Dropout(p=0.25303929962985794),
+            nn.Dropout(p=0.4),
 
-            nn.Linear(256, 2)
+            nn.Linear(128, 2)
         )
 
     def forward(self, m1_image, m2_image, measurement_features):
