@@ -31,7 +31,7 @@ def read_study_results(study_name: str, storage_url: str):
 
 
 if __name__ == "__main__":
-    study_name = "OptimizeHexCNN"
+    study_name = "Optimize_hexmagicnet"
     storage_url = "sqlite:///optuna_study.db"
 
     read_study_results(study_name, storage_url)
