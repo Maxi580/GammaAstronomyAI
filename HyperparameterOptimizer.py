@@ -35,6 +35,8 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
                 parameterize_func = parameterize_BasicMagicNet
             case "hexcirclenet":
                 parameterize_func = parameterize_HexCircleNet
+            case "hexcirclenetwithfeatures":
+                parameterize_func = parameterize_HexCircleNetWithFeatures
             case _:
                 raise ValueError(f"Invalid Modelname for parameterization: '{model}'")
 
