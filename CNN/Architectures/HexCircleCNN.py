@@ -9,16 +9,16 @@ class HexCircleCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            HexCircleConv(1, 8, kernel_size=5, n_pixels=1039),
+            HexCircleConv(1, 8, kernel_size=2),
             nn.BatchNorm1d(8),
             nn.ReLU(),
-            HexCirclePool(1, 1039, mode='avg'),
+            HexCirclePool(1, mode='avg'),
             nn.Dropout1d(0.06664789059481752),
 
-            HexCircleConv(8, 40, kernel_size=2, n_pixels=163),
+            HexCircleConv(8, 40, kernel_size=2),
             nn.BatchNorm1d(40),
             nn.ReLU(),
-            HexCirclePool(3, 163, mode='max'),
+            HexCirclePool(3, mode='max'),
             nn.Dropout1d(0.08472856027638453),
         )
 

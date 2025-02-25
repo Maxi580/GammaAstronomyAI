@@ -43,7 +43,6 @@ def parameterize_HexCircleNetWithFeatures(trial: optuna.Trial):
                         channels[i],
                         channels[i + 1],
                         kernel_size=trial.suggest_int(f'kernel_size{i + 1}', 1, 5),
-                        n_pixels=n_pixels[-1]
                     ),
                     nn.BatchNorm1d(channels[i+1]),
                     nn.ReLU(),
@@ -52,7 +51,6 @@ def parameterize_HexCircleNetWithFeatures(trial: optuna.Trial):
                 if pooling_pattern[i]:
                     layers.append(HexCirclePool(
                         trial.suggest_int(f'pooling_layer{i+1}_kernel', 1, 3),
-                        n_pixels[-1],
                         trial.suggest_categorical(f'pooling_layer{i+1}_mode', ["max", "avg"]),
                     ))
                     

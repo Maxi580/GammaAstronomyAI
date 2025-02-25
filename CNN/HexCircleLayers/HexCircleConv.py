@@ -5,13 +5,15 @@ import torch.nn as nn
 from CNN.HexCircleLayers.neighbors import get_neighbor_tensor
 
 
+def calc_kernel_pixels(kernel_size: int):
+    return 1 + sum(range(1, kernel_size+1)) * 6
+
 class HexCircleConv(nn.Module):
     def __init__(
         self,
         in_channels: int,
         out_channels: int,
         kernel_size: int,
-        n_pixels: int,
         bias: bool = True,
         # padding_mode: str = "zeros", # TODO
         device=None,
@@ -32,19 +34,13 @@ class HexCircleConv(nn.Module):
             raise ValueError("out_channels must be a positive integer")
         if kernel_size < 0:
             raise ValueError("kernel_size must be zero or a positive integer")
-        if n_pixels <= 0:
-            raise ValueError("n_pixels must be a positive integer")
         
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
-        self.n_pixels = n_pixels
-
-        # Generate neighbors list for given pixels and kernel size and save it in buffer
-        neighbor_list = get_neighbor_tensor(n_pixels, kernel_size)
-        self.register_buffer('neighbors', neighbor_list)
+        self.n_pixels = None
         
-        total_kernel_pixels = neighbor_list.shape[1]
+        total_kernel_pixels = calc_kernel_pixels(kernel_size)
         self.weight = nn.Parameter(torch.empty((out_channels, in_channels, total_kernel_pixels), **factory_kwargs))
         
         if bias:
@@ -77,6 +73,13 @@ class HexCircleConv(nn.Module):
         A tensor of shape (batch_size, out_channels, N).
         """
         B, Cin, N = x.shape
+        
+        if not self.n_pixels:
+            self.n_pixels = N
+            # Generate neighbors list for given pixels and kernel size and save it in buffer
+            neighbor_list = get_neighbor_tensor(self.n_pixels, self.kernel_size).to(device=x.get_device())
+            self.register_buffer('neighbors', neighbor_list)
+        
         expected_N, K = self.neighbors.shape
         
         if N != expected_N or Cin != self.in_channels:
