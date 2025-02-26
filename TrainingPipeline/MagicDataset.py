@@ -25,6 +25,14 @@ def replace_nan(value):
 def extract_features(row: pd.Series) -> torch.Tensor:
     features = []
 
+    true_features = [
+        'true_energy', 'true_theta', 'true_phi',
+        'true_telescope_theta', 'true_telescope_phi',
+        'true_first_interaction_height',
+        'true_impact_m1', 'true_impact_m2'
+    ]
+    features.extend([replace_nan(row[col]) for col in true_features])
+
     hillas_m1_features = [
         'hillas_length_m1', 'hillas_width_m1', 'hillas_delta_m1',
         'hillas_size_m1', 'hillas_cog_x_m1', 'hillas_cog_y_m1',
@@ -76,7 +84,7 @@ def extract_features(row: pd.Series) -> torch.Tensor:
     ]
     features.extend([replace_nan(row[col]) for col in source_m2_features])
 
-    assert len(features) == 51, "Total features count mismatch"
+    assert len(features) == 59, "Total features count mismatch"
 
     return torch.tensor(features, dtype=torch.float32)
 
@@ -115,7 +123,8 @@ class MagicDataset(Dataset):
     PROTON_LABEL: str = 'proton'
 
     def __init__(self, proton_filename: str, gamma_filename: str, mask_rings: Optional[int] = None,
-                 shuffle: Optional[bool] = False, max_samples: Optional[int] = None, debug_info: bool = True):
+                 shuffle: Optional[bool] = False, max_samples: Optional[int] = None, debug_info: bool = True,
+                 min_energy: float = None):
         self.debug_info = debug_info
         self.shuffle = shuffle
         self.mask_rings = mask_rings
@@ -148,9 +157,27 @@ class MagicDataset(Dataset):
             print(f"Calculated Number of Protons: {self.n_protons}")
             print(f"Calculated Number of Protons: {self.n_gammas}")
 
-        # Read the first num_rows rows
         self.proton_data = read_parquet_limit(proton_filename, self.n_protons)
         self.gamma_data = read_parquet_limit(gamma_filename, self.n_gammas)
+
+        if min_energy is not None:
+            original_proton_count = len(self.proton_data)
+            original_gamma_count = len(self.gamma_data)
+
+            self.proton_data = self.proton_data[self.proton_data['true_energy'] >= min_energy]
+            self.gamma_data = self.gamma_data[self.gamma_data['true_energy'] >= min_energy]
+
+            self.n_protons = len(self.proton_data)
+            self.n_gammas = len(self.gamma_data)
+
+            if self.debug_info:
+                print(f"\nApplied energy filter (true_energy >= {min_energy}):")
+                print(
+                    f"Protons: {original_proton_count} → {self.n_protons} ({self.n_protons / original_proton_count * 
+                                                                            100:.1f}%)")
+                print(
+                    f"Gammas: {original_gamma_count} → {self.n_gammas} ({self.n_gammas / original_gamma_count * 
+                                                                         100:.1f}%)")
 
         # self.proton_data = pd.read_parquet(proton_filename, engine='fastparquet', rows=self.n_protons)
         # self.gamma_data = pd.read_parquet(gamma_filename, engine='fastparquet', rows=self.n_gammas)
@@ -451,11 +478,3 @@ def plot_metric_distributions(stats_dict, output_dir="plots"):
             plt.savefig(os.path.join(output_dir, f"{metric_name}_{telescope_type}.png"),
                         dpi=300, bbox_inches='tight')
             plt.close()
-
-
-def main():
-    dataset = MagicDataset("magic-protons.parquet", "magic-gammas-new.parquet", debug_info=True)
-
-
-if __name__ == "__main__":
-    main()
