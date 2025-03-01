@@ -7,6 +7,18 @@ import optuna
 from CNN.MagicConv.MagicConv import MagicConv
 
 
+def get_group_norm_groups(channels):
+    # Start with a target of 8 groups or channels/8, whichever is smaller
+    target_groups = min(8, max(1, channels // 8))
+
+    # Find the largest divisor of channels that is <= target_groups
+    for groups in range(target_groups, 0, -1):
+        if channels % groups == 0:
+            return groups
+
+    return 1
+
+
 def parameterize_hex_magicnet(trial: optuna.Trial):
     class HexMagicCNN(nn.Module):
         def __init__(self, layers):
@@ -30,7 +42,7 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
 
             for i in range(1, self.hyperparams['num_layers'] + 1):
                 self.hyperparams['channels'].append(
-                    trial.suggest_int(f'cnn_channels{i}', 1, 32)
+                    trial.suggest_int(f'cnn_channels{i}', 1, 16)
                 )
 
             for i in range(1, self.hyperparams['num_layers'] + 1):
@@ -62,7 +74,10 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
                         pooling_cnt=pooling_ctr,
                         pooling_kernel_size=2,
                     ),
-                    nn.BatchNorm1d(self.hyperparams['channels'][i + 1]),
+                    nn.GroupNorm(
+                        get_group_norm_groups(self.hyperparams['channels'][i + 1]),
+                        self.hyperparams['channels'][i + 1]
+                    ),
                     nn.ReLU(),
                 ])
 
@@ -97,6 +112,7 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
             for i in range(mlp_additional_layers):
                 layers.extend([
                     nn.Linear(sizes[i], sizes[i + 1]),
+                    nn.GroupNorm(get_group_norm_groups(sizes[i + 1]), sizes[i + 1]),
                     nn.ReLU(),
                     nn.Dropout(trial.suggest_float(f'dropout_{i}', 0.05, 0.6))
                 ])

@@ -10,8 +10,7 @@ from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
 
 from ParameterTuning import *
 
-
-os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128,expandable_segments:True'
 
 
 def clean_memory():
