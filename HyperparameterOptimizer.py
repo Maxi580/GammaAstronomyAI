@@ -3,6 +3,7 @@ import os
 import time
 import gc
 import torch
+import sys
 
 from ParameterTuning.HexMagicCNN import parameterize_hex_magicnet
 from TrainingPipeline.MagicDataset import MagicDataset
@@ -16,8 +17,18 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 def clean_memory():
     gc.collect()
     torch.cuda.empty_cache()
+
     if torch.cuda.is_available():
         torch.cuda.synchronize()
+        torch.cuda.ipc_collect()
+
+    for obj in gc.get_objects():
+        try:
+            if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
+                del obj
+        except:
+            pass
+    sys.modules[__name__].__dict__.clear()
 
 
 def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int):
