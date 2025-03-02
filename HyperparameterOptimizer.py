@@ -20,7 +20,6 @@ def clean_memory():
 
     if torch.cuda.is_available():
         torch.cuda.synchronize()
-        torch.cuda.ipc_collect()
 
     for obj in gc.get_objects():
         try:
@@ -28,7 +27,6 @@ def clean_memory():
                 del obj
         except:
             pass
-    sys.modules[__name__].__dict__.clear()
 
 
 def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int):
