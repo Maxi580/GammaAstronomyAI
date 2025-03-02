@@ -317,7 +317,9 @@ class TrainingSupervisor:
         return weight_proton, weight_gamma
 
     def train_model(self, epochs: int):
-        criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+        weight_proton, weight_gamma = self.calculate_weight_distribution()
+        class_weights = torch.tensor([weight_proton, weight_gamma]).to(self.device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
 
         optimizer = optim.AdamW(
             self.model.parameters(),
