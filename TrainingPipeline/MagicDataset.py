@@ -116,7 +116,7 @@ class MagicDataset(Dataset):
 
     def __init__(self, proton_filename: str, gamma_filename: str, mask_rings: Optional[int] = None,
                  shuffle: Optional[bool] = False, max_samples: Optional[int] = None, debug_info: bool = True,
-                 min_energy: float = None):
+                 min_hillas_size: float = None):
         self.debug_info = debug_info
         self.shuffle = shuffle
         self.mask_rings = mask_rings
@@ -152,24 +152,28 @@ class MagicDataset(Dataset):
         self.proton_data = read_parquet_limit(proton_filename, self.n_protons)
         self.gamma_data = read_parquet_limit(gamma_filename, self.n_gammas)
 
-        if min_energy is not None:
+        if min_hillas_size is not None:
             original_proton_count = len(self.proton_data)
             original_gamma_count = len(self.gamma_data)
 
-            self.proton_data = self.proton_data[self.proton_data['true_energy'] >= min_energy]
-            self.gamma_data = self.gamma_data[self.gamma_data['true_energy'] >= min_energy]
+            self.proton_data = self.proton_data[
+                (self.proton_data['hillas_size_m1'] >= min_hillas_size) |
+                (self.proton_data['hillas_size_m2'] >= min_hillas_size)
+                ]
+            self.gamma_data = self.gamma_data[
+                (self.gamma_data['hillas_size_m1'] >= min_hillas_size) |
+                (self.gamma_data['hillas_size_m2'] >= min_hillas_size)
+                ]
 
             self.n_protons = len(self.proton_data)
             self.n_gammas = len(self.gamma_data)
 
             if self.debug_info:
-                print(f"\nApplied energy filter (true_energy >= {min_energy}):")
+                print(f"\nApplied Hillas size filter (hillas_size >= {min_hillas_size}):")
                 print(
-                    f"Protons: {original_proton_count} → {self.n_protons} ({self.n_protons / original_proton_count * 
-                                                                            100:.1f}%)")
+                    f"Protons: {original_proton_count} → {self.n_protons} ({self.n_protons / original_proton_count * 100:.1f}%)")
                 print(
-                    f"Gammas: {original_gamma_count} → {self.n_gammas} ({self.n_gammas / original_gamma_count * 
-                                                                         100:.1f}%)")
+                    f"Gammas: {original_gamma_count} → {self.n_gammas} ({self.n_gammas / original_gamma_count * 100:.1f}%)")
 
         # self.proton_data = pd.read_parquet(proton_filename, engine='fastparquet', rows=self.n_protons)
         # self.gamma_data = pd.read_parquet(gamma_filename, engine='fastparquet', rows=self.n_gammas)

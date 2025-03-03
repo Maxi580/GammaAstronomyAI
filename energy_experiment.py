@@ -10,8 +10,8 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
 
 def train_with_energy_cutoff(model_name: str, proton_file: str, gamma_file: str,
-                             min_energy: float, epochs: int):
-    nametag = f"{model_name}_E{min_energy}_{time.strftime('%d-%m-%Y-%H-%M-%S')}"
+                             min_hillas_size: float, epochs: int):
+    nametag = f"{model_name}_E{min_hillas_size}_{time.strftime('%d-%m-%Y-%H-%M-%S')}"
 
     proton_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), proton_file)
     gamma_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), gamma_file)
@@ -20,11 +20,11 @@ def train_with_energy_cutoff(model_name: str, proton_file: str, gamma_file: str,
     print(f"Starting Training with settings:")
     print(f"\t- Model = {model_name}")
     print(f"\t- Data = {proton_dir, gamma_dir}")
-    print(f"\t- Energy Cutoff = {min_energy}")
+    print(f"\t- Hillas Cutoff = {min_hillas_size}")
     print(f"\t- Epochs = {epochs}")
     print(f"\t- Output = {output_dir}\n")
 
-    dataset = MagicDataset(proton_file, gamma_file, debug_info=True, min_energy=min_energy)
+    dataset = MagicDataset(proton_file, gamma_file, debug_info=True, min_hillas_size=min_hillas_size)
 
     supervisor = TrainingSupervisor(model_name, dataset, output_dir,
                                     debug_info=True, save_model=True, save_debug_data=True)
@@ -32,7 +32,7 @@ def train_with_energy_cutoff(model_name: str, proton_file: str, gamma_file: str,
     supervisor.train_model(epochs)
 
     return {
-        "energy_cutoff": min_energy,
+        "energy_cutoff": min_hillas_size,
         "train_accuracy": supervisor.train_metrics[-1]["accuracy"],
         "val_accuracy": supervisor.validation_metrics[-1]["accuracy"],
         "val_precision": supervisor.validation_metrics[-1]["precision"],
@@ -46,13 +46,13 @@ def run_energy_cutoff_experiment(
         model_name: str,
         proton_file: str,
         gamma_file: str,
-        start_energy: float = 0.0,
+        start_hillas: float = 0.0,
         step_size: float = 10.0,
-        max_energy: float = 250.0,
+        max_hillas: float = 250.0,
         epochs: int = 10
 ):
     results = []
-    cutoffs = np.arange(start_energy, max_energy + step_size, step_size)
+    cutoffs = np.arange(start_hillas, max_hillas + step_size, step_size)
 
     experiment_dir = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -155,18 +155,18 @@ if __name__ == "__main__":
     MODEL_NAME = "hexmagicnet"
     PROTON_FILE = "magic-protons.parquet"
     GAMMA_FILE = "magic-gammas-new.parquet"
-    START_ENERGY = 0.0
-    STEP_SIZE = 25.0
-    MAX_ENERGY = 500.0
+    START_HILLAS = 0.0
+    STEP_SIZE = 20.0
+    MAX_HILLAS = 200.0
     EPOCHS = 15
 
     results = run_energy_cutoff_experiment(
         MODEL_NAME,
         PROTON_FILE,
         GAMMA_FILE,
-        start_energy=START_ENERGY,
+        start_hillas=START_HILLAS,
         step_size=STEP_SIZE,
-        max_energy=MAX_ENERGY,
+        max_hillas=MAX_HILLAS,
         epochs=EPOCHS
     )
 
