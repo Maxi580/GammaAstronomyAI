@@ -18,9 +18,9 @@ def main(model_name: str, proton_file: str, gamma_file: str, epochs: int):
     print(f"\t- Epochs = {epochs}")
     print(f"\t- Output = {output_dir}\n")
 
-    dataset = MagicDatasetHexagdly(proton_file, gamma_file)
+    dataset = MagicDataset(proton_file, gamma_file)
     supervisor = TrainingSupervisor(model_name, dataset, output_dir, debug_info=True, save_model=True,
-                                    save_debug_data=True)
+                                    save_debug_data=True, early_stopping=False)
 
     print(f"Model has {supervisor._count_trainable_weights()} trainable weights.")
     supervisor.train_model(epochs)
@@ -52,4 +52,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[1:])"""
 
-    main("HexagdlyNet", "magic-protons.parquet", "magic-gammas.parquet", 10)
+    main("HexCircleNet", "magic-protons.parquet", "magic-gammas-new-1.parquet", 20)
