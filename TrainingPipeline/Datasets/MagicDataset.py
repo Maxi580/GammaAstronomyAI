@@ -149,12 +149,15 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
+        image_m1 = np.array(row['clean_image_m1' if self.clean_image else 'image_m1'])
+        image_m2 = np.array(row['clean_image_m2' if self.clean_image else 'image_m2'])
+
         image_m1 = torch.tensor(
-            self._convert_image(self._rescale_image(row['clean_image_m1' if self.clean_image else 'image_m1'])),
+            self._convert_image(self._rescale_image(image_m1)),
             dtype=torch.float32
         )
         image_m2 = torch.tensor(
-            self._convert_image(self._rescale_image(row['clean_image_m2' if self.clean_image else 'image_m2'])),
+            self._convert_image(self._rescale_image(image_m2)),
             dtype=torch.float32
         )
 
@@ -166,9 +169,12 @@ class MagicDataset(Dataset):
         """Arrays are 1183 long, however the last 144 are always 0"""
         image = image[:NUM_OF_HEXAGONS]
         
+        # Rescale image to values between 0 and 1.
+        # Negative values are set to 0.
         if self.rescale_image:
             image[image < 0] = 0
-            image = (image - image.min()) / (image.max() - image.min())
+            if image.max() > 0:
+                image = (image - image.min()) / (image.max() - image.min())
 
         return image
     
