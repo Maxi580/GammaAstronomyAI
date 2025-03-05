@@ -160,12 +160,13 @@ class TrainingSupervisor:
     SCHEDULER_CYCLE_MOMENTUM: bool = False
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
-                 save_model: bool = False, save_debug_data: bool = True) -> None:
+                 save_model: bool = False, save_debug_data: bool = True, early_stopping: bool = True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
                                    else "cpu")
         self.debug_info = debug_info
         self.save_model = save_model
         self.save_debug_data = save_debug_data
+        self.early_stopping = early_stopping
 
         if self.save_debug_data or self.save_model:
             os.makedirs(output_dir, exist_ok=True)
@@ -366,11 +367,12 @@ class TrainingSupervisor:
                         self.model_path,
                     )
 
-            early_stopping(val_metrics['loss'])
-            if early_stopping.early_stop:
-                if self.debug_info:
-                    print(f"Early stopping triggered at epoch {epoch + 1}")
-                break
+            if self.early_stopping:
+                early_stopping(val_metrics['loss'])
+                if early_stopping.early_stop:
+                    if self.debug_info:
+                        print(f"Early stopping triggered at epoch {epoch + 1}")
+                    break
 
         if self.save_debug_data:
             self.write_results(epoch + 1)

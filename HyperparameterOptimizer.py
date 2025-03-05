@@ -97,7 +97,9 @@ def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_t
 
 def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int):
     study_name = f"Optimize_{model}"
-    dataset = MagicDatasetHexagdly(proton, gamma, max_samples=100000, debug_info=False)
+
+    dataset = MagicDataset(proton, gamma, max_samples=100000, debug_info=False)
+
     study = start_or_resume_study(dataset, model, study_name, epochs, n_trials)
 
     print("Best 3 trials:")
@@ -112,7 +114,7 @@ def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int):
 if __name__ == "__main__":
     model_name = "HexagdlyNet"
     proton_file = "magic-protons.parquet"
-    gamma_file = "magic-gammas.parquet"
+    gamma_file = "magic-gammas-new.parquet"
 
     main(
         model_name,

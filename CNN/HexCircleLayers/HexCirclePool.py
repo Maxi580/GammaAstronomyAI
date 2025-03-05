@@ -2,8 +2,12 @@ import torch
 import torch.nn as nn
 from CNN.HexCircleLayers.pooling import get_clusters
 
+
+def calc_kernel_pixels(kernel_size: int):
+    return 1 + sum(range(1, kernel_size+1)) * 6
+
 class HexCirclePool(nn.Module):
-    def __init__(self, kernel_size: int, n_pixels: int, mode: str = 'avg'):
+    def __init__(self, kernel_size: int, mode: str = 'avg'):
         """
         A simple pooling layer for hexagonal grids.
         
@@ -16,17 +20,12 @@ class HexCirclePool(nn.Module):
         
         if kernel_size <= 0:
             raise ValueError("kernel_size must a positive integer")
-        if n_pixels <= 0:
-            raise ValueError("n_pixels must be a positive integer")
         if mode not in ('avg', 'max'):
             raise ValueError("mode must be either 'avg' or 'max'")
 
         self.kernel_size = kernel_size
-        self.n_pixels = n_pixels
         self.mode = mode
-        
-        # Generate clusters list for given pixels and kernel size and save it
-        self.clusters = get_clusters(n_pixels, kernel_size)
+        self.n_pixels = None
 
     def extra_repr(self):
         return (
@@ -43,6 +42,12 @@ class HexCirclePool(nn.Module):
           A tensor of shape (B, channels, N_pooled) where N_pooled is the number of clusters.
         """
         B, C, N = x.shape
+        
+        if not self.n_pixels:
+            self.n_pixels = N
+            # Generate clusters list for given pixels and kernel size and save it
+            self.clusters = get_clusters(self.n_pixels, self.kernel_size)
+
         
         if N != self.n_pixels:
             raise ValueError(f"Passed data has shape (..., n_pixels={N}), but expected shape is (..., n_pixels={self.n_pixels})")
