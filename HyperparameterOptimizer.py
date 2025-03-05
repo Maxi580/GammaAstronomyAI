@@ -21,7 +21,7 @@ def clean_memory():
         torch.cuda.synchronize()
 
 
-def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int, with_features=False):
+def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int):
     supervisor = None
     try:
         nametag = f"{study_name}_WTF_{time.strftime('%Y-%m-%d_%H-%M-%S')}_trial_{trial.number}"
@@ -34,10 +34,7 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int,
             case "basicmagicnet":
                 parameterize_func = parameterize_BasicMagicNet
             case "hexcirclenet":
-                if with_features:
-                    parameterize_func = parameterize_HexCircleNetWithFeatures
-                else:
-                    parameterize_func = parameterize_HexCircleNet
+                parameterize_func = parameterize_HexCircleNet
             case _:
                 raise ValueError(f"Invalid Modelname for parameterization: '{model}'")
 
@@ -68,7 +65,7 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int,
             clean_memory()
 
 
-def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_trials: int, with_features: bool):
+def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_trials: int):
     try:
         study = optuna.load_study(
             study_name=study_name,
@@ -87,21 +84,18 @@ def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_t
         print("Creating new study")
 
     study.optimize(
-        lambda trial: objective(trial, model, dataset, study_name, epochs, with_features),
+        lambda trial: objective(trial, model, dataset, study_name, epochs),
         n_trials=n_trials
     )
 
     return study
 
 
-def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int, with_features=False):
+def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int):
     study_name = f"Optimize_{model}"
     
-    if with_features:
-        study_name += "_features"
-    
     dataset = MagicDataset(proton, gamma, max_samples=100000, debug_info=False)
-    study = start_or_resume_study(dataset, model, study_name, epochs, n_trials, with_features)
+    study = start_or_resume_study(dataset, model, study_name, epochs, n_trials)
 
     print("Best 3 trials:")
     for trial in study.best_trials[:3]:
