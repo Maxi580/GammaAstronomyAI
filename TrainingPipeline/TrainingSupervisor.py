@@ -70,6 +70,9 @@ def print_metrics(labels, metrics: MetricsDict):
     print(f"{'Recall:':<12} {metrics['recall']:>6.2f}%")
     print(f"{'F1-Score:':<12} {metrics['f1']:>6.2f}%")
     print(f"{'Loss:':<12} {metrics['loss']:>6.4f}")
+    if "proton_loss" in metrics and "gamma_loss" in metrics:
+        print(f"{'Proton Loss:':<12} {metrics['proton_loss']:>6.4f}")
+        print(f"{'Gamma Loss:':<12} {metrics['gamma_loss']:>6.4f}")
 
     print("\nConfusion Matrix:")
     print("─" * 45)
@@ -397,6 +400,18 @@ class TrainingSupervisor:
         train_labels = []
         train_loss = 0
 
+        # New accumulators for per-class loss
+        proton_loss_total = 0.0
+        gamma_loss_total = 0.0
+        count_proton = 0
+        count_gamma = 0
+
+        # Create a criterion with reduction='none' to obtain per-sample losses
+        criterion_none = nn.CrossEntropyLoss(
+            label_smoothing=criterion.label_smoothing, 
+            reduction='none'
+        )
+
         self.model.train()
         batch_cntr = 1
         total_batches = len(self.training_data_loader)
@@ -407,6 +422,17 @@ class TrainingSupervisor:
             outputs = self.model(m1_images, m2_images, features)
 
             loss = criterion(outputs, labels)
+            # Compute per-sample losses
+            per_sample_losses = criterion_none(outputs, labels)
+            # Accumulate losses per class
+            for loss_val, label in zip(per_sample_losses, labels):
+                if label.item() == self.dataset.labels[self.dataset.PROTON_LABEL]:
+                    proton_loss_total += loss_val.item()
+                    count_proton += 1
+                else:
+                    gamma_loss_total += loss_val.item()
+                    count_gamma += 1
+
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.GRAD_CLIP_NORM)
             loss.backward()
             optimizer.step()
@@ -426,6 +452,9 @@ class TrainingSupervisor:
             train_preds,
             train_loss / len(self.training_data_loader),
         )
+        # Add per-class losses to metrics
+        metrics["proton_loss"] = proton_loss_total / count_proton if count_proton > 0 else 0.0
+        metrics["gamma_loss"] = gamma_loss_total / count_gamma if count_gamma > 0 else 0.0
 
         self.train_metrics.append(metrics)
         return metrics
@@ -435,6 +464,18 @@ class TrainingSupervisor:
         val_preds = []
         val_labels = []
 
+        # New accumulators for per-class loss in validation
+        proton_loss_total = 0.0
+        gamma_loss_total = 0.0
+        count_proton = 0
+        count_gamma = 0
+
+        # Create a criterion with reduction='none' for per-sample loss calculation
+        criterion_none = nn.CrossEntropyLoss(
+            label_smoothing=criterion.label_smoothing, 
+            reduction='none'
+        )
+
         self.model.eval()
         with torch.no_grad():
             for batch in self.val_data_loader:
@@ -443,6 +484,16 @@ class TrainingSupervisor:
                 outputs = self.model(m1_images, m2_images, features)
 
                 loss = criterion(outputs, labels)
+                per_sample_losses = criterion_none(outputs, labels)
+                
+                for loss_val, label in zip(per_sample_losses, labels):
+                    if label.item() == self.dataset.labels[self.dataset.PROTON_LABEL]:
+                        proton_loss_total += loss_val.item()
+                        count_proton += 1
+                    else:
+                        gamma_loss_total += loss_val.item()
+                        count_gamma += 1
+
                 _, predicted = outputs.max(1)
                 val_preds.extend(predicted.cpu().numpy())
                 val_labels.extend(labels.cpu().numpy())
@@ -453,6 +504,9 @@ class TrainingSupervisor:
             val_preds,
             val_loss / len(self.val_data_loader),
         )
+        # Add per-class losses to validation metrics
+        metrics["proton_loss"] = proton_loss_total / count_proton if count_proton > 0 else 0.0
+        metrics["gamma_loss"] = gamma_loss_total / count_gamma if count_gamma > 0 else 0.0
 
         self.validation_metrics.append(metrics)
         return metrics
