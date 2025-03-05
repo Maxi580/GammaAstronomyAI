@@ -5,6 +5,7 @@ import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
 import sys
+import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from CNN.MagicConv.NeighborLogic import get_neighbor_list_by_kernel
@@ -151,12 +152,21 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        noisy_m1 = torch.tensor(resize_image(row['clean_image_m1' if self.clean_image else 'image_m1']), dtype=torch.float32)
-        noisy_m2 = torch.tensor(resize_image(row['clean_image_m2' if self.clean_image else 'image_m2']), dtype=torch.float32)
+        noisy_m1 = torch.tensor(
+            self._convert_image(resize_image(row['clean_image_m1' if self.clean_image else 'image_m1'])),
+            dtype=torch.float32
+        )
+        noisy_m2 = torch.tensor(
+            self._convert_image(resize_image(row['clean_image_m2' if self.clean_image else 'image_m2'])),
+            dtype=torch.float32
+        )
 
         features = extract_features(row)
 
         return noisy_m1, noisy_m2, features, self.labels[label]
+    
+    def _convert_image(self, image: np.ndarray) -> np.ndarray:
+        return image
 
     def get_distribution(self) -> Dict[str, Any]:
         total_samples = self.length

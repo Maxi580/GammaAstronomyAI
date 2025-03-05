@@ -1,0 +1,2 @@
+from .MagicDataset import MagicDataset
+from .MagicDatasetHexagdly import MagicDatasetHexagdly
