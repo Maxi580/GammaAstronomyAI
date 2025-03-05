@@ -81,11 +81,6 @@ def extract_features(row: pd.Series) -> torch.Tensor:
     return torch.tensor(features, dtype=torch.float32)
 
 
-def resize_image(image):
-    """Arrays are 1183 long, however the last 144 are always 0"""
-    return image[:NUM_OF_HEXAGONS]
-
-
 def read_parquet_limit(filename, max_rows):
     parquet_file_stream = pq.ParquetFile(filename).iter_batches(batch_size=max_rows)
 
@@ -98,9 +93,11 @@ class MagicDataset(Dataset):
     GAMMA_LABEL: str = 'gamma'
     PROTON_LABEL: str = 'proton'
 
-    def __init__(self, proton_filename: str, gamma_filename: str, max_samples: Optional[int] = None, clean_image: bool = True, debug_info: bool = True):
+    def __init__(self, proton_filename: str, gamma_filename: str, max_samples: Optional[int] = None,
+                 clean_image: bool = True, rescale_image: bool = True, debug_info: bool = True):
         self.debug_info = debug_info
         self.clean_image = clean_image
+        self.rescale_image = rescale_image
 
         if self.debug_info:
             print(f"Initializing dataset from:")
@@ -152,18 +149,28 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        noisy_m1 = torch.tensor(
-            self._convert_image(resize_image(row['clean_image_m1' if self.clean_image else 'image_m1'])),
+        image_m1 = torch.tensor(
+            self._convert_image(self._rescale_image(row['clean_image_m1' if self.clean_image else 'image_m1'])),
             dtype=torch.float32
         )
-        noisy_m2 = torch.tensor(
-            self._convert_image(resize_image(row['clean_image_m2' if self.clean_image else 'image_m2'])),
+        image_m2 = torch.tensor(
+            self._convert_image(self._rescale_image(row['clean_image_m2' if self.clean_image else 'image_m2'])),
             dtype=torch.float32
         )
 
         features = extract_features(row)
 
-        return noisy_m1, noisy_m2, features, self.labels[label]
+        return image_m1, image_m2, features, self.labels[label]
+    
+    def _rescale_image(self, image):
+        """Arrays are 1183 long, however the last 144 are always 0"""
+        image = image[:NUM_OF_HEXAGONS]
+        
+        if self.rescale_image:
+            image[image < 0] = 0
+            image = (image - image.min()) / (image.max() - image.min())
+
+        return image
     
     def _convert_image(self, image: np.ndarray) -> np.ndarray:
         return image

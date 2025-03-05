@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from CNN.Architectures.HexCircleCNN import HexCircleNet
-from TrainingPipeline.MagicDataset import MagicDataset
+from TrainingPipeline.Datasets import *
 
 
 def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=10000):
