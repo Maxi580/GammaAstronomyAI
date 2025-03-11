@@ -1,4 +1,5 @@
 import copy
+import math
 
 import torch
 import torch.nn as nn
@@ -28,7 +29,9 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
 
             channels = [1]
             for i in range(1, num_layers+1):
-                channels.append(trial.suggest_int(f'cnn_channels{i}', channels[-1]+1, channels[-1]*8))
+                lower_bound = ((channels[-1] + 7) // 8) * 8
+                upper_bound = channels[-1] * 8
+                channels.append(trial.suggest_int(f'cnn_channels{i}', lower_bound, upper_bound, step=8))
                 
             
             pooling_pattern = [
@@ -57,7 +60,7 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
                     n_pixels.append(len(_get_clusters(n_pixels[-1], trial.params[f'pooling_layer{i+1}_kernel'])))
                 
                 layers.append(nn.Dropout1d(
-                    trial.suggest_float(f'dropout_cnn_{i + 1}', 0.05, 0.6)
+                    trial.suggest_float(f'dropout_cnn_{i + 1}', 0.05, 0.6, step=0.05)
                 ))
 
             self.m1_cnn = HexCircleCNN(copy.deepcopy(layers))
@@ -72,14 +75,21 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
 
             sizes = [input_size]
             for i in range(1, num_layers+1):
-                sizes.append(trial.suggest_int(f'linear{i}_size', max(2, sizes[-1]//8), sizes[-1]))
+                lb_candidate = max(2, sizes[-1] // 8)
+                lb = max(16, math.ceil(lb_candidate / 16) * 16)
+                ub = (sizes[-1] // 16) * 16
+                
+                if lb > ub:
+                    lb = ub
+                    
+                sizes.append(trial.suggest_int(f'linear{i}_size', lb, ub, step=16))
             
             layers = []
             for i in range(num_layers):
                 layers.extend([
                     nn.Linear(sizes[i], sizes[i + 1]),
                     nn.ReLU(),
-                    nn.Dropout(trial.suggest_float(f'linear{i}_dropout', 0.05, 0.6))
+                    nn.Dropout(trial.suggest_float(f'linear{i}_dropout', 0.05, 0.6, step=0.05))
                 ])
 
             self.classifier = nn.Sequential(
