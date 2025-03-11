@@ -51,7 +51,11 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
 
         supervisor.LEARNING_RATE = trial.suggest_float('learning_rate', 1e-6, 1e-2, log=True)
         supervisor.WEIGHT_DECAY = trial.suggest_float('weight_decay', 1e-4, 1e-2, log=True)
-        supervisor.GRAD_CLIP_NORM = trial.suggest_float('grad_clip_norm', 0.1, 5.0)
+        supervisor.GRAD_CLIP_NORM = trial.suggest_float('grad_clip_norm', 0.1, 5.0, step=0.1)
+        supervisor.SCHEDULER_MODE = trial.suggest_categorical('scheduler_mode', ["triangular", "triangular2", "exp_range"])
+        supervisor.SCHEDULER_CYCLE_MOMENTUM = trial.suggest_categorical('scheduler_cycle_momentum', [True, False])
+        supervisor.SCHEDULER_STEP_SIZE = trial.suggest_int('scheduler_step_size', 3, 6)
+        supervisor.SCHEDULER_MAX_LR = trial.suggest_float('scheduler_max_lr', 1e-6, 1e-2, log=True)
 
         supervisor.train_model(epochs)
 
@@ -70,17 +74,19 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
 
 
 def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_trials: int):
+    storage = "sqlite:///optuna_study.db"
+    
     try:
         study = optuna.load_study(
             study_name=study_name,
-            storage="sqlite:///optuna_study.db"
+            storage=storage
         )
         print("Resuming existing study")
 
     except KeyError:
         study = optuna.create_study(
             study_name=study_name,
-            storage="sqlite:///optuna_study.db",
+            storage=storage,
             directions=["maximize", "minimize"],
             pruner=optuna.pruners.MedianPruner(),
             sampler=optuna.samplers.TPESampler(seed=42),
@@ -112,9 +118,9 @@ def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int):
 
 
 if __name__ == "__main__":
-    model_name = "HexagdlyNet"
+    model_name = "HexCircleNet"
     proton_file = "magic-protons.parquet"
-    gamma_file = "magic-gammas-new.parquet"
+    gamma_file = "magic-gammas-new-1.parquet"
 
     main(
         model_name,

@@ -1,14 +1,9 @@
 from typing import Any, Dict, Optional, Tuple
-import os
 import pandas as pd
 import pyarrow.parquet as pq
 import torch
 from torch.utils.data import Dataset
-import sys
 import numpy as np
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from CNN.MagicConv.NeighborLogic import get_neighbor_list_by_kernel
 
 NUM_OF_HEXAGONS = 1039
 

@@ -10,7 +10,7 @@ from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
 
-from TrainingPipeline.Datasets.MagicDataset import MagicDataset
+from TrainingPipeline.Datasets import MagicDataset
 from TrainingPipeline.ResultsWriter import ResultsWriter
 
 from CNN.Architectures import *
@@ -88,47 +88,6 @@ def print_metrics(labels, metrics: MetricsDict):
     print(f"Label mapping: {labels}")
 
 
-def inference(data_loader, labels, model_path):
-    device = torch.device(
-        "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
-    model = BasicMagicNet()
-
-    model.load_state_dict(torch.load(model_path, weights_only=True, map_location=device))
-    model = model.to(device)
-    model.eval()
-
-    all_preds = []
-    all_labels = []
-    total_loss = 0
-    criterion = nn.CrossEntropyLoss()
-
-    print(f"Evaluating model on device: {device}")
-    print(f"Total batches to process: {len(data_loader)}")
-
-    with torch.no_grad():
-        for batch_idx, (m1_images, m2_images, features, labels) in enumerate(data_loader):
-            m1_images = m1_images.to(device)
-            m2_images = m2_images.to(device)
-            features = features.to(device)
-            labels = labels.to(device)
-
-            outputs = model(m1_images, m2_images, features)
-            loss = criterion(outputs, labels)
-            total_loss += loss.item()
-
-            _, predicted = outputs.max(1)
-            all_preds.extend(predicted.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
-
-    avg_loss = total_loss / len(data_loader)
-
-    # Calculate metrics using the average loss and all predictions
-    metrics = calc_metrics(all_labels, all_preds, avg_loss)
-    print_metrics(labels, metrics)
-
-    return metrics
-
-
 def worker_init_fn(worker_id):
     np.random.seed(42 + worker_id)
 
@@ -161,6 +120,8 @@ class TrainingSupervisor:
     GRAD_CLIP_NORM = 1.0
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
+    SCHEDULER_STEP_SIZE = 4
+    SCHEDULER_MAX_LR = 1e-2
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
                  save_model: bool = False, save_debug_data: bool = True, early_stopping: bool = True) -> None:
@@ -275,9 +236,6 @@ class TrainingSupervisor:
         val_data_loader = DataLoader(
             val_dataset, batch_size=self.BATCH_SIZE, shuffle=False, generator=generator, worker_init_fn=worker_init_fn
         )
-        """test_data_loader = DataLoader(
-            test_dataset, batch_size=self.BATCH_SIZE, shuffle=False
-        )"""
 
         if self.debug_info:
             print("Dataset loaded.")
@@ -331,11 +289,11 @@ class TrainingSupervisor:
 
         scheduler = optim.lr_scheduler.CyclicLR(
             optimizer,
-            base_lr=1e-5,
-            max_lr=1e-3,
-            step_size_up=4,
-            mode='triangular2',
-            cycle_momentum=False
+            base_lr=self.LEARNING_RATE,
+            max_lr=self.SCHEDULER_MAX_LR,
+            step_size_up=self.SCHEDULER_STEP_SIZE,
+            mode=self.SCHEDULER_MODE,
+            cycle_momentum=self.SCHEDULER_CYCLE_MOMENTUM
         )
 
         early_stopping = EarlyStopping(patience=3, min_delta=0.001)
@@ -380,20 +338,15 @@ class TrainingSupervisor:
         if self.save_debug_data:
             self.write_results(epoch + 1)
 
-        """if self.debug_info:
-            print("Running Inference on Test Sample")
-        metrics = inference(self.test_data_loader, self.dataset.labels, self.model_path)
-        self.inference_metrics.append(metrics)"""
-
     def _extract_batch(self, batch):
-        m1_images, m2_images, features, labels = batch
+        *data, labels = batch
+        
+        for d in data:
+            d = d.to(self.device)
 
-        m1_images = m1_images.to(self.device)
-        m2_images = m2_images.to(self.device)
-        features = features.to(self.device)
         labels = labels.to(self.device)
 
-        return m1_images, m2_images, features, labels
+        return data, labels
 
     def _training_step(self, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
         train_preds = []
@@ -416,10 +369,10 @@ class TrainingSupervisor:
         batch_cntr = 1
         total_batches = len(self.training_data_loader)
         for batch in self.training_data_loader:
-            m1_images, m2_images, features, labels = self._extract_batch(batch)
+            data, labels = self._extract_batch(batch)
 
             optimizer.zero_grad()
-            outputs = self.model(m1_images, m2_images, features)
+            outputs = self.model(*data)
 
             loss = criterion(outputs, labels)
             # Compute per-sample losses
@@ -479,9 +432,9 @@ class TrainingSupervisor:
         self.model.eval()
         with torch.no_grad():
             for batch in self.val_data_loader:
-                m1_images, m2_images, features, labels = self._extract_batch(batch)
+                data, labels = self._extract_batch(batch)
 
-                outputs = self.model(m1_images, m2_images, features)
+                outputs = self.model(*data)
 
                 loss = criterion(outputs, labels)
                 per_sample_losses = criterion_none(outputs, labels)
