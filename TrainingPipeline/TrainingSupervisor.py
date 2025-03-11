@@ -340,13 +340,8 @@ class TrainingSupervisor:
 
     def _extract_batch(self, batch):
         *data, labels = batch
-        
-        for d in data:
-            d = d.to(self.device)
 
-        labels = labels.to(self.device)
-
-        return data, labels
+        return [d.to(self.device) for d in data], labels.to(self.device)
 
     def _training_step(self, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
         train_preds = []

@@ -108,7 +108,7 @@ class MultiMagicDataset(MagicDataset):
             features.append(torch.tensor(extract_features(row), dtype=torch.float32))
             orig_len += 1
             
-         # Pad the lists so that each group has exactly 16 samples.
+        # Pad the lists so that each group has exactly 16 samples.
         pad_length = 16 - orig_len
         if pad_length > 0:
             # Here we assume each image vector is of length 1039.
