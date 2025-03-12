@@ -116,7 +116,7 @@ class MagicDataset(Dataset):
 
     def __init__(self, proton_filename: str, gamma_filename: str, mask_rings: Optional[int] = None,
                  shuffle: Optional[bool] = False, max_samples: Optional[int] = None, debug_info: bool = True,
-                 min_hillas_size: float = None):
+                 min_hillas_size: float = None, min_true_energy: float = None):
         self.debug_info = debug_info
         self.shuffle = shuffle
         self.mask_rings = mask_rings
@@ -170,6 +170,27 @@ class MagicDataset(Dataset):
 
             if self.debug_info:
                 print(f"\nApplied Hillas size filter (hillas_size >= {min_hillas_size}):")
+                print(
+                    f"Protons: {original_proton_count} → {self.n_protons} ({self.n_protons / original_proton_count * 100:.1f}%)")
+                print(
+                    f"Gammas: {original_gamma_count} → {self.n_gammas} ({self.n_gammas / original_gamma_count * 100:.1f}%)")
+
+        if min_true_energy is not None:
+            original_proton_count = len(self.proton_data)
+            original_gamma_count = len(self.gamma_data)
+
+            self.proton_data = self.proton_data[
+                self.proton_data['true_energy'] >= min_true_energy
+                ]
+            self.gamma_data = self.gamma_data[
+                self.gamma_data['true_energy'] >= min_true_energy
+                ]
+
+            self.n_protons = len(self.proton_data)
+            self.n_gammas = len(self.gamma_data)
+
+            if self.debug_info:
+                print(f"\nApplied true energy filter (true_energy >= {min_true_energy}):")
                 print(
                     f"Protons: {original_proton_count} → {self.n_protons} ({self.n_protons / original_proton_count * 100:.1f}%)")
                 print(
