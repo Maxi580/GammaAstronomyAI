@@ -20,6 +20,11 @@ def clean_memory():
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
 
+        for i in range(torch.cuda.device_count()):
+            with torch.cuda.device(i):
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
+
 
 def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int):
     supervisor = None
@@ -59,6 +64,11 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
 
     finally:
         if supervisor is not None:
+            if hasattr(supervisor, 'model'):
+                # Explicitly delete and move model to CPU before garbage collection
+                supervisor.model = supervisor.model.cpu()
+                del supervisor.model
+
             clean_memory()
 
 
@@ -80,7 +90,8 @@ def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_t
 
     study.optimize(
         lambda trial: objective(trial, model, dataset, study_name, epochs),
-        n_trials=n_trials
+        n_trials=n_trials,
+        n_jobs=1,
     )
 
     return study
