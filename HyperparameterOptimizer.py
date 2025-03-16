@@ -96,7 +96,7 @@ def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_t
 
 def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int):
     study_name = f"Optimize_{model}"
-    dataset = MagicDataset(proton, gamma, max_samples=200000, debug_info=False)
+    dataset = MagicDataset(proton, gamma, max_samples=100000, debug_info=False)
     study = start_or_resume_study(dataset, model, study_name, epochs, n_trials)
 
     print("Best trial:")
