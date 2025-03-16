@@ -16,17 +16,9 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
 def clean_memory():
     gc.collect()
-    torch.cuda.empty_cache()
-
     if torch.cuda.is_available():
+        torch.cuda.empty_cache()
         torch.cuda.synchronize()
-
-    for obj in gc.get_objects():
-        try:
-            if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
-                del obj
-        except:
-            pass
 
 
 def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int):
@@ -37,7 +29,7 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
                                   f"parameter_tuning/{study_name}", nametag)
 
         supervisor = TrainingSupervisor(model, dataset, output_dir, debug_info=False, save_model=False, save_debug_data=False)
-        
+
         match model.lower():
             case "basicmagicnet":
                 parameterize_func = parameterize_BasicMagicNet
