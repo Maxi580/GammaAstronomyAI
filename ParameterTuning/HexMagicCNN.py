@@ -133,3 +133,7 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
             return self.classifier(combined)
 
     return HexMagicNet()
+
+
+if __name__ == '__main__':
+    print(get_group_norm_groups(3728))
