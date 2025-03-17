@@ -8,7 +8,7 @@ class TelescopeCNN(nn.Module):
         super().__init__()
         self.cnn = nn.Sequential(
             MagicConv(1, 14, kernel_size=2),
-            nn.GroupNorm(7, 14),
+            nn.GroupNorm(1, 14),
             nn.ReLU(),
             nn.Dropout1d(p=0.07999530520538227),
         )
@@ -26,7 +26,7 @@ class HexMagicNet(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Linear(14 * 1039 * 2, 3728),
-            nn.GroupNorm(1864, 3728),
+            nn.GroupNorm(8, 3728),
             nn.ReLU(),
             nn.Dropout(p=0.11062440039941919),
 
