@@ -26,7 +26,7 @@ class HexMagicNet(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.Linear(14 * 1039 * 2, 3728),
-            nn.GroupNorm(128, 3728),
+            nn.GroupNorm(1891, 3728),
             nn.ReLU(),
             nn.Dropout(p=0.11062440039941919),
 
