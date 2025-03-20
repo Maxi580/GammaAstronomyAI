@@ -351,8 +351,6 @@ class TrainingSupervisor:
             cycle_momentum=False
         )
 
-        early_stopping = EarlyStopping(patience=7, min_delta=0.001)
-
         torch.manual_seed(42)
         if torch.cuda.is_available():
             torch.cuda.manual_seed(42)
@@ -382,12 +380,6 @@ class TrainingSupervisor:
                         self.model.state_dict(),
                         self.model_path,
                     )
-
-            early_stopping(val_metrics['loss'])
-            if early_stopping.early_stop:
-                if self.debug_info:
-                    print(f"Early stopping triggered at epoch {epoch + 1}")
-                break
 
         if self.save_debug_data:
             self.write_results(epoch + 1)
