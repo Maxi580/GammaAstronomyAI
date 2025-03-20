@@ -8,7 +8,7 @@ class TelescopeCNN(nn.Module):
         super().__init__()
         self.cnn = nn.Sequential(
             MagicConv(1, 8, kernel_size=2),
-            nn.GroupNorm(1, 14),
+            nn.GroupNorm(1, 8),
             nn.ReLU(),
             nn.Dropout1d(p=0.3),
         )
