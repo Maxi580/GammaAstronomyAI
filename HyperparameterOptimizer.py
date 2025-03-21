@@ -119,5 +119,5 @@ if __name__ == "__main__":
         proton_file,
         gamma_file,
         epochs=10,
-        n_trials=300
+        n_trials=250
     )
