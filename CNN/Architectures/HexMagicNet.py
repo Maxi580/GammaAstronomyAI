@@ -25,7 +25,7 @@ class HexMagicNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(12 * 1039 * 2, 512),
+            nn.Linear(8 * 1039 * 2, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
             nn.Dropout(p=0.3),
