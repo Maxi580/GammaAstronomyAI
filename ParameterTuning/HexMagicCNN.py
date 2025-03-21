@@ -62,7 +62,7 @@ def parameterize_hex_magicnet(trial: optuna.Trial):
                         pooling_cnt=pooling_ctr,
                         pooling_kernel_size=2,
                     ),
-                    nn.BatchNorm2d(self.hyperparams['channels'][i + 1]),
+                    nn.BatchNorm1d(self.hyperparams['channels'][i + 1]),
                 ])
 
                 if self.hyperparams['pooling_pattern'][i]:
