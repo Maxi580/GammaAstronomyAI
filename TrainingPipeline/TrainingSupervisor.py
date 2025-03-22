@@ -159,7 +159,7 @@ class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
     LEARNING_RATE = 5.269632147047427e-06
     WEIGHT_DECAY = 0.00034049323130326087
-    BATCH_SIZE = 128
+    BATCH_SIZE = 64
     GRAD_CLIP_NORM = 0.7168560391358462
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
