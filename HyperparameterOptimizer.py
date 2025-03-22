@@ -12,7 +12,7 @@ import traceback
 
 # Configuration
 OPTUNA_DB = "sqlite:///optuna_study.db"
-MAX_BATCH_SIZE = 5  # Number of trials to run before restarting the process
+MAX_BATCH_SIZE = 2  # Number of trials to run before restarting the process
 
 
 def run_trial_subprocess(trial_id, study_name, model_name, proton_file, gamma_file, epochs):
@@ -21,7 +21,7 @@ def run_trial_subprocess(trial_id, study_name, model_name, proton_file, gamma_fi
     This ensures complete isolation and memory cleanup between trials.
     """
     # Create a temporary script file instead of using -c to avoid command line length limitations
-    script_content = """
+    script_content = f"""
 import optuna
 import os
 import sys
@@ -46,7 +46,7 @@ os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:512'
 
 # Load study
 try:
-    storage = optuna.storages.RDBStorage(url="{db_url}")
+    storage = optuna.storages.RDBStorage(url="{OPTUNA_DB}")
     study = optuna.load_study(study_name="{study_name}", storage=storage)
 except Exception as e:
     print(json.dumps({{"trial_id": -1, "error": f"Study load error: {{e}}", "status": "failed", "traceback": traceback.format_exc()}}))
@@ -97,8 +97,8 @@ try:
     supervisor.WEIGHT_DECAY = frozen_trial.suggest_float('weight_decay', 1e-4, 1e-2, log=True)
     supervisor.GRAD_CLIP_NORM = frozen_trial.suggest_float('grad_clip_norm', 0.1, 5.0)
 
-    # Train the model
-    print(f"Training model for {{epochs}} epochs...")
+    # Train the model - Note: using actual value {epochs} not the placeholder
+    print(f"Training model for {epochs} epochs...")
     supervisor.train_model({epochs})
 
     # Calculate accuracy
@@ -146,14 +146,7 @@ finally:
         torch.cuda.empty_cache()
 
     print("Cleanup complete, exiting process.")
-""".format(
-        db_url=OPTUNA_DB,
-        study_name=study_name,
-        model_name=model_name,
-        proton_file=proton_file,
-        gamma_file=gamma_file,
-        epochs=epochs
-    )
+"""
 
     # Write the script to a temporary file
     script_filename = f"temp_trial_{trial_id}_{int(time.time())}.py"
@@ -226,7 +219,7 @@ def create_or_load_study(study_name):
     try:
         # Make sure the database directory exists
         db_path = OPTUNA_DB.replace("sqlite:///", "")
-        os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
+        os.makedirs(os.path.dirname(os.path.abspath(db_path)) or ".", exist_ok=True)
 
         # Create storage
         storage = optuna.storages.RDBStorage(
@@ -362,8 +355,8 @@ def main():
         proton_file=proton_file,
         gamma_file=gamma_file,
         study_name=study_name,
-        n_trials=300,
-        epochs=10,
+        n_trials=10,
+        epochs=1,
         max_concurrent=1  # Set to 1 to avoid memory contention
     )
 
