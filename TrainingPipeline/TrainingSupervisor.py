@@ -10,7 +10,6 @@ from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
 
-from TrainingPipeline.MetricLoss import MetricLoss
 from TrainingPipeline.MagicDataset import MagicDataset
 from TrainingPipeline.ResultsWriter import ResultsWriter
 
@@ -317,23 +316,11 @@ class TrainingSupervisor:
         weight_gamma = weight_gamma / weights_sum
         return weight_proton, weight_gamma
 
-    def train_model(self, epochs: int, target_metric='accuracy', alpha=0.5):
+    def train_model(self, epochs: int):
         weight_proton, weight_gamma = self.calculate_weight_distribution()
-        class_weights = torch.tensor([weight_proton, weight_gamma]).to(self.device)
-        base_loss = nn.CrossEntropyLoss(weight=class_weights)
-
-        if target_metric == 'accuracy':
-            metric_fn = accuracy_score
-        elif target_metric == 'precision':
-            metric_fn = lambda y_true, y_pred: precision_score(y_true, y_pred, zero_division=0)
-        elif target_metric == 'recall':
-            metric_fn = lambda y_true, y_pred: recall_score(y_true, y_pred, zero_division=0)
-        elif target_metric == 'f1':
-            metric_fn = lambda y_true, y_pred: f1_score(y_true, y_pred, zero_division=0)
-        else:
-            metric_fn = accuracy_score
-
-        criterion = MetricLoss(metric_fn, base_loss, alpha)
+        metric_factor = 3
+        class_weights = torch.tensor([weight_proton, weight_gamma * metric_factor]).to(self.device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
 
         optimizer = optim.AdamW(
             self.model.parameters(),
