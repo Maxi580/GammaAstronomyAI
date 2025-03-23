@@ -58,11 +58,6 @@ class MagicConv(nn.Module):
 
         # Calculate average Value
         expanded_mask = valid_mask.unsqueeze(0).unsqueeze(1)
-        """valid_sum = torch.where(
-            expanded_mask,
-            neighbor_values,
-            torch.zeros_like(neighbor_values)
-        ).sum(dim=3, keepdim=True)"""
 
         valid_sum = (neighbor_values * expanded_mask.to(neighbor_values.dtype)).sum(dim=3, keepdim=True)
 

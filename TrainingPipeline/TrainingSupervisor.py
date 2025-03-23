@@ -320,7 +320,7 @@ class TrainingSupervisor:
     def train_model(self, epochs: int, target_metric='accuracy', alpha=0.5):
         weight_proton, weight_gamma = self.calculate_weight_distribution()
         class_weights = torch.tensor([weight_proton, weight_gamma]).to(self.device)
-        """base_loss = nn.CrossEntropyLoss(weight=class_weights)
+        base_loss = nn.CrossEntropyLoss(weight=class_weights)
 
         if target_metric == 'accuracy':
             metric_fn = accuracy_score
@@ -333,8 +333,7 @@ class TrainingSupervisor:
         else:
             metric_fn = accuracy_score
 
-        criterion = MetricLoss(metric_fn, base_loss, alpha)"""
-        criterion = nn.CrossEntropyLoss(weight=class_weights)
+        criterion = MetricLoss(metric_fn, base_loss, alpha)
 
         optimizer = optim.AdamW(
             self.model.parameters(),
