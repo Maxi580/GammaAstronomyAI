@@ -35,6 +35,8 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
                 parameterize_func = parameterize_BasicMagicNet
             case "hexcirclenet":
                 parameterize_func = parameterize_HexCircleNet
+            case "hexmagicnet":
+                parameterize_func = parameterize_HexMagicNet
             case "hexagdlynet":
                 parameterize_func = parameterize_HexagdlyNet
             case "simple1dnet":

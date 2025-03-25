@@ -249,6 +249,8 @@ class TrainingSupervisor:
                 model = StatsMagicNet()
             case "hexcirclenet":
                 model = HexCircleNet()
+            case "hexmagicnet":
+                model = HexCircleNet()
             case "hexagdlynet":
                 model = HexagdlyNet()
             case "simple1dnet":
