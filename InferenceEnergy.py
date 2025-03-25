@@ -39,18 +39,17 @@ def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=100
             
             probabilities = torch.softmax(output, dim=1)
             pred = output.argmax(dim=1).item()
-            gamma_prob = probabilities[0, 1].item() # "gammacity"
+            gamma_prob = probabilities[0, dataset.labels[dataset.GAMMA_LABEL]].item()  # "gammacity"
 
             is_correct = (pred == label)
             correct += is_correct
             
-            if label == 0:  # Proton
+            if label == dataset.labels[dataset.PROTON_LABEL]:  # Proton
                 if is_correct:
                     protons_correct.append((gamma_prob, energy))
                 else:
                     protons_incorrect.append((gamma_prob, energy))
-
-            else:  # label == 1 -> Gamma
+            else:  # Gamma
                 if is_correct:
                     gammas_correct.append((gamma_prob, energy))
                 else:
@@ -97,18 +96,158 @@ def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=100
     plt.clf()
     
     # Only incorrect ones
+    plt.figure(figsize=(8, 6))
     plt.scatter(pi_x, pi_y, color='lightblue', label='Protons Incorrect', marker='o')
     plt.scatter(gi_x, gi_y, color='salmon', label='Gammas Incorrect', marker='o')
 
     plt.xlabel('Gammacity')
     plt.ylabel('Energy')
     plt.yscale('log')
-    plt.title('Scatter Plot of Gammacity vs Energy')
+    plt.title('Scatter Plot (Incorrect Only) of Gammacity vs Energy')
     plt.legend()
     plt.tight_layout()
-    plt.savefig("gammacity_vs_energy2.png")
+    plt.savefig("gammacity_vs_energy_incorrect.png")
     plt.show()
+    plt.clf()
+
+
+    # --------------------------
+    # Histogram of Binned Average Energy
+    # --------------------------
+    # For the histogram we combine correct and incorrect for each category.
+    protons_data = protons_correct + protons_incorrect
+    gammas_data = gammas_correct + gammas_incorrect
+
+    # Convert list of tuples into separate numpy arrays for gammacity (x) and energy (y)
+    if protons_data:
+        p_x, p_y = zip(*protons_data)
+        p_x = np.array(p_x)
+        p_y = np.array(p_y)
+    else:
+        p_x, p_y = np.array([]), np.array([])
+
+    if gammas_data:
+        g_x, g_y = zip(*gammas_data)
+        g_x = np.array(g_x)
+        g_y = np.array(g_y)
+    else:
+        g_x, g_y = np.array([]), np.array([])
+
+    # Define a function to compute the binned average energy.
+    def binned_average(x, y, bins):
+        counts, _ = np.histogram(x, bins=bins)
+        sum_energy, _ = np.histogram(x, bins=bins, weights=y)
+        # Compute average energy per bin; avoid division by zero
+        avg_energy = np.divide(sum_energy, counts, out=np.zeros_like(sum_energy), where=counts>0)
+        # Set bins with no data to NaN (optional)
+        avg_energy[counts == 0] = np.nan
+        return avg_energy, counts
+
+    # Create 100 bins over the range of gammacity for each category.
+    if p_x.size > 0:
+        bins_protons = np.linspace(p_x.min(), p_x.max(), 101)
+    else:
+        bins_protons = np.linspace(0, 1, 101)
+
+    if g_x.size > 0:
+        bins_gammas = np.linspace(g_x.min(), g_x.max(), 101)
+    else:
+        bins_gammas = np.linspace(0, 1, 101)
     
+    # Compute bin centers for plotting.
+    p_bin_centers = (bins_protons[:-1] + bins_protons[1:]) / 2
+    g_bin_centers = (bins_gammas[:-1] + bins_gammas[1:]) / 2
+
+    p_avg_energy, p_counts = binned_average(p_x, p_y, bins_protons)
+    g_avg_energy, g_counts = binned_average(g_x, g_y, bins_gammas)
+
+
+    # Plot the histograms (bar plots) for protons and gammas.
+
+    # Protons histogram: x-axis = gammacity, y-axis = average energy (log scale)
+    plt.step(p_bin_centers, p_avg_energy, label='Protons')
+    plt.step(g_bin_centers, g_avg_energy, label='Gammas')
+    plt.xlabel('Gammacity')
+    plt.ylabel('Average Energy')
+    plt.yscale('log')
+    plt.title('Average Energy vs Gammacity')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("gammacity_vs_energy_average.png")
+    plt.show()
+    plt.clf()
+    
+    # --------------------------
+    # Histogram of Binned Median Energy
+    # --------------------------
+
+    # Function to compute binned median energy
+    def binned_median(x, y, bins):
+        # Digitize x-values into bins (indices are 1-indexed)
+        bin_indices = np.digitize(x, bins)
+        medians = []
+        for i in range(1, len(bins)):
+            # Get energy values corresponding to the i-th bin
+            bin_y = y[bin_indices == i]
+            if len(bin_y) > 0:
+                medians.append(np.median(bin_y))
+            else:
+                medians.append(np.nan)
+        return np.array(medians)
+
+    p_median_energy = binned_median(p_x, p_y, bins_protons)
+    g_median_energy = binned_median(g_x, g_y, bins_gammas)
+
+    # Plot the histograms (bar plots) for protons and gammas using the median energy
+    
+    # Protons histogram: x-axis = gammacity, y-axis = median energy (log scale)
+    plt.step(p_bin_centers, p_median_energy, label='Protons')
+    plt.step(g_bin_centers, g_median_energy, label='Gammas')
+    plt.xlabel('Gammacity')
+    plt.ylabel('Median Energy')
+    plt.yscale('log')
+    plt.title('Median Energy vs Gammacity')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("gammacity_vs_energy_median.png")
+    plt.show()
+    plt.clf()
+    
+    # --------------------------
+    # Histogram of Binned Geometric Mean Energy
+    # --------------------------
+    
+    # Function to compute binned geometric mean energy
+    def binned_geometric_mean(x, y, bins):
+        # Digitize x-values into bins (indices are 1-indexed)
+        bin_indices = np.digitize(x, bins)
+        geo_means = []
+        for i in range(1, len(bins)):
+            # Get energy values corresponding to the i-th bin
+            bin_y = y[bin_indices == i]
+            if len(bin_y) > 0:
+                # Compute the geometric mean: exp(mean(log(values)))
+                gm = np.exp(np.mean(np.log(bin_y)))
+                geo_means.append(gm)
+            else:
+                geo_means.append(np.nan)
+        return np.array(geo_means)
+    
+    p_geo_median_energy = binned_geometric_mean(p_x, p_y, bins_protons)
+    g_geo_median_energy = binned_geometric_mean(g_x, g_y, bins_gammas)
+    
+    # Protons histogram: x-axis = gammacity, y-axis = geometric mean energy (log scale)
+    plt.step(p_bin_centers, p_geo_median_energy, label='Protons')
+    plt.step(g_bin_centers, g_geo_median_energy, label='Gammas')
+    plt.xlabel('Gammacity')
+    plt.ylabel('Geometric Mean Energy')
+    plt.yscale('log')
+    plt.title('Geometric Mean Energy vs Gammacity')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("gammacity_vs_energy_geometricmean.png")
+    plt.show()
+    plt.clf()
 
 
 if __name__ == "__main__":
