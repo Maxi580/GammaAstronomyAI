@@ -339,7 +339,7 @@ class TrainingSupervisor:
             self.write_results(epoch + 1)
 
     def _extract_batch(self, batch):
-        *data, labels = batch
+        *data, labels, _ = batch
 
         return [d.to(self.device) for d in data], labels.to(self.device)
 

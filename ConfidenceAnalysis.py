@@ -10,7 +10,7 @@ from TrainingPipeline.Datasets import *
 
 
 def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=10000):
-    dataset = MagicDataset(proton_file, gamma_file, max_samples=200000)
+    dataset = MagicDataset(proton_file, gamma_file, max_samples=100000, rescale_image=False)
 
     device = torch.device("cuda" if torch.cuda.is_available() else
                           "mps" if torch.backends.mps.is_available() else "cpu")
@@ -36,7 +36,7 @@ def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=100
     with torch.no_grad():
         for i in range(num_samples):
             idx = np.random.randint(0, len(dataset))
-            m1, m2, features, label = dataset[idx]
+            m1, m2, features, label, *_ = dataset[idx]
 
             m1 = m1.unsqueeze(0).to(device)
             m2 = m2.unsqueeze(0).to(device)
@@ -114,15 +114,29 @@ def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=100
     # Histograms of Gammacity
     plt.figure(figsize=(10, 6))
 
-    plt.hist(proton_gammacity, bins=100, histtype='step', label='Proton (Label 0)', color='green')
-    plt.hist(gamma_gammacity, bins=100, histtype='step', label='Gamma (Label 1)', color='blue')
+    plt.hist(proton_gammacity, bins=100, histtype='step', label='Protons')
+    plt.hist(gamma_gammacity, bins=100, histtype='step', label='Gammas')
 
     plt.xlabel("Gammacity (Predicted Gamma Probability)")
     plt.ylabel("Counts")
     plt.title("Distribution of Gammacity for Protons and Gammas")
     plt.legend()
     plt.grid(True)
-    plt.savefig("confidence-analysis-2.png")
+    plt.savefig("confidence-analysis-2-1.png")
+    plt.clf()
+    
+    # Histograms of Gammacity (Relative)
+    plt.figure(figsize=(10, 6))
+
+    plt.hist(proton_gammacity, bins=100, histtype='step', label='Protons',  density=True)
+    plt.hist(gamma_gammacity, bins=100, histtype='step', label='Gammas',  density=True)
+
+    plt.xlabel("Gammacity (Predicted Gamma Probability)")
+    plt.ylabel("Relative Counts")
+    plt.title("Distribution of Gammacity for Protons and Gammas (Relative)")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig("confidence-analysis-2-2.png")
     plt.clf()
     
     # --- Histograms of Confidence Distribution ---

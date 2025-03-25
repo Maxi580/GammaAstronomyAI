@@ -80,7 +80,7 @@ if __name__ == "__main__":
     label_names = {v: k for k, v in dataset.labels.items()}
 
     for i, idx in enumerate(random_indices):
-        m1_image, m2_image, features, label = dataset[idx]
+        m1_image, m2_image, features, label, *_ = dataset[idx]
 
         prefix = f"{i}_{label_names[label]}"
         debug_forward_pass(model_path, prefix, m1_image, m2_image)

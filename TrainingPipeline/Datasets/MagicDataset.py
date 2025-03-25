@@ -89,10 +89,13 @@ class MagicDataset(Dataset):
     PROTON_LABEL: str = 'proton'
 
     def __init__(self, proton_filename: str, gamma_filename: str, max_samples: Optional[int] = None,
-                 clean_image: bool = True, rescale_image: bool = True, debug_info: bool = True):
+                 clean_image: bool = True, rescale_image: bool = True, debug_info: bool = True,
+                 additional_features: list = []
+                 ):
         self.debug_info = debug_info
         self.clean_image = clean_image
         self.rescale_image = rescale_image
+        self.additional_features = additional_features
 
         if self.debug_info:
             print(f"Initializing dataset from:")
@@ -136,7 +139,7 @@ class MagicDataset(Dataset):
     def __len__(self):
         return self.length
 
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int, list]:
         if idx < self.n_protons:
             row = self.proton_data.iloc[idx]
             label = self.PROTON_LABEL
@@ -158,7 +161,7 @@ class MagicDataset(Dataset):
 
         features = extract_features(row)
 
-        return image_m1, image_m2, features, self.labels[label]
+        return image_m1, image_m2, features, self.labels[label], [row[feat] for feat in self.additional_features]
     
     def _rescale_image(self, image):
         """Arrays are 1183 long, however the last 144 are always 0"""
