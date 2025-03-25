@@ -10,7 +10,7 @@ from TrainingPipeline.Datasets import *
 
 
 def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=10000):
-    dataset = MagicDataset(proton_file, gamma_file, max_samples=100000, rescale_image=False)
+    dataset = MagicDataset(proton_file, gamma_file, max_samples=100000, rescale_image=False, additional_features=['true_energy'])
 
     device = torch.device("cuda" if torch.cuda.is_available() else
                           "mps" if torch.backends.mps.is_available() else "cpu")
@@ -29,7 +29,7 @@ def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=100
     with torch.no_grad():
         for i in range(num_samples):
             idx = np.random.randint(0, len(dataset))
-            m1, m2, features, label, event_num, run_num, energy = dataset[idx]
+            m1, m2, features, label, [energy] = dataset[idx]
 
             m1 = m1.unsqueeze(0).to(device)
             m2 = m2.unsqueeze(0).to(device)
