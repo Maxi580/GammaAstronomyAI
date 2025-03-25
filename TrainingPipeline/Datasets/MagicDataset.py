@@ -194,3 +194,11 @@ class MagicDataset(Dataset):
         }
 
         return {'total_samples': total_samples, 'distribution': distribution}
+    
+    def get_all_labels(self) -> np.ndarray:
+        # First n_protons items are proton labels (Logic is mirrored magicDataset)
+        labels = np.full(self.n_protons + self.n_gammas, self.labels[self.PROTON_LABEL])
+        # Last n_gammas items are gamma labels
+        labels[self.n_protons:] = self.labels[self.GAMMA_LABEL]
+        
+        return labels
