@@ -294,7 +294,7 @@ class TrainingSupervisor:
             cycle_momentum=self.SCHEDULER_CYCLE_MOMENTUM
         )
 
-        early_stopping = EarlyStopping(patience=3, min_delta=0.001)
+        early_stopping = EarlyStopping(patience=3, min_delta=0.0001)
 
         torch.manual_seed(42)
         if torch.cuda.is_available():
