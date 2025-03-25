@@ -96,7 +96,6 @@ def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=100
     plt.clf()
     
     # Only incorrect ones
-    plt.figure(figsize=(8, 6))
     plt.scatter(pi_x, pi_y, color='lightblue', label='Protons Incorrect', marker='o')
     plt.scatter(gi_x, gi_y, color='salmon', label='Gammas Incorrect', marker='o')
 
