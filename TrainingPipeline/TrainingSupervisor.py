@@ -1,4 +1,5 @@
 import os
+import datetime
 from typing import Literal, TypedDict
 
 import numpy as np
@@ -271,6 +272,8 @@ class TrainingSupervisor:
         return weight_proton, weight_gamma
 
     def train_model(self, epochs: int):
+        self.training_start_time = datetime.datetime.now()
+        
         weight_proton, weight_gamma = self.calculate_weight_distribution()
         class_weights = torch.tensor([weight_proton, weight_gamma]).to(self.device)
         criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
@@ -328,6 +331,10 @@ class TrainingSupervisor:
                     if self.debug_info:
                         print(f"Early stopping triggered at epoch {epoch + 1}")
                     break
+                
+        self.training_duration = datetime.datetime.now() - self.training_start_time
+        if self.debug_info:
+            print(f"Total Training duration: {str(self.training_duration)}")
 
         if self.save_debug_data:
             self.write_results(epoch + 1)
@@ -469,6 +476,10 @@ class TrainingSupervisor:
                 "distribution": self.dataset.get_distribution(),
             },
             "epochs": epochs,
+            "time": {
+                "total": str(self.training_duration),
+                "avg_per_epoch": str(self.training_duration / epochs),
+            },
             "model": {
                 "name": self.model_name,
                 "structure": self._get_model_structure(),
