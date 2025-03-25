@@ -103,8 +103,10 @@ def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_t
 
 def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int):
     study_name = f"Optimize_{model}"
+    
+    dataset_class: MagicDataset = MagicDatasetHexagdly if model.lower() == 'hexagdlynet' else MagicDataset
 
-    dataset = MagicDataset(proton, gamma, max_samples=100000, debug_info=False)
+    dataset = dataset_class(proton, gamma, max_samples=100000, debug_info=False)
 
     study = start_or_resume_study(dataset, model, study_name, epochs, n_trials)
 
@@ -118,7 +120,7 @@ def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int):
 
 
 if __name__ == "__main__":
-    model_name = "HexCircleNet"
+    model_name = "HexagdlyNet"
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas-new-1.parquet"
 
