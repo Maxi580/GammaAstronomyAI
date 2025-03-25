@@ -10,7 +10,7 @@ from TrainingPipeline.Datasets import *
 
 
 def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=10000):
-    dataset = MagicDataset(proton_file, gamma_file, max_samples=100000, rescale_image=False)
+    dataset = MagicDataset(proton_file, gamma_file, max_samples=100000, rescale_image=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else
                           "mps" if torch.backends.mps.is_available() else "cpu")
@@ -47,7 +47,7 @@ def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=100
             probabilities = torch.softmax(output, dim=1)
             confidence = probabilities.max().item()
             pred = output.argmax(dim=1).item()
-            gamma_prob = probabilities[0, 1].item() # "gammacity"
+            gamma_prob = probabilities[0, dataset.labels[dataset.GAMMA_LABEL]].item() # "gammacity"
 
             is_correct = (pred == label)
             correct += is_correct
@@ -56,7 +56,7 @@ def evaluate_random_samples(model_path, proton_file, gamma_file, num_samples=100
             all_predicted_labels.append(pred)
             all_correct.append(is_correct)
             
-            if label == 0:  # Proton
+            if label == dataset.labels[dataset.PROTON_LABEL]:  # Proton
                 if is_correct:
                     proton_correct_conf.append(confidence)
                 else:
