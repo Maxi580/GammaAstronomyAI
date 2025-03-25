@@ -122,6 +122,7 @@ class TrainingSupervisor:
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     SCHEDULER_STEP_SIZE = 4
+    SCHEDULER_BASE_LR = 1e-4
     SCHEDULER_MAX_LR = 1e-2
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
@@ -286,7 +287,7 @@ class TrainingSupervisor:
 
         scheduler = optim.lr_scheduler.CyclicLR(
             optimizer,
-            base_lr=self.LEARNING_RATE,
+            base_lr=self.SCHEDULER_BASE_LR,
             max_lr=self.SCHEDULER_MAX_LR,
             step_size_up=self.SCHEDULER_STEP_SIZE,
             mode=self.SCHEDULER_MODE,
