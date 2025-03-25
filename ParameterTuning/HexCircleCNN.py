@@ -29,9 +29,9 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
 
             channels = [1]
             for i in range(1, num_layers+1):
-                lower_bound = ((channels[-1] + 7) // 8) * 8
-                upper_bound = channels[-1] * 8
-                channels.append(trial.suggest_int(f'cnn_channels{i}', lower_bound, upper_bound, step=8))
+                lower_bound = ((channels[-1] + 15) // 16) * 16
+                upper_bound = channels[-1] * 16
+                channels.append(trial.suggest_int(f'cnn_channels{i}', lower_bound, upper_bound, step=16))
                 
             
             pooling_pattern = [

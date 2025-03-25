@@ -1,10 +1,10 @@
 import copy
+import math
 
 import torch
 import torch.nn as nn
 import hexagdly
 import optuna
-
 
 
 def parameterize_HexagdlyNet(trial: optuna.Trial):
@@ -21,13 +21,19 @@ def parameterize_HexagdlyNet(trial: optuna.Trial):
         def __init__(self):
             super().__init__()
 
+            # Number of convolutional layers
             num_layers = trial.suggest_int('cnn_layers', 1, 3)
 
+            # Initialize channel list with first channel = 1 and then choose each next channel
             channels = [1]
             for i in range(1, num_layers+1):
-                channels.append(trial.suggest_int(f'cnn_channels{i}', channels[-1]+1, channels[-1]*8))
+                lower_bound = ((channels[-1] + 15) // 16) * 16
+                upper_bound = channels[-1] * 16
+                channels.append(
+                    trial.suggest_int(f'cnn_channels{i}', lower_bound, upper_bound, step=16)
+                )
                 
-            
+            # Pooling pattern for each layer
             pooling_pattern = [
                 trial.suggest_categorical(f'pooling_layer_{i+1}', [True, False])
                 for i in range(num_layers)
@@ -46,22 +52,29 @@ def parameterize_HexagdlyNet(trial: optuna.Trial):
                 ])
                 
                 if pooling_pattern[i]:
-                    layers.append(hexagdly.MaxPool2d(
-                        trial.suggest_int(f'pooling_layer{i+1}_kernel', 1, 3),
-                        trial.suggest_int(f'pooling_layer{i+1}_stride', 1, 3),
-                    ))
-                
-                layers.append(nn.Dropout2d(
-                    trial.suggest_float(f'dropout_cnn_{i + 1}', 0.05, 0.6)
-                ))
+                    layers.append(
+                        hexagdly.MaxPool2d(
+                            trial.suggest_int(f'pooling_layer{i+1}_kernel', 1, 3),
+                            trial.suggest_int(f'pooling_layer{i+1}_stride', 1, 3)
+                        )
+                    )
+                    
+                layers.append(
+                    nn.Dropout2d(
+                        trial.suggest_float(f'dropout_cnn_{i + 1}', 0.05, 0.6, step=0.05)
+                    )
+                )
 
+            # Duplicate the CNN architecture for m1 and m2
             self.m1_cnn = HexagdlyCNN(copy.deepcopy(layers))
             self.m2_cnn = HexagdlyCNN(copy.deepcopy(layers))
             
+            # Use the previously set 'cnn_layers' parameter
             num_layers = trial.params['cnn_layers']
             
-            # Calculate output dimensions of the CNN based on pooling layers
-            out_dims = (34, 39) # Magic Images converted to hexagdly format have size 34x39 (height x width)
+            # Calculate the output dimensions from the CNN.
+            # (Magic Images in hexagdly format have size 34x39)
+            out_dims = (34, 39)
             for i in range(num_layers):
                 if pooling_pattern[i]:
                     kernel = trial.params[f'pooling_layer{i+1}_kernel']
@@ -71,18 +84,26 @@ def parameterize_HexagdlyNet(trial: optuna.Trial):
             final_channels = trial.params[f'cnn_channels{num_layers}']
             input_size = final_channels * out_dims[0] * out_dims[1] * 2
             
+            # Define linear layers with limitations
             num_layers = trial.suggest_int('linear_layers', 1, 4)
 
             sizes = [input_size]
             for i in range(1, num_layers+1):
-                sizes.append(trial.suggest_int(f'linear{i}_size', max(2, sizes[-1]//8), sizes[-1]))
+                lb_candidate = max(2, sizes[-1] // 8)
+                lb = max(16, math.ceil(lb_candidate / 16) * 16)
+                ub = (sizes[-1] // 16) * 16
+                if lb > ub:
+                    lb = ub
+                sizes.append(
+                    trial.suggest_int(f'linear{i}_size', lb, ub, step=16)
+                )
             
             layers = []
             for i in range(num_layers):
                 layers.extend([
                     nn.Linear(sizes[i], sizes[i + 1]),
                     nn.ReLU(),
-                    nn.Dropout(trial.suggest_float(f'linear{i}_dropout', 0.05, 0.6))
+                    nn.Dropout(trial.suggest_float(f'linear{i}_dropout', 0.05, 0.6, step=0.05))
                 ])
 
             self.classifier = nn.Sequential(
