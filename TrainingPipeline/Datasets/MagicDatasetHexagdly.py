@@ -22,7 +22,7 @@ class MagicDatasetHexagdly(MagicDataset):
         x_groups = [list(group[1]) for group in groupby(indexed_coords, key=lambda x: x[1][0])]
         size_y = max([len(g) for g in x_groups])
         
-        grid = np.full((size_y, size_x), fill_value=-1, dtype=float)
+        grid = np.full((size_y, size_x), fill_value=0, dtype=float)
         
         for group in x_groups:
             min_offset_y = min(group, key=lambda x: x[1][1])[1][1]
