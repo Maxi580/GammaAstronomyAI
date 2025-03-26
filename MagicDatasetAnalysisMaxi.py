@@ -1,21 +1,20 @@
 from typing import Any, Dict, Optional, Tuple
 import os
-import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 import matplotlib.pyplot as plt
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from CNN.MagicConv.NeighborLogic import get_neighbor_list_by_kernel
+from CNN.Architectures.StatsModel import get_batch_stats
 
 NUM_OF_HEXAGONS = 1039
 
 
 def replace_nan(value):
-    """Replace missing Values with 0"""
     try:
         val = float(value)
         return 0.0 if pd.isna(val) else val
@@ -116,7 +115,8 @@ class MagicDataset(Dataset):
     PROTON_LABEL: str = 'proton'
 
     def __init__(self, proton_filename: str, gamma_filename: str, mask_rings: Optional[int] = None,
-                 shuffle: Optional[bool] = False, max_samples: Optional[int] = None, debug_info: bool = True):
+                 shuffle: Optional[bool] = False, max_samples: Optional[int] = None, debug_info: bool = True,
+                 min_hillas_size: float = None, min_true_energy: float = None):
         self.debug_info = debug_info
         self.shuffle = shuffle
         self.mask_rings = mask_rings
@@ -149,9 +149,52 @@ class MagicDataset(Dataset):
             print(f"Calculated Number of Protons: {self.n_protons}")
             print(f"Calculated Number of Protons: {self.n_gammas}")
 
-        # Read the first num_rows rows
         self.proton_data = read_parquet_limit(proton_filename, self.n_protons)
         self.gamma_data = read_parquet_limit(gamma_filename, self.n_gammas)
+
+        if min_hillas_size is not None:
+            original_proton_count = len(self.proton_data)
+            original_gamma_count = len(self.gamma_data)
+
+            self.proton_data = self.proton_data[
+                (self.proton_data['hillas_size_m1'] >= min_hillas_size) |
+                (self.proton_data['hillas_size_m2'] >= min_hillas_size)
+                ]
+            self.gamma_data = self.gamma_data[
+                (self.gamma_data['hillas_size_m1'] >= min_hillas_size) |
+                (self.gamma_data['hillas_size_m2'] >= min_hillas_size)
+                ]
+
+            self.n_protons = len(self.proton_data)
+            self.n_gammas = len(self.gamma_data)
+
+            if self.debug_info:
+                print(f"\nApplied Hillas size filter (hillas_size >= {min_hillas_size}):")
+                print(
+                    f"Protons: {original_proton_count} → {self.n_protons} ({self.n_protons / original_proton_count * 100:.1f}%)")
+                print(
+                    f"Gammas: {original_gamma_count} → {self.n_gammas} ({self.n_gammas / original_gamma_count * 100:.1f}%)")
+
+        if min_true_energy is not None:
+            original_proton_count = len(self.proton_data)
+            original_gamma_count = len(self.gamma_data)
+
+            self.proton_data = self.proton_data[
+                self.proton_data['true_energy'] >= min_true_energy
+                ]
+            self.gamma_data = self.gamma_data[
+                self.gamma_data['true_energy'] >= min_true_energy
+                ]
+
+            self.n_protons = len(self.proton_data)
+            self.n_gammas = len(self.gamma_data)
+
+            if self.debug_info:
+                print(f"\nApplied true energy filter (true_energy >= {min_true_energy}):")
+                print(
+                    f"Protons: {original_proton_count} → {self.n_protons} ({self.n_protons / original_proton_count * 100:.1f}%)")
+                print(
+                    f"Gammas: {original_gamma_count} → {self.n_gammas} ({self.n_gammas / original_gamma_count * 100:.1f}%)")
 
         # self.proton_data = pd.read_parquet(proton_filename, engine='fastparquet', rows=self.n_protons)
         # self.gamma_data = pd.read_parquet(gamma_filename, engine='fastparquet', rows=self.n_gammas)
@@ -175,10 +218,10 @@ class MagicDataset(Dataset):
             row = self.gamma_data.iloc[idx - self.n_protons]
             label = self.GAMMA_LABEL
 
-        noisy_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
-        noisy_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
+        m1 = resize_image(torch.tensor(row['image_m1'], dtype=torch.float32))
+        m2 = resize_image(torch.tensor(row['image_m2'], dtype=torch.float32))
 
-        if self.mask_rings is not None:
+        """if self.mask_rings is not None:
             # Masks are precalculated, but we need to know which to use
             clean_m1 = resize_image(torch.tensor(row['clean_image_m1'], dtype=torch.float32))
             clean_m2 = resize_image(torch.tensor(row['clean_image_m2'], dtype=torch.float32))
@@ -193,11 +236,11 @@ class MagicDataset(Dataset):
 
         if self.shuffle:
             noisy_m1 = shuffle_tensor(noisy_m1)
-            noisy_m2 = shuffle_tensor(noisy_m2)
+            noisy_m2 = shuffle_tensor(noisy_m2)"""
 
         features = extract_features(row)
 
-        return noisy_m1, noisy_m2, features, self.labels[label]
+        return m1, m2, features, self.labels[label]
 
     def analyze_noise(self):
         stats = {
@@ -346,75 +389,109 @@ class MagicDataset(Dataset):
         return {'total_samples': total_samples, 'distribution': distribution}
 
 
-def calculate_stats(tensor):
-    return {
-        'mean': tensor.mean().item(),
-        'std': tensor.std().item(),
-        'neg_ratio': (tensor < 0).float().mean().item(),
-        'min': tensor.min().item(),
-        'max': tensor.max().item(),
-        'squared_mean': (tensor ** 2).mean().item(),
-        'q25': torch.quantile(tensor, 0.25).item(),
-        'q50': torch.quantile(tensor, 0.50).item(),
-        'q75': torch.quantile(tensor, 0.75).item()
+def collect_statistics(dataset):
+    loader = DataLoader(dataset, batch_size=128, shuffle=False)
+
+    m1_proton_stats = []
+    m2_proton_stats = []
+    m1_gamma_stats = []
+    m2_gamma_stats = []
+
+    total_processed = 0
+
+    for m1, m2, _, labels in loader:
+        proton_mask = labels == 0
+        gamma_mask = labels == 1
+
+        if proton_mask.any():
+            batch_proton_stats_m1 = get_batch_stats(m1[proton_mask])
+            batch_proton_stats_m2 = get_batch_stats(m2[proton_mask])
+            m1_proton_stats.append(batch_proton_stats_m1)
+            m2_proton_stats.append(batch_proton_stats_m2)
+
+        if gamma_mask.any():
+            batch_gamma_stats_m1 = get_batch_stats(m1[gamma_mask])
+            batch_gamma_stats_m2 = get_batch_stats(m2[gamma_mask])
+            m1_gamma_stats.append(batch_gamma_stats_m1)
+            m2_gamma_stats.append(batch_gamma_stats_m2)
+
+        total_processed += len(labels)
+        if total_processed % 10000 == 0:
+            print(f"Processed {total_processed} samples")
+
+    m1_proton_stats = torch.cat(m1_proton_stats, dim=0)
+    m2_proton_stats = torch.cat(m2_proton_stats, dim=0)
+    m1_gamma_stats = torch.cat(m1_gamma_stats, dim=0)
+    m2_gamma_stats = torch.cat(m2_gamma_stats, dim=0)
+
+    stats_dict = {
+        "m1_proton": m1_proton_stats.numpy(),
+        "m2_proton": m2_proton_stats.numpy(),
+        "m1_gamma": m1_gamma_stats.numpy(),
+        "m2_gamma": m2_gamma_stats.numpy()
     }
 
+    metric_names = [
+        "mean", "std", "neg_ratio", "min", "max",
+        "squared_mean", "nonzero_ratio", "q25", "q50", "q75"
+    ]
 
-def collect_stats(dataset):
-    stats = {'proton': {'m1': [], 'm2': []}, 'gamma': {'m1': [], 'm2': []}}
+    print("\nComplete Statistics Summary:")
+    for telescope_type, stats in stats_dict.items():
+        print(f"\nSummary for {telescope_type}:")
+        for i, metric in enumerate(metric_names):
+            values = stats[:, i]
+            print(f"{metric:15} - Min: {values.min():10.6f}, Max: {values.max():10.6f}, "
+                  f"Avg: {values.mean():10.6f}, Std: {values.std():10.6f}")
 
-    for idx in range(len(dataset)):
-        m1, m2, _, label = dataset[idx]
-        label_name = 'gamma' if label == dataset.labels[dataset.GAMMA_LABEL] else 'proton'
-
-        stats[label_name]['m1'].append(calculate_stats(m1))
-        stats[label_name]['m2'].append(calculate_stats(m2))
-
-    return {label: {tel: pd.DataFrame(data)
-                    for tel, data in telescopes.items()}
-            for label, telescopes in stats.items()}
-
-
-def plot_distributions(stats, metrics):
-    for metric in metrics:
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
-
-        ax1.plot(stats['proton']['m1'][metric], alpha=0.7, color='blue')
-        ax1.set_title(f'Proton M1 {metric}')
-        ax1.grid(True, alpha=0.3)
-
-        ax2.plot(stats['proton']['m2'][metric], alpha=0.7, color='red')
-        ax2.set_title(f'Proton M2 {metric}')
-        ax2.grid(True, alpha=0.3)
-
-        ax3.plot(stats['gamma']['m1'][metric], alpha=0.7, color='blue')
-        ax3.set_title(f'Gamma M1 {metric}')
-        ax3.grid(True, alpha=0.3)
-
-        ax4.plot(stats['gamma']['m2'][metric], alpha=0.7, color='red')
-        ax4.set_title(f'Gamma M2 {metric}')
-        ax4.grid(True, alpha=0.3)
-
-        plt.tight_layout()
-        plt.savefig(f'distribution_{metric}.png', dpi=300, bbox_inches='tight')
-        plt.close()
+    return stats_dict
 
 
-def plot_neg_ratio_distributions(stats):
-    for telescope in ['m1', 'm2']:
-        for particle in ['proton', 'gamma']:
-            plt.figure(figsize=(15, 5))
-            plt.plot(stats[particle][telescope]['neg_ratio'], linewidth=0.5, alpha=1.0)
-            plt.title(f'{particle.capitalize()} {telescope.upper()} Negative Ratio')
-            plt.xlabel('Sample Index')
-            plt.ylabel('Negative Ratio')
+def print_summary_statistics(stats_dict):
+    metrics = [
+        "mean", "std", "neg_ratio", "min", "max",
+        "squared_mean", "nonzero_ratio", "q25", "q50", "q75"
+    ]
+
+    for telescope_type, stats in stats_dict.items():
+        print(f"\nSummary for {telescope_type}:")
+        for i, metric in enumerate(metrics):
+            values = stats[:, i]
+            print(f"{metric:15} - Min: {values.min():10.6f}, Max: {values.max():10.6f}, "
+                  f"Avg: {values.mean():10.6f}, Std: {values.std():10.6f}")
+
+
+def plot_metric_distributions(stats_dict, output_dir="plots"):
+    os.makedirs(output_dir, exist_ok=True)
+
+    metrics = [
+        "mean", "std", "neg_ratio", "min", "max",
+        "squared_mean", "nonzero_ratio", "q25", "q50", "q75"
+    ]
+
+    for metric_idx, metric_name in enumerate(metrics):
+        for telescope_type, stats in stats_dict.items():
+            plt.figure(figsize=(10, 6))
+            values = stats[:, metric_idx]
+
+            plt.plot(range(len(values)), values, linewidth=1)
+
+            plt.title(f"{metric_name} Distribution - {telescope_type}")
+            plt.xlabel("Sample Index")
+            plt.ylabel(metric_name)
             plt.grid(True, alpha=0.3)
-            plt.savefig(f'neg_ratio_{particle}_{telescope}.png', dpi=300, bbox_inches='tight')
+
+            mean_val = values.mean()
+            std_val = values.std()
+            plt.axhline(y=mean_val, color='r', linestyle='--', alpha=0.5,
+                        label=f'Mean: {mean_val:.4f}')
+            plt.axhline(y=mean_val + std_val, color='g', linestyle=':', alpha=0.5,
+                        label=f'Mean ± Std')
+            plt.axhline(y=mean_val - std_val, color='g', linestyle=':', alpha=0.5)
+
+            plt.legend()
+            plt.tight_layout()
+
+            plt.savefig(os.path.join(output_dir, f"{metric_name}_{telescope_type}.png"),
+                        dpi=300, bbox_inches='tight')
             plt.close()
-
-
-if __name__ == '__main__':
-    dataset = MagicDataset("magic-protons.parquet", "magic-gammas.parquet", debug_info=False)
-    stats = collect_stats(dataset)
-    metrics = ['mean', 'std', 'neg_ratio', 'min', 'max', 'squared_mean', 'q25', 'q50', 'q75']
-    plot_neg_ratio_distributions(stats)

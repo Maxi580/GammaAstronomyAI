@@ -115,6 +115,13 @@ class EarlyStopping:
 
 class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
+    
+    # Params from Maxis Branch
+    # LEARNING_RATE = 5.269632147047427e-06
+    # WEIGHT_DECAY = 0.00034049323130326087
+    # BATCH_SIZE = 64
+    # GRAD_CLIP_NORM = 0.7168560391358462
+    
     LEARNING_RATE = 1e-4
     WEIGHT_DECAY = 1e-4
     BATCH_SIZE = 64
@@ -250,7 +257,7 @@ class TrainingSupervisor:
             case "hexcirclenet":
                 model = HexCircleNet()
             case "hexmagicnet":
-                model = HexCircleNet()
+                model = HexMagicNet()
             case "hexagdlynet":
                 model = HexagdlyNet()
             case "simple1dnet":
@@ -278,8 +285,9 @@ class TrainingSupervisor:
         self.training_start_time = datetime.datetime.now()
         
         weight_proton, weight_gamma = self.calculate_weight_distribution()
-        class_weights = torch.tensor([weight_proton, weight_gamma]).to(self.device)
-        criterion = nn.CrossEntropyLoss(weight=class_weights, label_smoothing=0.1)
+        metric_factor = 3
+        class_weights = torch.tensor([weight_proton, weight_gamma * metric_factor]).to(self.device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
 
         optimizer = optim.AdamW(
             self.model.parameters(),

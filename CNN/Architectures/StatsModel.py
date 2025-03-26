@@ -21,7 +21,6 @@ class StatsMagicNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.classifier = nn.Sequential(
-            nn.Linear(18, 32),
             nn.Linear(20, 64),
             nn.BatchNorm1d(64),
             nn.ReLU(),
@@ -30,13 +29,11 @@ class StatsMagicNet(nn.Module):
             nn.Linear(64, 32),
             nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.Dropout(0.2),
             nn.Dropout(0.4),
 
             nn.Linear(32, 16),
             nn.BatchNorm1d(16),
             nn.ReLU(),
-            nn.Dropout(0.2),
             nn.Dropout(0.4),
 
             nn.Linear(16, 2)
