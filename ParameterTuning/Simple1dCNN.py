@@ -79,13 +79,13 @@ def parameterize_Simple1dNet(trial: optuna.Trial):
             sizes = [input_size]
             max_ub = 4096
             for i in range(1, num_layers+1):
-                lb_candidate = max(2, sizes[-1] // 8)
+                lb_candidate = max(2, sizes[-1] // 16)
                 lb = max(16, math.ceil(lb_candidate / 16) * 16)
                 ub = (sizes[-1] // 16) * 16
                 ub = min(max_ub, ub)
 
                 if lb > ub:
-                    lb = ub // 8
+                    lb = ub // 16
 
                 sizes.append(
                     trial.suggest_int(f'linear{i}_size', lb, ub, step=16)
