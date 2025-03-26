@@ -10,7 +10,7 @@ from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
 
-from TrainingPipeline.MagicDataset import MagicDataset
+from TrainingPipeline.Datasets.MagicDataset import MagicDataset
 from TrainingPipeline.ResultsWriter import ResultsWriter
 
 from CNN.Architectures.BasicMagicCNN import BasicMagicNet

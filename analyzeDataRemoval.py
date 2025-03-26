@@ -3,7 +3,7 @@ import time
 import json
 import matplotlib.pyplot as plt
 import numpy as np
-from TrainingPipeline.MagicDataset import MagicDataset
+from TrainingPipeline.Datasets.MagicDataset import MagicDataset
 
 
 def analyze_energy_cutoffs(proton_file: str, gamma_file: str,

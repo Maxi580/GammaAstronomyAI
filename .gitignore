@@ -1,5 +1,5 @@
 # Test data and other datasets
-datasets/
+datasets/*
 reconstructed_images/
 *.parquet
 
