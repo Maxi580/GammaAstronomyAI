@@ -91,7 +91,10 @@ def start_or_resume_study(dataset, model: str, study_name: str, epochs: int, n_t
             storage=storage,
             directions=["maximize", "minimize"],
             pruner=optuna.pruners.MedianPruner(),
-            sampler=optuna.samplers.TPESampler(seed=42),
+            sampler=optuna.samplers.TPESampler(
+                seed=42,
+                n_startup_trials=(n_trials // 5), # Use 20% of trials with random sampler to explor more options first.
+            )
         )
         print("Creating new study")
 
@@ -122,7 +125,7 @@ def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int):
 
 
 if __name__ == "__main__":
-    model_name = "HexagdlyNet"
+    model_name = "Simple1DNet"
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas-new-1.parquet"
 
@@ -131,5 +134,5 @@ if __name__ == "__main__":
         proton_file,
         gamma_file,
         epochs=10,
-        n_trials=250
+        n_trials=300
     )
