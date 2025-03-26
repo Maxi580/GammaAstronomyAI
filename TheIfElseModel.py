@@ -5,12 +5,12 @@ from collections import defaultdict
 
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
-from TrainingPipeline.Datasets.MagicDataset import MagicDataset
+from TrainingPipeline.MagicDataset import MagicDataset
 from sklearn.metrics import accuracy_score, confusion_matrix
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from CNN.Architectures.StatsModel import get_batch_stats
-from TrainingPipeline.Datasets.MagicDataset import collect_statistics
+from TrainingPipeline.MagicDataset import collect_statistics
 
 
 def combine_results(m1_result, m2_result):

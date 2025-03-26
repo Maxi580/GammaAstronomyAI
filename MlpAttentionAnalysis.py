@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from typing import Dict
 
 from CNN.Architectures.StatsModel import get_batch_stats, StatsMagicNet
-from TrainingPipeline.Datasets.MagicDataset import MagicDataset
+from TrainingPipeline.MagicDataset import MagicDataset
 
 
 class StatsMagicNetAnalyzer:

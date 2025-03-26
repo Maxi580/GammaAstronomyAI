@@ -6,7 +6,7 @@ import torch.nn as nn
 
 from CNN.Architectures.BasicMagicCNN import BasicMagicNet
 from CNN.MagicConv.MagicConv import MagicConv
-from TrainingPipeline.Datasets.MagicDataset import MagicDataset
+from TrainingPipeline.MagicDataset import MagicDataset
 from Visualization.ImageReconstruct import reconstruct_image
 
 POOLING_KERNEL_SIZE = 2
