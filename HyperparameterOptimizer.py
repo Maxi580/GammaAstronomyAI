@@ -51,13 +51,13 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
         if weights > 20_000_000:
             raise optuna.exceptions.TrialPruned(f"Too many weights: {weights}")
 
-        supervisor.LEARNING_RATE = trial.suggest_float('learning_rate', 1e-6, 1e-1, log=True)
+        supervisor.LEARNING_RATE = learning_rate = trial.suggest_float('learning_rate', 1e-6, 1e-1, log=True)
         supervisor.WEIGHT_DECAY = trial.suggest_float('weight_decay', 1e-4, 1e-2, log=True)
         supervisor.GRAD_CLIP_NORM = trial.suggest_float('grad_clip_norm', 0.1, 5.0, step=0.1)
         supervisor.SCHEDULER_CYCLE_MOMENTUM = trial.suggest_categorical('scheduler_cycle_momentum', [True, False])
         supervisor.SCHEDULER_STEP_SIZE = trial.suggest_int('scheduler_step_size', 3, 6)
-        supervisor.SCHEDULER_BASE_LR = trial.suggest_float('scheduler_base_lr', 1e-6, supervisor.LEARNING_RATE, log=True)
-        supervisor.SCHEDULER_MAX_LR = trial.suggest_float('scheduler_max_lr', supervisor.LEARNING_RATE, supervisor.LEARNING_RATE * 10, log=True)
+        supervisor.SCHEDULER_BASE_LR = trial.suggest_float('scheduler_base_lr', 1e-6, learning_rate, log=True)
+        supervisor.SCHEDULER_MAX_LR = trial.suggest_float('scheduler_max_lr', learning_rate, learning_rate * 10, log=True)
 
         supervisor.train_model(epochs)
 

@@ -42,7 +42,7 @@ def parameterize_Simple1dNet(trial: optuna.Trial):
                     nn.Conv1d(
                         channels[i],
                         channels[i + 1],
-                        kernel_size=trial.suggest_int(f'conv_kernel_size{i + 1}', 1, 5)
+                        kernel_size=trial.suggest_int(f'conv_kernel_size{i + 1}', 1, 8)
                     ),
                     nn.BatchNorm1d(channels[i+1]),
                     nn.ReLU(),
@@ -50,9 +50,9 @@ def parameterize_Simple1dNet(trial: optuna.Trial):
                 
                 if pooling_pattern[i]:
                     PoolingLayer = nn.MaxPool1d if trial.suggest_categorical(f'pooling_layer{i+1}_type', ["max", "avg"]) == "max" else nn.AvgPool1d
-                    # Limit pooling kernel range to 1 to 3
+                    # Limit pooling kernel range to 1 to 8
                     layers.append(PoolingLayer(
-                        trial.suggest_int(f'pooling_layer{i+1}_kernel', 1, 3)
+                        trial.suggest_int(f'pooling_layer{i+1}_kernel', 1, 8)
                     ))
                     
                 layers.append(nn.Dropout1d(
@@ -77,12 +77,16 @@ def parameterize_Simple1dNet(trial: optuna.Trial):
             num_layers = trial.suggest_int('linear_layers', 1, 4)
 
             sizes = [input_size]
+            max_ub = 4096
             for i in range(1, num_layers+1):
                 lb_candidate = max(2, sizes[-1] // 8)
                 lb = max(16, math.ceil(lb_candidate / 16) * 16)
                 ub = (sizes[-1] // 16) * 16
+                ub = min(max_ub, ub)
+
                 if lb > ub:
-                    lb = ub
+                    lb = ub // 8
+
                 sizes.append(
                     trial.suggest_int(f'linear{i}_size', lb, ub, step=16)
                 )
