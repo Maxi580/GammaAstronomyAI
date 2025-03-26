@@ -38,6 +38,18 @@ class ResultsWriter:
                          [("loss", train_metrics, "Training"),
                           ("loss", val_metrics, "Validation")]),
 
+            _plot_config("loss_diagram_training.png", "Loss Diagram Training",
+                         ((1, data["epochs"]), None, "Epochs"),
+                         ((0, 1), np.arange(0, 1.1, 0.1), "Loss Value"),
+                         [("proton_loss", train_metrics, "Protons"),
+                          ("gamma_loss", train_metrics, "Gammas")]),
+
+            _plot_config("loss_diagram_validation.png", "Loss Diagram Validation",
+                         ((1, data["epochs"]), None, "Epochs"),
+                         ((0, 1), np.arange(0, 1.1, 0.1), "Loss Value"),
+                         [("proton_loss", val_metrics, "Protons"),
+                          ("gamma_loss", val_metrics, "Gammas")]),
+
             _plot_config("training_metrics.png", "Training Metrics",
                          ((1, data["epochs"]), None, "Epochs"),
                          ((0, 100), np.arange(0, 101, 10), "Percentage"),
@@ -90,11 +102,6 @@ class ResultsWriter:
 
         ax.figure.savefig(os.path.join(self.output_dir, plot_config["filename"]))
         plt.close(ax.figure)
-
-
-import matplotlib.pyplot as plt
-import numpy as np
-import json
 
 
 def get_min_max_values(metrics_data, metric_names):

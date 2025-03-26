@@ -1,7 +1,8 @@
-from typing import Tuple
+import sys, os
 
 from PIL import Image, ImageDraw
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from SimulatedSampleGeneration.PlaneGenerators import HexagonPlaneGenerator
 
 

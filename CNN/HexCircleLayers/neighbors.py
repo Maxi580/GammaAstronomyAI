@@ -113,7 +113,7 @@ def get_axial_coords(hex_count_target: int) -> List[Tuple[int, int]]:
 
         # Binary search to find a hex_radius that produces approximately target_count hexagons.
         min_ratio = 0.01
-        max_ratio = 0.2
+        max_ratio = 0.5
         best_ratio = None
         best_count = 0
 

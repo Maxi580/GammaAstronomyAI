@@ -1,15 +1,14 @@
+import sys, os
 from PIL import Image, ImageDraw
 import numpy as np
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from SimulatedSampleGeneration.PlaneGenerators import HexagonPlaneGenerator
 from CNN.HexCircleLayers.pooling import _get_clusters
- 
 
-hex_count = 163
 
 def hex_circle_pooled(hex_count: int, kernel_size: int, number_pooled: bool):
     clusters = _get_clusters(hex_count, kernel_size)
-
 
     plane_generator = HexagonPlaneGenerator()
 
@@ -31,7 +30,7 @@ def hex_circle_pooled(hex_count: int, kernel_size: int, number_pooled: bool):
                 hex_center_x, hex_center_y, plane_info[2]
             )
             draw.polygon(points, fill=color, outline=(0, 0, 0))
-            draw.text((hex_center_x, hex_center_y), str(c_idx if number_pooled else idx), anchor="mm", align="center", font_size=20, stroke_width=1)
+            draw.text((hex_center_x, hex_center_y), str(c_idx if number_pooled else idx), anchor="mm", align="center", font_size=22, stroke_width=1, fill=(50,50,50))
             
             missing.remove(idx)
 
@@ -42,11 +41,11 @@ def hex_circle_pooled(hex_count: int, kernel_size: int, number_pooled: bool):
             hex_center_x, hex_center_y, plane_info[2]
         )
         draw.polygon(points, fill=(50,50,50), outline=(0, 0, 0))
-        draw.text((hex_center_x, hex_center_y), str("None" if number_pooled else idx), anchor="mm", align="center", font_size=20, stroke_width=1)
+        draw.text((hex_center_x, hex_center_y), str("None" if number_pooled else idx), anchor="mm", align="center", font_size=22, stroke_width=1)
         
     image.show()
 
-    # image.save("./hex_circle_pooled.png", "PNG")
+    # image.save(f"./Visuals/hex_circle_pooled-{hex_count}-{kernel_size}.png", "PNG")
     
 
 if __name__ == "__main__":

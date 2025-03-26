@@ -1,4 +1,5 @@
 import os
+import datetime
 from typing import Literal, TypedDict
 
 import numpy as np
@@ -10,14 +11,10 @@ from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Subset
 
-from TrainingPipeline.Datasets.MagicDataset import MagicDataset
+from TrainingPipeline.Datasets import MagicDataset
 from TrainingPipeline.ResultsWriter import ResultsWriter
 
-from CNN.Architectures.BasicMagicCNN import BasicMagicNet
-from CNN.Architectures.MLP import MLP
-from CNN.Architectures.StatsModel import StatsMagicNet
-from CNN.Architectures.HexCircleCNN import HexCircleNet
-from CNN.Architectures.HexMagicNet import HexMagicNet
+from CNN.Architectures import *
 
 np.random.seed(42)
 torch.manual_seed(42)
@@ -74,6 +71,9 @@ def print_metrics(labels, metrics: MetricsDict):
     print(f"{'Recall:':<12} {metrics['recall']:>6.2f}%")
     print(f"{'F1-Score:':<12} {metrics['f1']:>6.2f}%")
     print(f"{'Loss:':<12} {metrics['loss']:>6.4f}")
+    if "proton_loss" in metrics and "gamma_loss" in metrics:
+        print(f"{'Proton Loss:':<12} {metrics['proton_loss']:>6.4f}")
+        print(f"{'Gamma Loss:':<12} {metrics['gamma_loss']:>6.4f}")
 
     print("\nConfusion Matrix:")
     print("─" * 45)
@@ -87,47 +87,6 @@ def print_metrics(labels, metrics: MetricsDict):
     print("─" * 45)
     # Get label mapping (which actual label is 0 and which is 1)
     print(f"Label mapping: {labels}")
-
-
-def inference(data_loader, labels, model_path):
-    device = torch.device(
-        "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
-    model = BasicMagicNet()
-
-    model.load_state_dict(torch.load(model_path, weights_only=True, map_location=device))
-    model = model.to(device)
-    model.eval()
-
-    all_preds = []
-    all_labels = []
-    total_loss = 0
-    criterion = nn.CrossEntropyLoss()
-
-    print(f"Evaluating model on device: {device}")
-    print(f"Total batches to process: {len(data_loader)}")
-
-    with torch.no_grad():
-        for batch_idx, (m1_images, m2_images, features, labels) in enumerate(data_loader):
-            m1_images = m1_images.to(device)
-            m2_images = m2_images.to(device)
-            features = features.to(device)
-            labels = labels.to(device)
-
-            outputs = model(m1_images, m2_images, features)
-            loss = criterion(outputs, labels)
-            total_loss += loss.item()
-
-            _, predicted = outputs.max(1)
-            all_preds.extend(predicted.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
-
-    avg_loss = total_loss / len(data_loader)
-
-    # Calculate metrics using the average loss and all predictions
-    metrics = calc_metrics(all_labels, all_preds, avg_loss)
-    print_metrics(labels, metrics)
-
-    return metrics
 
 
 def worker_init_fn(worker_id):
@@ -156,20 +115,31 @@ class EarlyStopping:
 
 class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
-    LEARNING_RATE = 5.269632147047427e-06
-    WEIGHT_DECAY = 0.00034049323130326087
+    
+    # Params from Maxis Branch
+    # LEARNING_RATE = 5.269632147047427e-06
+    # WEIGHT_DECAY = 0.00034049323130326087
+    # BATCH_SIZE = 64
+    # GRAD_CLIP_NORM = 0.7168560391358462
+    
+    LEARNING_RATE = 1e-4
+    WEIGHT_DECAY = 1e-4
     BATCH_SIZE = 64
-    GRAD_CLIP_NORM = 0.7168560391358462
+    GRAD_CLIP_NORM = 1.0
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
+    SCHEDULER_STEP_SIZE = 4
+    SCHEDULER_BASE_LR = 1e-4
+    SCHEDULER_MAX_LR = 1e-2
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
-                 save_model: bool = False, save_debug_data: bool = True) -> None:
+                 save_model: bool = False, save_debug_data: bool = True, early_stopping: bool = True) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
                                    else "cpu")
         self.debug_info = debug_info
         self.save_model = save_model
         self.save_debug_data = save_debug_data
+        self.early_stopping = early_stopping
 
         if self.save_debug_data or self.save_model:
             os.makedirs(output_dir, exist_ok=True)
@@ -208,14 +178,8 @@ class TrainingSupervisor:
 
         # Stratified splitting using sklearn
         # Use 70% of data for training and 30% for validation
-        # Create labels array directly from metadata
-        n_protons = self.dataset.n_protons
-        n_gammas = self.dataset.n_gammas
-
-        # First n_protons items are proton labels (Logic is mirrored magicDataset)
-        labels = np.full(n_protons + n_gammas, self.dataset.labels[self.dataset.PROTON_LABEL])
-        # Last n_gammas items are gamma labels
-        labels[n_protons:] = self.dataset.labels[self.dataset.GAMMA_LABEL]
+        # Get labels from dataset
+        labels = self.dataset.get_all_labels()
 
         # Stratified splitting using sklearn (shuffles indices)
         train_indices, val_indices = train_test_split(
@@ -275,9 +239,6 @@ class TrainingSupervisor:
         val_data_loader = DataLoader(
             val_dataset, batch_size=self.BATCH_SIZE, shuffle=False, generator=generator, worker_init_fn=worker_init_fn
         )
-        """test_data_loader = DataLoader(
-            test_dataset, batch_size=self.BATCH_SIZE, shuffle=False
-        )"""
 
         if self.debug_info:
             print("Dataset loaded.")
@@ -297,6 +258,10 @@ class TrainingSupervisor:
                 model = HexCircleNet()
             case "hexmagicnet":
                 model = HexMagicNet()
+            case "hexagdlynet":
+                model = HexagdlyNet()
+            case "simple1dnet":
+                model = Simple1dNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
@@ -317,6 +282,8 @@ class TrainingSupervisor:
         return weight_proton, weight_gamma
 
     def train_model(self, epochs: int):
+        self.training_start_time = datetime.datetime.now()
+        
         weight_proton, weight_gamma = self.calculate_weight_distribution()
         metric_factor = 3
         class_weights = torch.tensor([weight_proton, weight_gamma * metric_factor]).to(self.device)
@@ -330,12 +297,14 @@ class TrainingSupervisor:
 
         scheduler = optim.lr_scheduler.CyclicLR(
             optimizer,
-            base_lr=1e-5,
-            max_lr=1e-3,
-            step_size_up=4,
-            mode='triangular2',
-            cycle_momentum=False
+            base_lr=self.SCHEDULER_BASE_LR,
+            max_lr=self.SCHEDULER_MAX_LR,
+            step_size_up=self.SCHEDULER_STEP_SIZE,
+            mode=self.SCHEDULER_MODE,
+            cycle_momentum=self.SCHEDULER_CYCLE_MOMENTUM
         )
+
+        early_stopping = EarlyStopping(patience=3, min_delta=0.0001)
 
         torch.manual_seed(42)
         if torch.cuda.is_available():
@@ -367,39 +336,63 @@ class TrainingSupervisor:
                         self.model_path,
                     )
 
+            if self.early_stopping:
+                early_stopping(val_metrics['loss'])
+                if early_stopping.early_stop:
+                    if self.debug_info:
+                        print(f"Early stopping triggered at epoch {epoch + 1}")
+                    break
+                
+        self.training_duration = datetime.datetime.now() - self.training_start_time
+        if self.debug_info:
+            print(f"Total Training duration: {str(self.training_duration)}")
+
         if self.save_debug_data:
             self.write_results(epoch + 1)
 
-        """if self.debug_info:
-            print("Running Inference on Test Sample")
-        metrics = inference(self.test_data_loader, self.dataset.labels, self.model_path)
-        self.inference_metrics.append(metrics)"""
-
     def _extract_batch(self, batch):
-        m1_images, m2_images, features, labels = batch
+        *data, labels, _ = batch
 
-        m1_images = m1_images.to(self.device)
-        m2_images = m2_images.to(self.device)
-        features = features.to(self.device)
-        labels = labels.to(self.device)
-
-        return m1_images, m2_images, features, labels
+        return [d.to(self.device) for d in data], labels.to(self.device)
 
     def _training_step(self, optimizer: optim.Optimizer, criterion) -> dict[str, float]:
         train_preds = []
         train_labels = []
         train_loss = 0
 
+        # New accumulators for per-class loss
+        proton_loss_total = 0.0
+        gamma_loss_total = 0.0
+        count_proton = 0
+        count_gamma = 0
+
+        # Create a criterion with reduction='none' to obtain per-sample losses
+        criterion_none = nn.CrossEntropyLoss(
+            label_smoothing=criterion.label_smoothing, 
+            reduction='none'
+        )
+
         self.model.train()
         batch_cntr = 1
         total_batches = len(self.training_data_loader)
         for batch in self.training_data_loader:
-            m1_images, m2_images, features, labels = self._extract_batch(batch)
+            data, labels = self._extract_batch(batch)
 
             optimizer.zero_grad()
-            outputs = self.model(m1_images, m2_images, features)
+            outputs = self.model(*data)
 
             loss = criterion(outputs, labels)
+            # Compute per-sample losses
+            per_sample_losses = criterion_none(outputs, labels)
+            # Accumulate losses per class
+            for loss_val, label in zip(per_sample_losses, labels):
+                if label.item() == self.dataset.labels[self.dataset.PROTON_LABEL]:
+                    proton_loss_total += loss_val.item()
+                    count_proton += 1
+                else:
+                    gamma_loss_total += loss_val.item()
+                    count_gamma += 1
+
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.GRAD_CLIP_NORM)
             loss.backward()
             optimizer.step()
@@ -419,6 +412,9 @@ class TrainingSupervisor:
             train_preds,
             train_loss / len(self.training_data_loader),
         )
+        # Add per-class losses to metrics
+        metrics["proton_loss"] = proton_loss_total / count_proton if count_proton > 0 else 0.0
+        metrics["gamma_loss"] = gamma_loss_total / count_gamma if count_gamma > 0 else 0.0
 
         self.train_metrics.append(metrics)
         return metrics
@@ -428,14 +424,36 @@ class TrainingSupervisor:
         val_preds = []
         val_labels = []
 
+        # New accumulators for per-class loss in validation
+        proton_loss_total = 0.0
+        gamma_loss_total = 0.0
+        count_proton = 0
+        count_gamma = 0
+
+        # Create a criterion with reduction='none' for per-sample loss calculation
+        criterion_none = nn.CrossEntropyLoss(
+            label_smoothing=criterion.label_smoothing, 
+            reduction='none'
+        )
+
         self.model.eval()
         with torch.no_grad():
             for batch in self.val_data_loader:
-                m1_images, m2_images, features, labels = self._extract_batch(batch)
+                data, labels = self._extract_batch(batch)
 
-                outputs = self.model(m1_images, m2_images, features)
+                outputs = self.model(*data)
 
                 loss = criterion(outputs, labels)
+                per_sample_losses = criterion_none(outputs, labels)
+                
+                for loss_val, label in zip(per_sample_losses, labels):
+                    if label.item() == self.dataset.labels[self.dataset.PROTON_LABEL]:
+                        proton_loss_total += loss_val.item()
+                        count_proton += 1
+                    else:
+                        gamma_loss_total += loss_val.item()
+                        count_gamma += 1
+
                 _, predicted = outputs.max(1)
                 val_preds.extend(predicted.cpu().numpy())
                 val_labels.extend(labels.cpu().numpy())
@@ -446,6 +464,9 @@ class TrainingSupervisor:
             val_preds,
             val_loss / len(self.val_data_loader),
         )
+        # Add per-class losses to validation metrics
+        metrics["proton_loss"] = proton_loss_total / count_proton if count_proton > 0 else 0.0
+        metrics["gamma_loss"] = gamma_loss_total / count_gamma if count_gamma > 0 else 0.0
 
         self.validation_metrics.append(metrics)
         return metrics
@@ -466,6 +487,10 @@ class TrainingSupervisor:
                 "distribution": self.dataset.get_distribution(),
             },
             "epochs": epochs,
+            "time": {
+                "total": str(self.training_duration),
+                "avg_per_epoch": str(self.training_duration / epochs),
+            },
             "model": {
                 "name": self.model_name,
                 "structure": self._get_model_structure(),
