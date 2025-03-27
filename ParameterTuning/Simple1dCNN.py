@@ -49,7 +49,6 @@ def parameterize_Simple1dNet(trial: optuna.Trial):
                 ])
                 
                 if pooling_pattern[i]:
-                    nn.MaxPool1d()
                     PoolingLayer = nn.MaxPool1d if trial.suggest_categorical(f'pooling_layer{i+1}_type', ["max", "avg"]) == "max" else nn.AvgPool1d
                     # Limit pooling kernel range to 1 to 8
                     layers.append(PoolingLayer(
