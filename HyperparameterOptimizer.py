@@ -72,7 +72,7 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
     except Exception as e:
         print(f"Trial {trial.number} failed with error:", e)
 
-        if "Too many weights:" not in str(e):
+        if "Too many weights:" not in str(e) and "CUDA out of memory." not in str(e):
             traceback.print_exc()
 
         raise optuna.exceptions.TrialPruned()

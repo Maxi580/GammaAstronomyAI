@@ -42,13 +42,14 @@ def parameterize_Simple1dNet(trial: optuna.Trial):
                     nn.Conv1d(
                         channels[i],
                         channels[i + 1],
-                        kernel_size=trial.suggest_int(f'conv_kernel_size{i + 1}', 1, 8)
+                        kernel_size=trial.suggest_int(f'conv_kernel_size{i + 1}', 3, 8)
                     ),
                     nn.BatchNorm1d(channels[i+1]),
                     nn.ReLU(),
                 ])
                 
                 if pooling_pattern[i]:
+                    nn.MaxPool1d()
                     PoolingLayer = nn.MaxPool1d if trial.suggest_categorical(f'pooling_layer{i+1}_type', ["max", "avg"]) == "max" else nn.AvgPool1d
                     # Limit pooling kernel range to 1 to 8
                     layers.append(PoolingLayer(
@@ -66,9 +67,14 @@ def parameterize_Simple1dNet(trial: optuna.Trial):
 
             out_pixels = 1039
             for i in range(num_layers):
+                conv_kernel = trial.params[f'conv_kernel_size{i + 1}']
+                
+                out_pixels = out_pixels - (conv_kernel - 1)
+                
                 if pooling_pattern[i]:
-                    kernel = trial.params[f'pooling_layer{i+1}_kernel']
-                    out_pixels = ((1039 - (kernel - 1) - 1) // kernel) + 1
+                    pooling_kernel = trial.params[f'pooling_layer{i + 1}_kernel']
+                    
+                    out_pixels = ((out_pixels - (pooling_kernel - 1) - 1) // pooling_kernel) + 1
 
             final_channels = trial.params[f'cnn_channels{num_layers}']
             input_size = final_channels * out_pixels * 2
