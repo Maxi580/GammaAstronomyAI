@@ -3,6 +3,7 @@ import os
 import time
 import gc
 import torch
+import traceback
 
 from TrainingPipeline.Datasets import *
 from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
@@ -22,6 +23,8 @@ def clean_memory():
 
 
 def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int):
+    clean_memory()
+    
     supervisor = None
     try:
         nametag = f"{study_name}_WTF_{time.strftime('%Y-%m-%d_%H-%M-%S')}_trial_{trial.number}"
@@ -68,10 +71,12 @@ def objective(trial: optuna.Trial, model: str, dataset, study_name, epochs: int)
 
     except Exception as e:
         print(f"Trial {trial.number} failed with error:", e)
+        traceback.print_exc()
         raise optuna.exceptions.TrialPruned()
 
     finally:
         if supervisor is not None:
+            del supervisor
             clean_memory()
 
 
