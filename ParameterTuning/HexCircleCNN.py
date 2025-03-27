@@ -74,11 +74,11 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
             num_layers = trial.suggest_int('linear_layers', 1, 4)
 
             sizes = [input_size]
-            max_ub = 4096
+            max_ub = 2048
             for i in range(1, num_layers+1):
                 lb_candidate = max(2, sizes[-1] // 16)
                 lb = max(16, math.ceil(lb_candidate / 16) * 16)
-                ub = (sizes[-1] // 16) * 16
+                ub = (sizes[-1] // 4) * 4
                 ub = min(max_ub, ub)
 
                 if lb > ub:
