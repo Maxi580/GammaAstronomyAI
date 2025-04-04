@@ -28,9 +28,13 @@ def parameterize_HexCircleNet(trial: optuna.Trial):
             num_layers = trial.suggest_int('cnn_layers', 1, 3)
 
             channels = [1]
-            for i in range(1, num_layers+1):
+            channels.append(
+                trial.suggest_int('cnn_channels1', 8, 32, step=8)
+            )
+            
+            for i in range(2, num_layers+1):
                 lower_bound = ((channels[-1] + 15) // 16) * 16
-                upper_bound = channels[-1] * 16
+                upper_bound = min(channels[-1] * 4, 512)  # restrict growth factor to 512 channels
                 channels.append(trial.suggest_int(f'cnn_channels{i}', lower_bound, upper_bound, step=16))
                 
             
