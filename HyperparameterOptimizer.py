@@ -133,7 +133,7 @@ def main(model: str, proton: str, gamma: str, epochs: int, n_trials: int):
 
 
 if __name__ == "__main__":
-    model_name = "Simple1DNet"
+    model_name = "HexCircleNet"
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas-new-1.parquet"
 
