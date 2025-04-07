@@ -44,17 +44,16 @@ class HybridNet(nn.Module):
                 path=RF_MODEL_PATH,
                 test_size=0.3,
             )
+            self.rf_model = results['model']
             plot_results(results)
             print("RF Training and evaluation complete!")
-            with open(RF_MODEL_PATH, 'rb') as f:
-                self.rf_model = pickle.load(f)
 
         self.num_rf_outputs = num_rf_outputs
 
         self.m1_cnn = CNN()
         self.m2_cnn = CNN()
 
-        self.classifier = nn.Sequential(
+        self.cnn_classifier = nn.Sequential(
             nn.Linear(8 * 1039 * 2, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),

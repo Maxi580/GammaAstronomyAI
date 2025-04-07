@@ -16,7 +16,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from TrainingPipeline.Datasets.MagicDataset import MagicDataset
 
 
-def optimize_random_forest(X_train, y_train, cv=3, sample_size=50000):
+def optimize_random_forest(X_train, y_train, cv=3, sample_size=20000):
     print("Optimizing Random Forest hyperparameters on a subset of the data...")
 
     if len(X_train) > sample_size:
@@ -64,7 +64,7 @@ def optimize_random_forest(X_train, y_train, cv=3, sample_size=50000):
     return best_model
 
 
-def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3, optimize=False):
+def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3, optimize=True):
     print("Loading the MAGIC dataset...")
     dataset = MagicDataset(
         proton_filename=proton_file,
@@ -134,6 +134,7 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3,
 
     with open(path, 'wb') as f:
         pickle.dump(rf, f)
+    print(f"Model dumped to {path}")
 
     results = {
         'model': rf,
