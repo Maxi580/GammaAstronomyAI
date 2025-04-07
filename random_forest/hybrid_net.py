@@ -9,8 +9,8 @@ from random_forest.random_forest import train_random_forest_classifier
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RF_MODEL_DIR = os.path.join(BASE_DIR, "models")
 RF_MODEL_PATH = os.path.join(RF_MODEL_DIR, "rf_model.pkl")
-PROTON_FILE = os.path.join(BASE_DIR, "magic-protons.parquet")
-GAMMA_FILE = os.path.join(BASE_DIR, "magic-gammas-new.parquet")
+PROTON_FILE = os.path.join(BASE_DIR, "../magic-protons.parquet")
+GAMMA_FILE = os.path.join(BASE_DIR, "../magic-gammas-new.parquet")
 
 
 class CNN(nn.Module):
