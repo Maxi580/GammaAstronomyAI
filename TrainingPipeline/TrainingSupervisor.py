@@ -15,7 +15,6 @@ from TrainingPipeline.Datasets import MagicDataset
 from TrainingPipeline.ResultsWriter import ResultsWriter
 
 from CNN.Architectures import *
-from hybrid_net import HybridNet
 
 np.random.seed(42)
 torch.manual_seed(42)
@@ -263,8 +262,6 @@ class TrainingSupervisor:
                 model = HexagdlyNet()
             case "simple1dnet":
                 model = Simple1dNet()
-            case "hybridnet":
-                model = HybridNet()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
