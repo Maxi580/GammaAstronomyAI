@@ -84,4 +84,4 @@ class HybridNet(nn.Module):
         combined_predictions = torch.cat([cnn_prediction, rf_prediction], dim=1)
         final_output = self.ensemble_layer(combined_predictions)
 
-        return self.classifier(final_output)
+        return final_output
