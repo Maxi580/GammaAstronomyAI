@@ -8,24 +8,18 @@ class HexagdlyCNN(nn.Module):
         super().__init__()
 
         self.cnn = nn.Sequential(
-            hexagdly.Conv2d(1, 8, kernel_size=2),
-            nn.BatchNorm2d(8),
-            nn.ReLU(),
-            hexagdly.MaxPool2d(1, 2),
-            nn.Dropout2d(0.2),
-            
-            
-            hexagdly.Conv2d(8, 16, kernel_size=1),
+            hexagdly.Conv2d(1, 16, kernel_size=4),
             nn.BatchNorm2d(16),
             nn.ReLU(),
             hexagdly.MaxPool2d(1, 2),
             nn.Dropout2d(0.2),
-
-            hexagdly.Conv2d(16, 32, kernel_size=1),
-            nn.BatchNorm2d(32),
+            
+            
+            hexagdly.Conv2d(16, 48, kernel_size=5),
+            nn.BatchNorm2d(48),
             nn.ReLU(),
-            hexagdly.MaxPool2d(1),
-            nn.Dropout2d(0.2),
+            hexagdly.MaxPool2d(1, 3),
+            nn.Dropout2d(0.35),
         )
 
     def forward(self, x):
@@ -40,19 +34,19 @@ class HexagdlyNet(nn.Module):
         self.m2_cnn = HexagdlyCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(80 * 32 * 2, 1024),
+            nn.Linear((6 * 7) * 48 * 2, 288),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+
+            nn.Linear(288, 192),
             nn.ReLU(),
             nn.Dropout(0.2),
 
-            nn.Linear(1024, 256),
+            nn.Linear(192, 96),
             nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.Dropout(0.3),
 
-            nn.Linear(256, 64),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-
-            nn.Linear(64, 2)
+            nn.Linear(96, 2)
         )
 
     def forward(self, m1_image, m2_image, measurement_features):
