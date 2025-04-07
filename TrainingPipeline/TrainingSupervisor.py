@@ -118,15 +118,15 @@ class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
     
     # Params from Maxis Branch
-    # LEARNING_RATE = 5.269632147047427e-06
-    # WEIGHT_DECAY = 0.00034049323130326087
+    LEARNING_RATE = 5.269632147047427e-06
+    WEIGHT_DECAY = 0.00034049323130326087
     # BATCH_SIZE = 64
-    # GRAD_CLIP_NORM = 0.7168560391358462
+    GRAD_CLIP_NORM = 0.7168560391358462
     
-    LEARNING_RATE = 1e-4
-    WEIGHT_DECAY = 1e-4
+    #LEARNING_RATE = 1e-4
+    #WEIGHT_DECAY = 1e-4
     BATCH_SIZE = 64
-    GRAD_CLIP_NORM = 1.0
+    #GRAD_CLIP_NORM = 1.0
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     SCHEDULER_STEP_SIZE = 4
@@ -286,10 +286,8 @@ class TrainingSupervisor:
 
     def train_model(self, epochs: int):
         self.training_start_time = datetime.datetime.now()
-        
         weight_proton, weight_gamma = self.calculate_weight_distribution()
-        metric_factor = 3
-        class_weights = torch.tensor([weight_proton, weight_gamma * metric_factor]).to(self.device)
+        class_weights = torch.tensor([weight_proton, weight_gamma]).to(self.device)
         criterion = nn.CrossEntropyLoss(weight=class_weights)
 
         optimizer = optim.AdamW(
