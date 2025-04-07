@@ -92,21 +92,6 @@ def train_random_forest_classifier(proton_file, gamma_file, test_size=0.3):
 
 def plot_results(results):
     """Plot the results from the random forest classifier"""
-
-    # Plot feature importances
-    plt.figure(figsize=(12, 8))
-
-    # Get top 20 features
-    top_features = results['feature_importances'][:20]
-    features = [f[0] for f in top_features]
-    importances = [f[1] for f in top_features]
-
-    sns.barplot(x=importances, y=features)
-    plt.title('Top 20 Feature Importances')
-    plt.xlabel('Importance')
-    plt.tight_layout()
-    plt.savefig('feature_importances.png')
-
     # Plot ROC curve
     plt.figure(figsize=(8, 8))
     plt.plot(results['fpr'], results['tpr'], color='darkorange', lw=2,
