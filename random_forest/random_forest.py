@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 import sys
 import os
@@ -13,7 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from TrainingPipeline.Datasets.MagicDataset import MagicDataset
 
 
-def train_random_forest_classifier(proton_file, gamma_file, test_size=0.3):
+def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3):
     print("Loading the MAGIC dataset...")
     dataset = MagicDataset(
         proton_filename=proton_file,
@@ -73,10 +75,12 @@ def train_random_forest_classifier(proton_file, gamma_file, test_size=0.3):
     print("\nClassification Report:")
     print(classification_report(y_test, y_pred, target_names=['Proton', 'Gamma']))
 
-    # Calculate ROC curve
     y_prob = rf.predict_proba(X_test)[:, 1]
     fpr, tpr, thresholds = roc_curve(y_test, y_prob)
     roc_auc = auc(fpr, tpr)
+
+    with open(path, 'wb') as f:
+        pickle.dump(rf, f)
 
     results = {
         'model': rf,
@@ -92,7 +96,6 @@ def train_random_forest_classifier(proton_file, gamma_file, test_size=0.3):
 
 def plot_results(results):
     """Plot the results from the random forest classifier"""
-    # Plot ROC curve
     plt.figure(figsize=(8, 8))
     plt.plot(results['fpr'], results['tpr'], color='darkorange', lw=2,
              label=f'ROC curve (area = {results["roc_auc"]:.3f})')
@@ -119,19 +122,3 @@ def plot_results(results):
     plt.savefig('confusion_matrix.png')
 
     print("Plots saved to current directory")
-
-
-if __name__ == "__main__":
-    proton_file = "magic-protons.parquet"
-    gamma_file = "magic-gammas-new.parquet"
-    test_size = 0.3
-
-    results = train_random_forest_classifier(
-        proton_file=proton_file,
-        gamma_file=gamma_file,
-        test_size=test_size,
-    )
-
-    plot_results(results)
-
-    print("\nTraining and evaluation complete!")

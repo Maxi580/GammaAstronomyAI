@@ -52,4 +52,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[1:])"""
 
-    main("HexCircleNet", "magic-protons.parquet", "magic-gammas-new-1.parquet", 20)
+    main("HybridNet", "magic-protons.parquet", "magic-gammas-new.parquet", 20)
