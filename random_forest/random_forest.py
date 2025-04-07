@@ -1,15 +1,17 @@
 import numpy as np
-import pandas as pd
+import sys
+import os
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, auc
 import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
-import torch
 from torch.utils.data import DataLoader
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from TrainingPipeline.Datasets.MagicDataset import MagicDataset
+
 
 def train_random_forest_classifier(proton_file, gamma_file, test_size=0.3):
     print("Loading the MAGIC dataset...")
@@ -136,7 +138,7 @@ def plot_results(results):
 
 if __name__ == "__main__":
     proton_file = "magic-protons.parquet"
-    gamma_file ="magic-gammas-new.parquet"
+    gamma_file = "magic-gammas-new.parquet"
     test_size = 0.3
 
     results = train_random_forest_classifier(
