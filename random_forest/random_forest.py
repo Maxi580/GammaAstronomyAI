@@ -115,7 +115,7 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3,
             bootstrap=True,
             n_jobs=-1,
             random_state=42,
-            verbose=1
+            verbose=0
         )
 
     rf.fit(X_train, y_train)
