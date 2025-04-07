@@ -29,7 +29,7 @@ def train_random_forest_classifier(proton_file, gamma_file, test_size=0.3):
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
     for batch in tqdm(loader, desc="Processing batches"):
-        m1_batch, m2_batch, features_batch, labels_batch = batch
+        m1_batch, m2_batch, features_batch, labels_batch, _ = batch
 
         # Add the features to our dataset (these are already the numerical features)
         for i in range(len(labels_batch)):
