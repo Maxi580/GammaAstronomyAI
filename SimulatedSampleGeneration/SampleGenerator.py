@@ -56,7 +56,7 @@ class SampleGenerator:
         from shapely.geometry import Polygon
 
         hex_polygons = []
-        for hex_center_x, hex_center_y in hexagons:
+        for hex_center_x, hex_center_y, *_ in hexagons:
             hex_points = PlaneGeneratorUtils.create_hexagon_points_static(
                 hex_center_x, hex_center_y, plane_info[2]
             )

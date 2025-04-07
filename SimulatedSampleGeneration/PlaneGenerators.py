@@ -57,7 +57,7 @@ class HexagonPlaneGenerator(IPlaneGenerator):
         q, r = 0, 0
         x, y = axial_to_pixel(q, r)
         if self.point_in_circle(x, y, center_x, center_y, outer_radius):
-            hexagons.append((x, y))
+            hexagons.append((x, y, 0))
             count += 1
 
         # Generate hexagons ring by ring
@@ -68,7 +68,7 @@ class HexagonPlaneGenerator(IPlaneGenerator):
             for direction in directions:
                 for _ in range(ring):
                     if self.point_in_circle(*axial_to_pixel(q, r), center_x, center_y, outer_radius):
-                        hexagons.append(axial_to_pixel(q, r))
+                        hexagons.append((*axial_to_pixel(q, r), ring))
                         count += 1
                         added_in_ring = True
                     q += direction[0]
@@ -77,7 +77,7 @@ class HexagonPlaneGenerator(IPlaneGenerator):
                 break
             ring += 1
 
-        return hexagons
+        return hexagons, ring
 
     def generate_plane(self, size: int, target_count: int) -> Tuple[Image.Image, List[Tuple[float, float]], Tuple[int, int, float, float]]:
         image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
@@ -96,7 +96,7 @@ class HexagonPlaneGenerator(IPlaneGenerator):
         while max_ratio - min_ratio > 0.0001:
             mid_ratio = (min_ratio + max_ratio) / 2
             hex_radius = outer_radius * mid_ratio
-            hexagons = self.generate_spiral_hexagons(center_x, center_y, hex_radius, outer_radius)
+            hexagons, _ = self.generate_spiral_hexagons(center_x, center_y, hex_radius, outer_radius)
             count = len(hexagons)
 
             if count == target_count:
@@ -114,14 +114,14 @@ class HexagonPlaneGenerator(IPlaneGenerator):
 
         # Final hexagon generation with the best_ratio
         final_hex_radius = outer_radius * best_ratio
-        final_hexagons = self.generate_spiral_hexagons(center_x, center_y, final_hex_radius, outer_radius)
+        final_hexagons, rings = self.generate_spiral_hexagons(center_x, center_y, final_hex_radius, outer_radius)
 
         # Draw hexagons
-        for hex_center_x, hex_center_y in final_hexagons:
+        for hex_center_x, hex_center_y, _ in final_hexagons:
             points = self.create_hexagon_points(hex_center_x, hex_center_y, final_hex_radius)
             draw.polygon(points, fill=self.HEXAGON_FILL_COLOR, outline=self.HEXAGON_OUTLINE_COLOR)
 
-        circle_info = (center_x, center_y, final_hex_radius, outer_radius)
+        circle_info = (center_x, center_y, final_hex_radius, outer_radius, rings)
         print(f"Created hexagon pattern with {len(final_hexagons)} hexagons")
 
         return image, final_hexagons, circle_info
