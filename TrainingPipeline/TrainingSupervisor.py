@@ -262,6 +262,8 @@ class TrainingSupervisor:
                 model = HexagdlyNet()
             case "simple1dnet":
                 model = Simple1dNet()
+            case "custom":
+                model = nn.Module()
             case _:
                 raise ValueError(f"Invalid Modelname: '{self.model_name}'")
 
