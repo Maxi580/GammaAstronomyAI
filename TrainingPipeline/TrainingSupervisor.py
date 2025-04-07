@@ -15,7 +15,7 @@ from TrainingPipeline.Datasets import MagicDataset
 from TrainingPipeline.ResultsWriter import ResultsWriter
 
 from CNN.Architectures import *
-from random_forest.hybrid_net import HybridNet
+from hybrid_net import HybridNet
 
 np.random.seed(42)
 torch.manual_seed(42)
