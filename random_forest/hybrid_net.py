@@ -18,8 +18,8 @@ class CNN(nn.Module):
         super().__init__()
 
         self.cnn = nn.Sequential(
-            MagicConv(1, 8, kernel_size=2),
-            nn.GroupNorm(2, 8),
+            MagicConv(1, 4, kernel_size=2),
+            nn.GroupNorm(2, 4),
             nn.ReLU(),
             nn.Dropout1d(p=0.3),
         )
@@ -54,7 +54,7 @@ class HybridNet(nn.Module):
         self.m2_cnn = CNN()
 
         self.cnn_classifier = nn.Sequential(
-            nn.Linear(8 * 1039 * 2, 512),
+            nn.Linear(4 * 1039 * 2, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
             nn.Dropout(p=0.3),
@@ -62,10 +62,10 @@ class HybridNet(nn.Module):
         )
 
         self.ensemble_layer = nn.Sequential(
-            nn.Linear(4, 16),
+            nn.Linear(4, 8),
             nn.ReLU(),
-            nn.Dropout(p=0.2),
-            nn.Linear(16, 2)
+            nn.Dropout(p=0.4),
+            nn.Linear(8, 2)
         )
 
     def forward(self, m1_image, m2_image, features):
