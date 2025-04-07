@@ -9,22 +9,22 @@ class HexCircleCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            HexCircleConv(1, 8, kernel_size=2),
-            nn.BatchNorm1d(8),
-            nn.ReLU(),
-            nn.Dropout1d(0.05027208056732827),
-
-            HexCircleConv(8, 20, kernel_size=5),
-            nn.BatchNorm1d(20),
-            nn.ReLU(),
-            HexCirclePool(2, mode='max'),
-            nn.Dropout1d(0.21308784431475414),
-            
-            HexCircleConv(20, 47, kernel_size=3),
-            nn.BatchNorm1d(47),
+            HexCircleConv(1, 16, kernel_size=3),
+            nn.BatchNorm1d(16),
             nn.ReLU(),
             HexCirclePool(1, mode='max'),
-            nn.Dropout1d(0.09910993376674002),
+            nn.Dropout1d(0.25),
+
+            HexCircleConv(16, 32, kernel_size=5),
+            nn.BatchNorm1d(32),
+            nn.ReLU(),
+            nn.Dropout1d(0.05),
+            
+            HexCircleConv(32, 64, kernel_size=1),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            HexCirclePool(3, mode='avg'),
+            nn.Dropout1d(0.15),
         )
 
     def forward(self, x):
@@ -39,19 +39,11 @@ class HexCircleNet(nn.Module):
         self.m2_cnn = HexCircleCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(47 * 13 * 2, 398),
+            nn.Linear(64 * 7 * 2, 448),
             nn.ReLU(),
-            nn.Dropout(0.4283984386317653),
+            nn.Dropout(0.55),
 
-            nn.Linear(398, 62),
-            nn.ReLU(),
-            nn.Dropout(0.20237090903445126),
-
-            nn.Linear(62, 9),
-            nn.ReLU(),
-            nn.Dropout(0.40145111076242346),
-
-            nn.Linear(9, 2)
+            nn.Linear(448, 2)
         )
 
     def forward(self, m1_image, m2_image, measurement_features):

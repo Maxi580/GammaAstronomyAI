@@ -21,6 +21,34 @@ def main(model_name: str, proton_file: str, gamma_file: str, epochs: int):
     dataset = MagicDataset(proton_file, gamma_file)
     supervisor = TrainingSupervisor(model_name, dataset, output_dir, debug_info=True, save_model=True,
                                     save_debug_data=True, early_stopping=False)
+    
+    
+    # # Params for Simple1DNet
+    # supervisor.LEARNING_RATE = 0.0024372693219380376
+    # supervisor.WEIGHT_DECAY = 0.00046404836789216026
+    # supervisor.GRAD_CLIP_NORM = 3.1
+    # supervisor.SCHEDULER_CYCLE_MOMENTUM = False
+    # supervisor.SCHEDULER_STEP_SIZE = 4
+    # supervisor.SCHEDULER_BASE_LR = 0.0001089415103064346
+    # supervisor.SCHEDULER_MAX_LR = 0.004629201448534882
+    
+    # # Params for HexCircleNet
+    # supervisor.LEARNING_RATE = 0.0006250708520118225
+    # supervisor.WEIGHT_DECAY = 0.00012551308112717833
+    # supervisor.GRAD_CLIP_NORM = 1.0
+    # supervisor.SCHEDULER_CYCLE_MOMENTUM = True
+    # supervisor.SCHEDULER_STEP_SIZE = 6
+    # supervisor.SCHEDULER_BASE_LR = 1.9730551292086e-05
+    # supervisor.SCHEDULER_MAX_LR = 0.0008631873109885323
+    
+    # # Params for HexagdlyNet
+    # supervisor.LEARNING_RATE = 0.000817861258020137
+    # supervisor.WEIGHT_DECAY = 0.000721390625278987
+    # supervisor.GRAD_CLIP_NORM = 2.0
+    # supervisor.SCHEDULER_CYCLE_MOMENTUM = False
+    # supervisor.SCHEDULER_STEP_SIZE = 4
+    # supervisor.SCHEDULER_BASE_LR = 0.0001108823441121981
+    # supervisor.SCHEDULER_MAX_LR = 0.004212829321789141
 
     print(f"Model has {supervisor._count_trainable_weights()} trainable weights.")
     supervisor.train_model(epochs)
