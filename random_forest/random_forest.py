@@ -132,6 +132,7 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3,
     fpr, tpr, thresholds = roc_curve(y_test, y_prob)
     roc_auc = auc(fpr, tpr)
 
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'wb') as f:
         pickle.dump(rf, f)
     print(f"Model dumped to {path}")
