@@ -32,8 +32,21 @@ class HybridNet(nn.Module):
     def __init__(self, num_rf_outputs=1):
         super().__init__()
 
-        with open(RF_MODEL_PATH, 'rb') as f:
-            self.rf_model = pickle.load(f)
+        if os.path.exists(RF_MODEL_PATH):
+            print(f"Random Forest model already exists at {RF_MODEL_PATH}")
+            with open(RF_MODEL_PATH, 'rb') as f:
+                self.rf_model = pickle.load(f)
+        else:
+            print(f"Random Forest model not found at {RF_MODEL_PATH}, training new model...")
+            train_random_forest_classifier(
+                proton_file=PROTON_FILE,
+                gamma_file=GAMMA_FILE,
+                path=RF_MODEL_PATH,
+                test_size=0.3,
+            )
+            print("RF Training and evaluation complete!")
+            with open(RF_MODEL_PATH, 'rb') as f:
+                self.rf_model = pickle.load(f)
 
         self.num_rf_outputs = num_rf_outputs
 
@@ -72,21 +85,3 @@ class HybridNet(nn.Module):
         final_output = self.ensemble_layer(combined_predictions)
 
         return self.classifier(final_output)
-
-
-def train_if_model_missing():
-    if os.path.exists(RF_MODEL_PATH):
-        print(f"Random Forest model already exists at {RF_MODEL_PATH}")
-    else:
-        print(f"Random Forest model not found at {RF_MODEL_PATH}, training new model...")
-        train_random_forest_classifier(
-            proton_file=PROTON_FILE,
-            gamma_file=GAMMA_FILE,
-            path=RF_MODEL_PATH,
-            test_size=0.3,
-        )
-        print("RF Training and evaluation complete!")
-
-
-if __name__ == "__main__":
-    train_if_model_missing()
