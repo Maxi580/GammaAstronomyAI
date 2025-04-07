@@ -4,7 +4,7 @@ import torch.nn as nn
 from CNN.MagicConv.MagicConv import MagicConv
 import pickle
 
-from random_forest.random_forest import train_random_forest_classifier
+from random_forest.random_forest import train_random_forest_classifier, plot_results
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RF_MODEL_DIR = os.path.join(BASE_DIR, "models")
@@ -38,22 +38,22 @@ class HybridNet(nn.Module):
                 self.rf_model = pickle.load(f)
         else:
             print(f"Random Forest model not found at {RF_MODEL_PATH}, training new model...")
-            train_random_forest_classifier(
+            results = train_random_forest_classifier(
                 proton_file=PROTON_FILE,
                 gamma_file=GAMMA_FILE,
                 path=RF_MODEL_PATH,
                 test_size=0.3,
             )
+            self.rf_model = results['model']
+            plot_results(results)
             print("RF Training and evaluation complete!")
-            with open(RF_MODEL_PATH, 'rb') as f:
-                self.rf_model = pickle.load(f)
 
         self.num_rf_outputs = num_rf_outputs
 
         self.m1_cnn = CNN()
         self.m2_cnn = CNN()
 
-        self.classifier = nn.Sequential(
+        self.cnn_classifier = nn.Sequential(
             nn.Linear(8 * 1039 * 2, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),

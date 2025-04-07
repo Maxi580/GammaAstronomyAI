@@ -47,31 +47,7 @@ def extract_features(row: pd.Series) -> torch.Tensor:
     ]
     features.extend([replace_nan(row[col]) for col in stereo_features])
 
-    features.extend([
-        replace_nan(row['pointing_zenith']),
-        replace_nan(row['pointing_azimuth'])
-    ])
-
-    features.extend([
-        replace_nan(row['time_gradient_m1']),
-        replace_nan(row['time_gradient_m2'])
-    ])
-
-    source_m1_features = [
-        'source_alpha_m1', 'source_dist_m1',
-        'source_cos_delta_alpha_m1', 'source_dca_m1',
-        'source_dca_delta_m1'
-    ]
-    features.extend([replace_nan(row[col]) for col in source_m1_features])
-
-    source_m2_features = [
-        'source_alpha_m2', 'source_dist_m2',
-        'source_cos_delta_alpha_m2', 'source_dca_m2',
-        'source_dca_delta_m2'
-    ]
-    features.extend([replace_nan(row[col]) for col in source_m2_features])
-
-    assert len(features) == 51, "Total features count mismatch"
+    assert len(features) == 37, "Total features count mismatch"
 
     return torch.tensor(features, dtype=torch.float32)
 
