@@ -1,4 +1,5 @@
 import sys, os
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -37,13 +38,22 @@ def hex_circle_pooled(hex_count: int, kernel_size: int, number_pooled: bool, val
         if valid_padding and -1 in cluster:
             continue
 
-        color = cluster_colors[(c_idx+2) % 20]
+        color = cluster_colors[c_idx % 20]
+        all_points = {}
         for idx, neighbor_idx in enumerate(cluster):
             if neighbor_idx == -1:
                 continue
 
             hex_center_x, hex_center_y, ring = hexagons[neighbor_idx]
             points = plane_generator.create_hexagon_points(hex_center_x, hex_center_y, hex_radius)
+
+            # Save edge points of every hexagon to later use them to add an outline around every cluster
+            for p in points:
+                p = (round(p[0], 2), round(p[1], 2))
+                if p in all_points:
+                    all_points[p] += 1
+                else:
+                    all_points[p] = 1
             
             hexagon_patch = patches.Polygon(points, closed=True, facecolor=color, edgecolor="black", alpha=0.15)
             ax.add_patch(hexagon_patch)
@@ -57,6 +67,19 @@ def hex_circle_pooled(hex_count: int, kernel_size: int, number_pooled: bool, val
 
             if neighbor_idx in missing:
                 missing.remove(neighbor_idx)
+
+        # Find edge points and sort them to create an outline
+        outside_points = [point for point, occurrence in all_points.items() if occurrence <= 2]
+        sorted_outside_points = outside_points[:1]
+        points_to_sort = outside_points[1:]
+
+        while len(points_to_sort) > 0:
+            prev_point = sorted_outside_points[-1]
+            points_to_sort = sorted(points_to_sort, key=lambda p: math.dist(prev_point, p))
+            sorted_outside_points.append(points_to_sort.pop(0))
+
+        outline_patch = patches.Polygon(sorted_outside_points, closed=True, facecolor='none', edgecolor="black", linewidth=1)
+        ax.add_patch(outline_patch)
 
     default_color = (50/255, 50/255, 50/255)
     for neighbor_idx in missing:
@@ -76,5 +99,5 @@ if __name__ == "__main__":
     TARGET_HEX_COUNT = 1039
     KERNEL_SIZE = 1
     NUMBER_POOLED = False
-    VALID_PADDING = False
+    VALID_PADDING = False # Only for demonstration purposes
     hex_circle_pooled(TARGET_HEX_COUNT, KERNEL_SIZE, NUMBER_POOLED, VALID_PADDING)
