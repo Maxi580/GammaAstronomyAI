@@ -32,6 +32,11 @@ def train_cnn_model(epochs=30):
                                     save_debug_data=True, early_stopping=False)
 
     print(f"CNN model has {supervisor._count_trainable_weights()} trainable weights.")
+    supervisor.LEARNING_RATE = 5.269632147047427e-06
+    supervisor.WEIGHT_DECAY = 0.00034049323130326087
+    supervisor.BATCH_SIZE = 64
+    supervisor.GRAD_CLIP_NORM = 0.7168560391358462
+
     supervisor.train_model(epochs)
 
     # Save the model to the standardized path
