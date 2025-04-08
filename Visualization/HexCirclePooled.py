@@ -40,7 +40,7 @@ def hex_circle_pooled(hex_count: int, kernel_size: int, number_pooled: bool, val
 
         color = cluster_colors[c_idx % 20]
         all_points = {}
-        for idx, neighbor_idx in enumerate([c for c in cluster if c >= 0]):
+        for idx, neighbor_idx in enumerate(cluster):
             if neighbor_idx == -1:
                 continue
 
@@ -108,6 +108,6 @@ def hex_circle_pooled(hex_count: int, kernel_size: int, number_pooled: bool, val
 if __name__ == "__main__":
     TARGET_HEX_COUNT = 1039
     KERNEL_SIZE = 1
-    NUMBER_POOLED = False
+    NUMBER_POOLED = True
     VALID_PADDING = False # Only for demonstration purposes
     hex_circle_pooled(TARGET_HEX_COUNT, KERNEL_SIZE, NUMBER_POOLED, VALID_PADDING)
