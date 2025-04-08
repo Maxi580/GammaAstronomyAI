@@ -117,15 +117,15 @@ class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
     
     # Params from Maxis Branch
-    # LEARNING_RATE = 5.269632147047427e-06
-    # WEIGHT_DECAY = 0.00034049323130326087
-    # BATCH_SIZE = 64
-    # GRAD_CLIP_NORM = 0.7168560391358462
-    
-    LEARNING_RATE = 1e-4
-    WEIGHT_DECAY = 1e-4
+    LEARNING_RATE = 5.269632147047427e-06
+    WEIGHT_DECAY = 0.00034049323130326087
     BATCH_SIZE = 64
-    GRAD_CLIP_NORM = 1.0
+    GRAD_CLIP_NORM = 0.7168560391358462
+    
+    # LEARNING_RATE = 1e-4
+    # WEIGHT_DECAY = 1e-4
+    # BATCH_SIZE = 64
+    # GRAD_CLIP_NORM = 1.0
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     SCHEDULER_STEP_SIZE = 4
