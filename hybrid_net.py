@@ -73,11 +73,11 @@ class EnsembleModel(nn.Module):
             self.rf_model = pickle.load(f)
 
         self.ensemble_layer = nn.Sequential(
-            nn.Linear(4, 8),
-            nn.BatchNorm1d(8),
+            nn.Linear(4, 16),
+            nn.BatchNorm1d(16),
             nn.ReLU(),
-            nn.Dropout(p=0.5),
-            nn.Linear(8, 2)
+            nn.Dropout(p=0.3),
+            nn.Linear(16, 2)
         )
 
         self.cnn_weight = nn.Parameter(torch.tensor([0.5]), requires_grad=True)
