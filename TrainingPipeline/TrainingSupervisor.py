@@ -115,13 +115,13 @@ class EarlyStopping:
 
 class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
-    
+
     # Params from Maxis Branch
     LEARNING_RATE = 5.269632147047427e-06
     WEIGHT_DECAY = 0.00034049323130326087
     BATCH_SIZE = 64
     GRAD_CLIP_NORM = 0.7168560391358462
-    
+
     # LEARNING_RATE = 1e-4
     # WEIGHT_DECAY = 1e-4
     # BATCH_SIZE = 64
@@ -129,8 +129,8 @@ class TrainingSupervisor:
     SCHEDULER_MODE: Literal["triangular", "triangular2", "exp_range"] = "triangular2"
     SCHEDULER_CYCLE_MOMENTUM: bool = False
     SCHEDULER_STEP_SIZE = 4
-    SCHEDULER_BASE_LR = 1e-4
-    SCHEDULER_MAX_LR = 1e-2
+    SCHEDULER_BASE_LR = 1e-5
+    SCHEDULER_MAX_LR = 1e-3
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
                  save_model: bool = False, save_debug_data: bool = True, early_stopping: bool = True) -> None:
@@ -342,7 +342,7 @@ class TrainingSupervisor:
                     if self.debug_info:
                         print(f"Early stopping triggered at epoch {epoch + 1}")
                     break
-                
+
         self.training_duration = datetime.datetime.now() - self.training_start_time
         if self.debug_info:
             print(f"Total Training duration: {str(self.training_duration)}")
@@ -368,7 +368,7 @@ class TrainingSupervisor:
 
         # Create a criterion with reduction='none' to obtain per-sample losses
         criterion_none = nn.CrossEntropyLoss(
-            label_smoothing=criterion.label_smoothing, 
+            label_smoothing=criterion.label_smoothing,
             reduction='none'
         )
 
@@ -432,7 +432,7 @@ class TrainingSupervisor:
 
         # Create a criterion with reduction='none' for per-sample loss calculation
         criterion_none = nn.CrossEntropyLoss(
-            label_smoothing=criterion.label_smoothing, 
+            label_smoothing=criterion.label_smoothing,
             reduction='none'
         )
 
@@ -445,7 +445,7 @@ class TrainingSupervisor:
 
                 loss = criterion(outputs, labels)
                 per_sample_losses = criterion_none(outputs, labels)
-                
+
                 for loss_val, label in zip(per_sample_losses, labels):
                     if label.item() == self.dataset.labels[self.dataset.PROTON_LABEL]:
                         proton_loss_total += loss_val.item()
