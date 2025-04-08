@@ -59,7 +59,7 @@ class HexCircleConv(nn.Module):
         )
 
     def reset_parameters(self):
-        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5), nonlinearity='relu')
         if self.bias is not None:
             fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight)
             if fan_in != 0:

@@ -101,8 +101,8 @@ def hex_circle_pooled(hex_count: int, kernel_size: int, number_pooled: bool, val
         ax.text(hex_center_x, hex_center_y, text_to_show,
                 ha="center", va="center", fontsize=8, color="white")
 
+    plt.savefig(f"../Visuals/hex_circle_pooled-{hex_count}-{kernel_size}.png", bbox_inches='tight')
     plt.show()
-    # plt.savefig(f"./Visuals/hex_circle_pooled-{hex_count}-{kernel_size}.png")
 
 
 if __name__ == "__main__":
