@@ -40,7 +40,7 @@ def hex_circle_pooled(hex_count: int, kernel_size: int, number_pooled: bool, val
 
         color = cluster_colors[c_idx % 20]
         all_points = {}
-        for idx, neighbor_idx in enumerate(cluster):
+        for idx, neighbor_idx in enumerate([c for c in cluster if c >= 0]):
             if neighbor_idx == -1:
                 continue
 
@@ -70,13 +70,23 @@ def hex_circle_pooled(hex_count: int, kernel_size: int, number_pooled: bool, val
 
         # Find edge points and sort them to create an outline
         outside_points = [point for point, occurrence in all_points.items() if occurrence <= 2]
-        sorted_outside_points = outside_points[:1]
-        points_to_sort = outside_points[1:]
+        if len(outside_points) == len(all_points.keys()):
+            cx = np.mean([p[0] for p in outside_points])
+            cy = np.mean([p[1] for p in outside_points])
+            # Sort the points by angle relative to the centroid.
+            sorted_outside_points = sorted(outside_points, key=lambda p: np.arctan2(p[1] - cy, p[0] - cx))
+        else: 
+            sorted_outside_points = []
+            points_to_sort = outside_points
 
-        while len(points_to_sort) > 0:
-            prev_point = sorted_outside_points[-1]
-            points_to_sort = sorted(points_to_sort, key=lambda p: math.dist(prev_point, p))
-            sorted_outside_points.append(points_to_sort.pop(0))
+            while len(points_to_sort) > 0:
+                if len(sorted_outside_points) == 0:
+                    prev_point = (0,0)
+                else:
+                    prev_point = sorted_outside_points[-1]
+
+                points_to_sort = sorted(points_to_sort, key=lambda p: math.dist(prev_point, p))
+                sorted_outside_points.append(points_to_sort.pop(0))
 
         outline_patch = patches.Polygon(sorted_outside_points, closed=True, facecolor='none', edgecolor="black", linewidth=1)
         ax.add_patch(outline_patch)
