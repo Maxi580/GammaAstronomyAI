@@ -56,32 +56,6 @@ def hex_circle_valid_padding(hex_count: int, kernel_size: int):
         if existing_idx in missing:
             missing.remove(existing_idx)
 
-    
-
-        # Find edge points and sort them to create an outline
-        # outside_points = [point for point, occurrence in all_points.items() if occurrence <= 2]
-        # if len(outside_points) == len(all_points.keys()):
-        #     cx = np.mean([p[0] for p in outside_points])
-        #     cy = np.mean([p[1] for p in outside_points])
-        #     # Sort the points by angle relative to the centroid.
-        #     sorted_outside_points = sorted(outside_points, key=lambda p: np.arctan2(p[1] - cy, p[0] - cx))
-        # else: 
-        #     sorted_outside_points = []
-        #     points_to_sort = outside_points
-
-        #     while len(points_to_sort) > 0:
-        #         if len(sorted_outside_points) == 0:
-        #             prev_point = (0,0)
-        #         else:
-        #             prev_point = sorted_outside_points[-1]
-
-        #         points_to_sort = sorted(points_to_sort, key=lambda p: math.dist(prev_point, p))
-        #         sorted_outside_points.append(points_to_sort.pop(0))
-
-        # if c_idx in [766, 765, 764, 859, 858]:
-        #     outline_patch = patches.Polygon(sorted_outside_points, closed=True, facecolor='none', edgecolor=color, linewidth=3)
-        #     ax.add_patch(outline_patch)
-
     # Plot hexagons which would be removed because of the convolution
     default_color = (50/255, 50/255, 50/255)
     for neighbor_idx in missing:
