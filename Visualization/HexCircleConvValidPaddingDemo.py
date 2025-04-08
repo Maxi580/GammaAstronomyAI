@@ -99,8 +99,8 @@ def hex_circle_valid_padding(hex_count: int, kernel_size: int):
     outline_patch = patches.Polygon(sorted_outside_points, closed=True, facecolor='none', edgecolor='red', linewidth=2)
     ax.add_patch(outline_patch)
 
+    plt.savefig(f"../Visuals/valid_padding_demo_hex-{hex_count}_kernel-{kernel_size}.png", bbox_inches='tight')
     plt.show()
-    # plt.savefig(f"./Visuals/hex_circle_pooled-{hex_count}-{kernel_size}.png")
 
 
 if __name__ == "__main__":
