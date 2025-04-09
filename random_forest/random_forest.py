@@ -62,22 +62,10 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3)
         bootstrap=True,
         n_jobs=-1,
         random_state=42,
-        verbose=1
+        verbose=2
     )
 
-    n_estimators = rf.get_params()['n_estimators']
-
-    rf.n_estimators = 1
-    rf.warm_start = True
-
-    with tqdm(total=n_estimators, desc="Building trees") as pbar:
-        rf.fit(X_train, y_train)
-        pbar.update(1)
-
-        for i in range(1, n_estimators):
-            rf.n_estimators = i + 1
-            rf.fit(X_train, y_train)
-            pbar.update(1)
+    rf.fit(X_train, y_train)
 
     y_pred = rf.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
