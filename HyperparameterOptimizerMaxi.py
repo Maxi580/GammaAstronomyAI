@@ -298,7 +298,7 @@ def main():
     model_name = "hexmagicnet"
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas-new.parquet"
-    study_name = f"Optimize_{model_name}"
+    study_name = f"Final_Optimize_{model_name}"
 
     study = create_or_load_study(study_name)
     if study is None:
