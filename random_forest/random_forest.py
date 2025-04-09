@@ -54,18 +54,30 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3)
     print(f"Testing set size: {X_test.shape[0]}")
     print("\nTraining Random Forest classifier...")
     rf = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=None,
+        n_estimators=200,
+        max_depth=30,
         min_samples_split=2,
         min_samples_leaf=1,
-        max_features='sqrt',
+        max_features=None,
         bootstrap=True,
         n_jobs=-1,
         random_state=42,
         verbose=1
     )
 
-    rf.fit(X_train, y_train)
+    n_estimators = rf.get_params()['n_estimators']
+
+    rf.n_estimators = 1
+    rf.warm_start = True
+
+    with tqdm(total=n_estimators, desc="Building trees") as pbar:
+        rf.fit(X_train, y_train)
+        pbar.update(1)
+
+        for i in range(1, n_estimators):
+            rf.n_estimators = i + 1
+            rf.fit(X_train, y_train)
+            pbar.update(1)
 
     y_pred = rf.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
@@ -110,7 +122,6 @@ def plot_results(results):
     plt.tight_layout()
     plt.savefig('roc_curve.png')
 
-    # Plot confusion matrix
     plt.figure(figsize=(8, 6))
     cm = results['confusion_matrix']
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
@@ -124,7 +135,11 @@ def plot_results(results):
 
     print("Plots saved to current directory")
 
+
 if __name__ == '__main__':
-    gammas_file = '../magic-gammas.parquet'
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    RF_MODEL_PATH = os.path.join(BASE_DIR, "rf_model.pkl")
+
+    gammas_file = '../magic-gammas-new.parquet'
     proton_file = '../magic-protons.parquet'
-    train_random_forest_classifier(proton_file, gammas_file, path="rf.pkl")
+    train_random_forest_classifier(proton_file, gammas_file, path=RF_MODEL_PATH)
