@@ -28,7 +28,7 @@ import traceback
 
 # Import your modules
 try:
-    from ParameterTuning.HexMagicCNN import parameterize_hex_magicnet
+    from ParameterTuning.HexMagicNet import parameterize_hex_magicnet
     from TrainingPipeline.MagicDataset import MagicDataset
     from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
     from ParameterTuning import *
@@ -75,11 +75,7 @@ try:
 
     # Create model based on parameters
     print(f"Creating model...")
-    if "{model_name}".lower() == "basicmagicnet":
-        parameterize_func = parameterize_BasicMagicNet
-    elif "{model_name}".lower() == "hexcirclenet":
-        parameterize_func = parameterize_HexCircleNet
-    elif "{model_name}".lower() == "hexmagicnet":
+    if "{model_name}".lower() == "hexmagicnet":
         parameterize_func = parameterize_hex_magicnet
     else:
         raise ValueError(f"Invalid Modelname for parameterization: '{model_name}'")
@@ -298,7 +294,7 @@ def main():
     model_name = "hexmagicnet"
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas-new.parquet"
-    study_name = f"Final_Optimize_{model_name}"
+    study_name = f"Final_v2_Optimize_{model_name}"
 
     study = create_or_load_study(study_name)
     if study is None:
