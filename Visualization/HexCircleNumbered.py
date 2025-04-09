@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from SimulatedSampleGeneration.PlaneGenerators import HexagonPlaneGenerator
 
 
-def visualize_hex_circle(target_count: int):
+def visualize_hex_circle(target_count: int, cluster_cmap: bool = False):
     plane_generator = HexagonPlaneGenerator()
 
     # Generate the hexagon plane; we only need the hexagon centers and circle_info.
@@ -24,13 +24,15 @@ def visualize_hex_circle(target_count: int):
     ax.axis("off")  # Hide axes for a cleaner look
 
     colors = cm.prism(np.linspace(0, 1, total_rings))
+    cluster_colors = plt.get_cmap("prism")(np.linspace(0, 1, 20))
 
     # Draw each hexagon using a color from the colormap based on its index.
     for idx, (hex_center_x, hex_center_y, ring) in enumerate(hexagons):
+        color = cluster_colors[idx % 20] if cluster_cmap else colors[ring]
         # Get the points for the hexagon (using the same generator method)
         points = plane_generator.create_hexagon_points(hex_center_x, hex_center_y, hex_radius)
         # Create a polygon patch with the chosen fill color and a black outline.
-        hexagon_patch = patches.Polygon(points, closed=True, facecolor=colors[ring], edgecolor="black", alpha=0.1)
+        hexagon_patch = patches.Polygon(points, closed=True, facecolor=color, edgecolor="black", alpha=0.1)
         ax.add_patch(hexagon_patch)
         # Place the hexagon index as text in the center of the hexagon.
         ax.text(hex_center_x, hex_center_y, str(idx),
