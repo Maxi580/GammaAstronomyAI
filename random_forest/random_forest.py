@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import sys
 import os
@@ -12,6 +14,7 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader
 import cudf
 import cuml
+from cuml.model_selection import train_test_split as cu_train_test_split
 from cuml.ensemble import RandomForestClassifier as cuRF
 import joblib
 from joblib import parallel_backend
@@ -76,69 +79,82 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3,
         debug_info=True,
     )
 
-    print("\nExtracting features and labels for training...")
-    X = []
-    y = []
+    print("\nProcessing data directly to GPU...")
+    start_time = time.time()
 
-    batch_size = 128
+    batch_size = 1024
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
-    for batch in tqdm(loader, desc="Processing batches"):
-        m1_batch, m2_batch, features_batch, labels_batch, _ = batch
+    feature_cols = [f'feature_{i}' for i in range(51)]  # Based on extract_features returning 51 features
 
-        for i in range(len(labels_batch)):
-            X.append(features_batch[i].numpy())
-            y.append(labels_batch[i].item())
+    first_batch = next(iter(loader))
+    _, _, features_batch, labels_batch, _ = first_batch
 
-    X = np.array(X)
-    y = np.array(y)
+    X_gpu = cudf.DataFrame(features_batch.numpy().astype(np.float32), columns=feature_cols)
+    y_gpu = cudf.Series(labels_batch.numpy().astype(np.int32))
 
-    print(f"\nExtracted features shape: {X.shape}")
-    print(f"Labels shape: {y.shape}")
-    print(f"Class distribution: {np.bincount(y)}")
+    for i, batch in enumerate(tqdm(loader, desc="Processing batches to GPU")):
+        if i == 0:
+            continue
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=42, stratify=y
+        _, _, features_batch, labels_batch, _ = batch
+
+        features_cudf = cudf.DataFrame(features_batch.numpy().astype(np.float32), columns=feature_cols)
+        labels_cudf = cudf.Series(labels_batch.numpy().astype(np.int32))
+
+        X_gpu = cudf.concat([X_gpu, features_cudf], ignore_index=True)
+        y_gpu = cudf.concat([y_gpu, labels_cudf], ignore_index=True)
+
+    data_processing_time = time.time() - start_time
+    print(f"GPU data processing time: {data_processing_time:.2f} seconds")
+
+    print(f"\nTotal samples on GPU: {len(X_gpu)}")
+    print(f"Class distribution: {y_gpu.value_counts().to_pandas().to_dict()}")
+
+    print("\nSplitting data on GPU...")
+    X_train_gpu, X_test_gpu, y_train_gpu, y_test_gpu = cu_train_test_split(
+        X_gpu, y_gpu, test_size=test_size, random_state=42, stratify=y_gpu
     )
 
-    try:
-        X_train_gpu = cudf.DataFrame(X_train.astype(np.float32))
-        y_train_gpu = cudf.Series(y_train.astype(np.int32))
-        X_test_gpu = cudf.DataFrame(X_test.astype(np.float32))
-        y_test_gpu = cudf.Series(y_test.astype(np.int32))
-    except Exception as e:
-        print(f"Error converting data to GPU format: {e}")
-        raise
+    print(f"Training set size: {len(X_train_gpu)}")
+    print(f"Testing set size: {len(X_test_gpu)}")
 
-    print(f"\nTraining set size: {X_train.shape[0]}")
-    print(f"Testing set size: {X_test.shape[0]}")
     print("\nTraining GPU-accelerated Random Forest classifier...")
+    start_time = time.time()
 
     rf = cuRF(
+        random_state=42,
+        verbose=True,
         n_estimators=200,
         max_depth=30,
-        n_bins=128,
-        random_state=42,
-        verbose=True
+        n_bins=128
     )
 
     rf.fit(X_train_gpu, y_train_gpu)
+    fit_time = time.time() - start_time
+    print(f"Training time: {fit_time:.2f} seconds")
 
-    y_pred = rf.predict(X_test_gpu).to_numpy()
-    y_prob = rf.predict_proba(X_test_gpu)[:, 1].to_numpy()
+    start_time = time.time()
+    y_pred = rf.predict(X_test_gpu)
+    y_prob = rf.predict_proba(X_test_gpu)[:, 1]
+    pred_time = time.time() - start_time
+    print(f"Prediction time: {pred_time:.2f} seconds")
+
+    y_test_np = y_test_gpu.to_numpy()
+    y_pred_np = y_pred.to_numpy()
+    y_prob_np = y_prob.to_numpy()
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     joblib.dump(rf, path)
     print(f"GPU model saved to {path}")
 
-    accuracy = accuracy_score(y_test, y_pred)
-
+    accuracy = accuracy_score(y_test_np, y_pred_np)
     print(f"\nRandom Forest Test Accuracy: {accuracy:.4f}")
 
     print("\nClassification Report:")
-    print(classification_report(y_test, y_pred, target_names=['Proton', 'Gamma']))
+    print(classification_report(y_test_np, y_pred_np, target_names=['Proton', 'Gamma']))
 
-    fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+    fpr, tpr, thresholds = roc_curve(y_test_np, y_prob_np)
     roc_auc = auc(fpr, tpr)
 
     results = {
@@ -147,7 +163,7 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3,
         'roc_auc': roc_auc,
         'fpr': fpr,
         'tpr': tpr,
-        'confusion_matrix': confusion_matrix(y_test, y_pred)
+        'confusion_matrix': confusion_matrix(y_test_np, y_pred_np)
     }
 
     return results
