@@ -101,10 +101,14 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3,
         X, y, test_size=test_size, random_state=42, stratify=y
     )
 
-    X_train_gpu = cudf.DataFrame(X_train)
-    y_train_gpu = cudf.Series(y_train)
-    X_test_gpu = cudf.DataFrame(X_test)
-    y_test_gpu = cudf.Series(y_test)
+    try:
+        X_train_gpu = cudf.DataFrame(X_train.astype(np.float32))
+        y_train_gpu = cudf.Series(y_train.astype(np.int32))
+        X_test_gpu = cudf.DataFrame(X_test.astype(np.float32))
+        y_test_gpu = cudf.Series(y_test.astype(np.int32))
+    except Exception as e:
+        print(f"Error converting data to GPU format: {e}")
+        raise
 
     print(f"\nTraining set size: {X_train.shape[0]}")
     print(f"Testing set size: {X_test.shape[0]}")
