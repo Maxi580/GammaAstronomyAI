@@ -18,8 +18,6 @@ def convert_image(image: np.ndarray) -> np.ndarray:
     min_x = min(coords, key=lambda x: x[0])[0]
     max_x = max(coords, key=lambda x: x[0])[0]
     size_x = abs(min_x) + max_x + 1
-
-    print(size_x)
     
     # Calculate size for y axis
     indexed_coords = list(enumerate(coords))
@@ -74,7 +72,8 @@ def plot_image_hexagdly(image: np.ndarray, as_hex: bool = False, cmap ='viridis'
         p.set_array(np.array(np.array(intensities)))
         ax.add_collection(p)
     else:
-        ax.pcolormesh(converted, edgecolors='black', cmap=cmap, linewidth=0.5)
+        # Flipping upside-down because pcolormesh flips it too.
+        ax.pcolormesh(np.flipud(converted), edgecolors='black', cmap=cmap, linewidth=0.5)
 
     plt.tight_layout()
     plt.savefig(f'../Visuals/hexagdly_{len(image)}px_{'hex' if as_hex else 'square'}.png', bbox_inches='tight')
