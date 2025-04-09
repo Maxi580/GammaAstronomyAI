@@ -21,7 +21,7 @@ def parameterize_HexMagicNet(trial: optuna.Trial):
             super().__init__()
 
             self.hyperparams = {
-                'num_layers': trial.suggest_int('cnn_layers', 1, 2),
+                'num_layers': trial.suggest_int('cnn_layers', 1, 3),
                 'channels': [1],
                 'kernel_sizes': [],
                 'dropout_rates': [],
@@ -35,7 +35,7 @@ def parameterize_HexMagicNet(trial: optuna.Trial):
 
             for i in range(1, self.hyperparams['num_layers'] + 1):
                 self.hyperparams['kernel_sizes'].append(
-                    trial.suggest_int(f'kernel_size{i}', 1, 3)
+                    trial.suggest_int(f'kernel_size{i}', 1, 4)
                 )
 
             for i in range(1, self.hyperparams['num_layers'] + 1):
