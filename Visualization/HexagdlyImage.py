@@ -75,6 +75,7 @@ def plot_image_hexagdly(image: np.ndarray, as_hex: bool = False, cmap ='viridis'
         # Flipping upside-down because pcolormesh flips it too.
         ax.pcolormesh(np.flipud(converted), edgecolors='black', cmap=cmap, linewidth=0.5)
 
+    plt.colorbar(converted, ax=ax, label='Intensity')
     plt.tight_layout()
     plt.savefig(f'../Visuals/hexagdly_{len(image)}px_{'hex' if as_hex else 'square'}.png', bbox_inches='tight')
     plt.show()

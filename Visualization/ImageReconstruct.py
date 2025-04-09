@@ -22,6 +22,8 @@ def reconstruct_image(array_1039, save_path, title=None, pooling_count=0):
         array_1039 = array_1039.cpu().numpy()
 
     fig, ax = plt.subplots(figsize=(10, 10))
+    ax.set_aspect("equal")
+    ax.axis("off")  # Hide axes for a cleaner look
     disp = CameraDisplay(geom, ax=ax)
 
     if pooling_count > 0:
