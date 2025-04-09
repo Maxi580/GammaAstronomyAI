@@ -3,18 +3,16 @@ import time
 import torch
 import torch.nn as nn
 import pickle
-import cudf
-import joblib
 
 from CNN.Architectures import HexMagicNet
 from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
 from TrainingPipeline.Datasets import MagicDataset
-from random_forest.random_forest import train_random_forest_classifier_gpu
+from random_forest.random_forest import train_random_forest_classifier
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 HYBRID_DIR = os.path.join(BASE_DIR, "HybridSystem")
 CNN_MODEL_PATH = os.path.join(HYBRID_DIR, "cnn_model.pth")
-RF_MODEL_PATH = os.path.join(HYBRID_DIR, "rf_model_gpu.pkl")
+RF_MODEL_PATH = os.path.join(HYBRID_DIR, "rf_model.pkl")
 ENSEMBLE_MODEL_PATH = os.path.join(HYBRID_DIR, "ensemble_model.pth")
 
 PROTON_FILE = "magic-protons.parquet"
@@ -41,6 +39,7 @@ def train_cnn_model(epochs=30):
 
     supervisor.train_model(epochs)
 
+    # Save the model to the standardized path
     torch.save(supervisor.model.state_dict(), CNN_MODEL_PATH)
     print(f"CNN model saved to {CNN_MODEL_PATH}")
 
@@ -48,16 +47,12 @@ def train_cnn_model(epochs=30):
 
 
 def train_rf_model():
-    print("Training Random Forest component on GPU...")
-    results = train_random_forest_classifier_gpu(
+    print("Training Random Forest component...")
+    results = train_random_forest_classifier(
         proton_file=PROTON_FILE,
         gamma_file=GAMMA_FILE,
         path=RF_MODEL_PATH,
         test_size=0.3,
-        n_estimators=200,
-        max_depth=30,
-        min_samples_split=2,
-        min_samples_leaf=1
     )
     print(f"Random Forest model saved to {RF_MODEL_PATH}")
     return RF_MODEL_PATH
@@ -74,14 +69,14 @@ class EnsembleModel(nn.Module):
             param.requires_grad = False
 
         with open(rf_model_path, 'rb') as f:
-            self.rf_model = joblib.load(rf_model_path)
+            self.rf_model = pickle.load(f)
 
         self.ensemble_layer = nn.Sequential(
-            nn.Linear(4, 16),
-            nn.BatchNorm1d(16),
+            nn.Linear(4, 32),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
             nn.Dropout(p=0.3),
-            nn.Linear(16, 2)
+            nn.Linear(32, 2)
         )
 
         self.cnn_weight = nn.Parameter(torch.tensor([0.5]), requires_grad=True)
@@ -92,8 +87,7 @@ class EnsembleModel(nn.Module):
             cnn_pred = self.cnn_model(m1_image, m2_image, features)
 
         features_np = features.cpu().detach().numpy()
-        features_df = cudf.DataFrame(features_np)
-        rf_probs = self.rf_model.predict_proba(features_df)
+        rf_probs = self.rf_model.predict_proba(features_np)
         rf_pred = torch.tensor(rf_probs, dtype=torch.float32, device=features.device)
 
         rf_weight = 1.0 - self.cnn_weight
@@ -134,7 +128,6 @@ def train_ensemble_model(cnn_path, rf_path, epochs=10):
     return ENSEMBLE_MODEL_PATH
 
 
-# Main function to train the whole pipeline
 def main():
     if os.path.exists(CNN_MODEL_PATH):
         print(f"CNN model already exists at {CNN_MODEL_PATH}")
