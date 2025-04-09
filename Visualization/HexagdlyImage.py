@@ -55,7 +55,7 @@ def plot_image_hexagdly(image: np.ndarray, as_hex: bool = False, cmap ='viridis'
         npixel = 0
         intensities = []
         hexagons = []
-        for x in range(30):
+        for x in range(len(converted[0])):
             for y in range(len(converted)):
                 intensity = converted[y, x]
                 hexagon = RegularPolygon(
@@ -74,7 +74,7 @@ def plot_image_hexagdly(image: np.ndarray, as_hex: bool = False, cmap ='viridis'
         p.set_array(np.array(np.array(intensities)))
         ax.add_collection(p)
     else:
-        ax.imshow(converted, cmap=cmap)
+        ax.pcolormesh(converted, edgecolors='black', cmap=cmap, linewidth=0.5)
 
     plt.tight_layout()
     plt.savefig(f'../Visuals/hexagdly_{len(image)}px_{'hex' if as_hex else 'square'}.png', bbox_inches='tight')
