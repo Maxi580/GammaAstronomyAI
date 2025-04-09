@@ -9,7 +9,7 @@ import joblib
 from CNN.Architectures import HexMagicNet
 from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
 from TrainingPipeline.Datasets import MagicDataset
-from random_forest.random_forest import train_random_forest_classifier
+from random_forest.random_forest import train_random_forest_classifier_gpu
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 HYBRID_DIR = os.path.join(BASE_DIR, "HybridSystem")
@@ -48,13 +48,16 @@ def train_cnn_model(epochs=30):
 
 
 def train_rf_model():
-    print("Training Random Forest component...")
-    results = train_random_forest_classifier(
+    print("Training Random Forest component on GPU...")
+    results = train_random_forest_classifier_gpu(
         proton_file=PROTON_FILE,
         gamma_file=GAMMA_FILE,
         path=RF_MODEL_PATH,
         test_size=0.3,
-        optimize=False
+        n_estimators=200,
+        max_depth=30,
+        min_samples_split=2,
+        min_samples_leaf=1
     )
     print(f"Random Forest model saved to {RF_MODEL_PATH}")
     return RF_MODEL_PATH

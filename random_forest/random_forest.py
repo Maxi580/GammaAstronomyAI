@@ -1,199 +1,146 @@
-import time
-
-import numpy as np
-import sys
-import os
-import pickle
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, auc
-import matplotlib.pyplot as plt
-import seaborn as sns
-from tqdm import tqdm
-from torch.utils.data import DataLoader
 import cudf
 import cuml
-from cuml.model_selection import train_test_split as cu_train_test_split
-from cuml.ensemble import RandomForestClassifier as cuRF
+from cuml.ensemble import RandomForestClassifier
+from cuml.model_selection import train_test_split
+from cuml.metrics import accuracy_score
 import joblib
-from joblib import parallel_backend
+import pandas as pd
+import numpy as np
+import time
+from TrainingPipeline.Datasets.MagicDataset import MagicDataset, read_parquet_limit, extract_features
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from TrainingPipeline.Datasets.MagicDataset import MagicDataset
+
+def train_random_forest_classifier_gpu(
+        proton_file,
+        gamma_file,
+        path=None,
+        test_size=0.3,
+        n_estimators=100,
+        max_depth=15,
+        min_samples_split=2,
+        min_samples_leaf=1
+):
+    print("Loading data...")
+    start_time = time.time()
+
+    proton_metadata = cudf.io.read_parquet_metadata(proton_file)
+    gamma_metadata = cudf.io.read_parquet_metadata(gamma_file)
+
+    n_protons = proton_metadata.num_rows
+    n_gammas = gamma_metadata.num_rows
+
+    print(f"Loading {n_protons} proton samples and {n_gammas} gamma samples")
+
+    proton_data = cudf.read_parquet(proton_file)
+    gamma_data = cudf.read_parquet(gamma_file)
+
+    print(f"Data loaded in {time.time() - start_time:.2f} seconds")
+
+    print("Extracting features...")
+    feature_start = time.time()
+
+    proton_features = extract_features_gpu(proton_data)
+    gamma_features = extract_features_gpu(gamma_data)
+
+    proton_labels = cudf.Series(np.zeros(len(proton_data)), dtype='int32')
+    gamma_labels = cudf.Series(np.ones(len(gamma_data)), dtype='int32')
+
+    X = cudf.concat([proton_features, gamma_features])
+    y = cudf.concat([proton_labels, gamma_labels])
+
+    print(f"Features extracted in {time.time() - feature_start:.2f} seconds")
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
+
+    print("Training Random Forest model on GPU...")
+    training_start = time.time()
+
+    model = RandomForestClassifier(
+        n_estimators=n_estimators,
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_samples_leaf,
+        n_streams=1,
+        n_bins=128,
+        max_features=None,
+        bootstrap=True,
+        random_state=42
+    )
+
+    model.fit(X_train, y_train)
+
+    training_time = time.time() - training_start
+    print(f"Model trained in {training_time:.2f} seconds")
+
+    print("Evaluating model...")
 
 
-def optimize_random_forest(X_train, y_train, cv=3, sample_size=20000):
-    print("Optimizing Random Forest hyperparameters on a subset of the data...")
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Test accuracy: {accuracy:.4f}")
 
-    if len(X_train) > sample_size:
-        X_sample, _, y_sample, _ = train_test_split(
-            X_train, y_train,
-            train_size=sample_size,
-            stratify=y_train,
-            random_state=42
-        )
-        print(f"Using {sample_size} samples for optimization ({sample_size / len(X_train):.1%} of training data)")
-    else:
-        X_sample = X_train
-        y_sample = y_train
-        print(f"Using all {len(X_train)} samples for optimization (dataset smaller than requested sample)")
+    # Save the model if path is provided
+    if path:
+        joblib.dump(model, path)
+        print(f"Model saved to {path}")
 
-    param_grid = {
-        'n_estimators': [50, 100, 200],
-        'max_depth': [None, 10, 20, 30],
-        'min_samples_split': [2, 5, 10],
-        'min_samples_leaf': [1, 2, 4],
-        'max_features': ['sqrt', 'log2', None]
+    return {
+        "model": model,
+        "accuracy": accuracy,
+        "training_time": training_time,
+        "n_samples": len(X)
     }
 
-    rf = RandomForestClassifier(random_state=42)
 
-    grid_search = GridSearchCV(
-        estimator=rf,
-        param_grid=param_grid,
-        cv=cv,
-        n_jobs=-1,
-        verbose=2,
-        scoring='accuracy'
-    )
+def extract_features_gpu(df):
+    """
+    Adapt the extract_features function to work with cuDF DataFrames
+    This returns all features as a cuDF DataFrame
+    """
+    # The same feature names as in your original extract_features function
+    feature_columns = [
+        # Hillas M1 features
+        'hillas_length_m1', 'hillas_width_m1', 'hillas_delta_m1',
+        'hillas_size_m1', 'hillas_cog_x_m1', 'hillas_cog_y_m1',
+        'hillas_sin_delta_m1', 'hillas_cos_delta_m1',
 
-    grid_search.fit(X_sample, y_sample)
+        # Hillas M2 features
+        'hillas_length_m2', 'hillas_width_m2', 'hillas_delta_m2',
+        'hillas_size_m2', 'hillas_cog_x_m2', 'hillas_cog_y_m2',
+        'hillas_sin_delta_m2', 'hillas_cos_delta_m2',
 
-    print(f"Best parameters: {grid_search.best_params_}")
-    print(f"Best cross-validation score: {grid_search.best_score_:.4f}")
+        # Stereo features
+        'stereo_direction_x', 'stereo_direction_y', 'stereo_zenith',
+        'stereo_azimuth', 'stereo_dec', 'stereo_ra', 'stereo_theta2',
+        'stereo_core_x', 'stereo_core_y', 'stereo_impact_m1',
+        'stereo_impact_m2', 'stereo_impact_azimuth_m1',
+        'stereo_impact_azimuth_m2', 'stereo_shower_max_height',
+        'stereo_xmax', 'stereo_cherenkov_radius',
+        'stereo_cherenkov_density', 'stereo_baseline_phi_m1',
+        'stereo_baseline_phi_m2', 'stereo_image_angle',
+        'stereo_cos_between_shower',
 
-    best_params = grid_search.best_params_
-    print("Training final model with best parameters on full training set...")
-    best_model = RandomForestClassifier(random_state=42, **best_params)
-    best_model.fit(X_train, y_train)
+        # Pointing features
+        'pointing_zenith', 'pointing_azimuth',
 
-    return best_model
+        # Time gradient features
+        'time_gradient_m1', 'time_gradient_m2',
 
+        # Source M1 features
+        'source_alpha_m1', 'source_dist_m1',
+        'source_cos_delta_alpha_m1', 'source_dca_m1',
+        'source_dca_delta_m1',
 
-def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3, optimize=False):
-    print("Loading the MAGIC dataset...")
-    dataset = MagicDataset(
-        proton_filename=proton_file,
-        gamma_filename=gamma_file,
-        debug_info=True,
-    )
+        # Source M2 features
+        'source_alpha_m2', 'source_dist_m2',
+        'source_cos_delta_alpha_m2', 'source_dca_m2',
+        'source_dca_delta_m2'
+    ]
 
-    print("\nProcessing data directly to GPU...")
-    start_time = time.time()
+    # Create a new DataFrame with only the features we need
+    features_df = df[feature_columns].copy()
 
-    batch_size = 1024
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    # Replace NaN values with 0
+    features_df = features_df.fillna(0.0)
 
-    feature_cols = [f'feature_{i}' for i in range(51)]  # Based on extract_features returning 51 features
-
-    first_batch = next(iter(loader))
-    _, _, features_batch, labels_batch, _ = first_batch
-
-    X_gpu = cudf.DataFrame(features_batch.numpy().astype(np.float32), columns=feature_cols)
-    y_gpu = cudf.Series(labels_batch.numpy().astype(np.int32))
-
-    for i, batch in enumerate(tqdm(loader, desc="Processing batches to GPU")):
-        if i == 0:
-            continue
-
-        _, _, features_batch, labels_batch, _ = batch
-
-        features_cudf = cudf.DataFrame(features_batch.numpy().astype(np.float32), columns=feature_cols)
-        labels_cudf = cudf.Series(labels_batch.numpy().astype(np.int32))
-
-        X_gpu = cudf.concat([X_gpu, features_cudf], ignore_index=True)
-        y_gpu = cudf.concat([y_gpu, labels_cudf], ignore_index=True)
-
-    data_processing_time = time.time() - start_time
-    print(f"GPU data processing time: {data_processing_time:.2f} seconds")
-
-    print(f"\nTotal samples on GPU: {len(X_gpu)}")
-    print(f"Class distribution: {y_gpu.value_counts().to_pandas().to_dict()}")
-
-    print("\nSplitting data on GPU...")
-    X_train_gpu, X_test_gpu, y_train_gpu, y_test_gpu = cu_train_test_split(
-        X_gpu, y_gpu, test_size=test_size, random_state=42, stratify=y_gpu
-    )
-
-    print(f"Training set size: {len(X_train_gpu)}")
-    print(f"Testing set size: {len(X_test_gpu)}")
-
-    print("\nTraining GPU-accelerated Random Forest classifier...")
-    start_time = time.time()
-
-    rf = cuRF(
-        random_state=42,
-        verbose=True,
-        n_estimators=200,
-        max_depth=30,
-        n_bins=128
-    )
-
-    rf.fit(X_train_gpu, y_train_gpu)
-    fit_time = time.time() - start_time
-    print(f"Training time: {fit_time:.2f} seconds")
-
-    start_time = time.time()
-    y_pred = rf.predict(X_test_gpu)
-    y_prob = rf.predict_proba(X_test_gpu)[:, 1]
-    pred_time = time.time() - start_time
-    print(f"Prediction time: {pred_time:.2f} seconds")
-
-    y_test_np = y_test_gpu.to_numpy()
-    y_pred_np = y_pred.to_numpy()
-    y_prob_np = y_prob.to_numpy()
-
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    joblib.dump(rf, path)
-    print(f"GPU model saved to {path}")
-
-    accuracy = accuracy_score(y_test_np, y_pred_np)
-    print(f"\nRandom Forest Test Accuracy: {accuracy:.4f}")
-
-    print("\nClassification Report:")
-    print(classification_report(y_test_np, y_pred_np, target_names=['Proton', 'Gamma']))
-
-    fpr, tpr, thresholds = roc_curve(y_test_np, y_prob_np)
-    roc_auc = auc(fpr, tpr)
-
-    results = {
-        'model': rf,
-        'accuracy': accuracy,
-        'roc_auc': roc_auc,
-        'fpr': fpr,
-        'tpr': tpr,
-        'confusion_matrix': confusion_matrix(y_test_np, y_pred_np)
-    }
-
-    return results
-
-
-def plot_results(results):
-    """Plot the results from the random forest classifier"""
-    plt.figure(figsize=(8, 8))
-    plt.plot(results['fpr'], results['tpr'], color='darkorange', lw=2,
-             label=f'ROC curve (area = {results["roc_auc"]:.3f})')
-    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic (ROC) Curve')
-    plt.legend(loc="lower right")
-    plt.tight_layout()
-    plt.savefig('roc_curve.png')
-
-    # Plot confusion matrix
-    plt.figure(figsize=(8, 6))
-    cm = results['confusion_matrix']
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                xticklabels=['Proton', 'Gamma'],
-                yticklabels=['Proton', 'Gamma'])
-    plt.xlabel('Predicted Label')
-    plt.ylabel('True Label')
-    plt.title('Confusion Matrix')
-    plt.tight_layout()
-    plt.savefig('confusion_matrix.png')
-
-    print("Plots saved to current directory")
+    return features_df
