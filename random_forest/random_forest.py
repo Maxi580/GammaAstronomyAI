@@ -1,7 +1,6 @@
 import numpy as np
 import sys
 import os
-
 import pickle
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
@@ -11,12 +10,17 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+import cudf
+import cuml
+from cuml.ensemble import RandomForestClassifier as cuRF
+import joblib
+from joblib import parallel_backend
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from TrainingPipeline.Datasets.MagicDataset import MagicDataset
 
 
-def optimize_random_forest(X_train, y_train, cv=3, sample_size=10000):
+def optimize_random_forest(X_train, y_train, cv=3, sample_size=20000):
     print("Optimizing Random Forest hyperparameters on a subset of the data...")
 
     if len(X_train) > sample_size:
@@ -82,7 +86,6 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3,
     for batch in tqdm(loader, desc="Processing batches"):
         m1_batch, m2_batch, features_batch, labels_batch, _ = batch
 
-        # Add the features to our dataset (these are already the numerical features)
         for i in range(len(labels_batch)):
             X.append(features_batch[i].numpy())
             y.append(labels_batch[i].item())
@@ -98,29 +101,32 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3,
         X, y, test_size=test_size, random_state=42, stratify=y
     )
 
+    X_train_gpu = cudf.DataFrame(X_train)
+    y_train_gpu = cudf.Series(y_train)
+    X_test_gpu = cudf.DataFrame(X_test)
+    y_test_gpu = cudf.Series(y_test)
+
     print(f"\nTraining set size: {X_train.shape[0]}")
     print(f"Testing set size: {X_test.shape[0]}")
+    print("\nTraining GPU-accelerated Random Forest classifier...")
 
-    if optimize:
-        print("\nPerforming hyperparameter optimization...")
-        rf = optimize_random_forest(X_train, y_train, cv=3)
-    else:
-        print("\nTraining Random Forest classifier...")
-        rf = RandomForestClassifier(
-            n_estimators=100,
-            max_depth=None,
-            min_samples_split=2,
-            min_samples_leaf=1,
-            max_features='sqrt',
-            bootstrap=True,
-            n_jobs=-1,
-            random_state=42,
-            verbose=0
-        )
+    rf = cuRF(
+        n_estimators=200,
+        max_depth=30,
+        n_bins=128,
+        random_state=42,
+        verbose=True
+    )
 
-    rf.fit(X_train, y_train)
+    rf.fit(X_train_gpu, y_train_gpu)
 
-    y_pred = rf.predict(X_test)
+    y_pred = rf.predict(X_test_gpu).to_numpy()
+    y_prob = rf.predict_proba(X_test_gpu)[:, 1].to_numpy()
+
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    joblib.dump(rf, path)
+    print(f"GPU model saved to {path}")
+
     accuracy = accuracy_score(y_test, y_pred)
 
     print(f"\nRandom Forest Test Accuracy: {accuracy:.4f}")
@@ -128,14 +134,8 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3,
     print("\nClassification Report:")
     print(classification_report(y_test, y_pred, target_names=['Proton', 'Gamma']))
 
-    y_prob = rf.predict_proba(X_test)[:, 1]
     fpr, tpr, thresholds = roc_curve(y_test, y_prob)
     roc_auc = auc(fpr, tpr)
-
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'wb') as f:
-        pickle.dump(rf, f)
-    print(f"Model dumped to {path}")
 
     results = {
         'model': rf,
