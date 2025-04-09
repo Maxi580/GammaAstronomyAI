@@ -36,8 +36,8 @@ def visualize_hex_circle(target_count: int):
         ax.text(hex_center_x, hex_center_y, str(idx),
                 ha="center", va="center", fontsize=8, color="black")
 
+    plt.savefig(f"../Visuals/hex_circle_numbered-{target_count}.png", bbox_inches='tight')
     plt.show()
-    # plt.savefig("./hex_circle.png")
 
 if __name__ == "__main__":
     TARGET_HEX_COUNT = 1039

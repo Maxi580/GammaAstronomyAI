@@ -15,7 +15,7 @@ class HexCircleConv(nn.Module):
         out_channels: int,
         kernel_size: int,
         bias: bool = True,
-        # padding_mode: str = "zeros", # TODO
+        padding_mode: str = "zeros",
         device=None,
         dtype=None,
     ):
@@ -34,10 +34,13 @@ class HexCircleConv(nn.Module):
             raise ValueError("out_channels must be a positive integer")
         if kernel_size < 0:
             raise ValueError("kernel_size must be zero or a positive integer")
+        if padding_mode not in ["zeros", "mean"]:
+            raise ValueError("padding_mode must be either \"zeros\" or \"mean\"")
         
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = kernel_size
+        self.padding_mode = padding_mode
         self.n_pixels = None
         
         total_kernel_pixels = calc_kernel_pixels(kernel_size)
@@ -52,7 +55,7 @@ class HexCircleConv(nn.Module):
     
     def extra_repr(self):
         return (
-            "{in_channels}, {out_channels}, kernel_size={kernel_size}, n_pixels={n_pixels}".format(**self.__dict__)
+            "{in_channels}, {out_channels}, kernel_size={kernel_size}, n_pixels={n_pixels}, padding_mode={padding_mode}".format(**self.__dict__)
         )
 
     def reset_parameters(self):
@@ -73,27 +76,27 @@ class HexCircleConv(nn.Module):
         A tensor of shape (batch_size, out_channels, N).
         """
         B, Cin, N = x.shape
-        
+
         if not self.n_pixels:
             self.n_pixels = N
             # Generate neighbors list for given pixels and kernel size and save it in buffer
             neighbor_list = get_neighbor_tensor(self.n_pixels, self.kernel_size).to(device=x.get_device())
             self.register_buffer('neighbors', neighbor_list)
-        
+
         expected_N, K = self.neighbors.shape
-        
+
         if N != expected_N or Cin != self.in_channels:
             raise ValueError(f"Passed data has shape (in_channels={Cin}, n_pixels={N}), but expected shape is (in_channels={self.in_channels}, n_pixels={expected_N})")
-        
+
         # Expand neighbors tensor to batch dimension.
         # self.neighbors has shape (N, K) and contains -1 for missing neighbors on the edges.
         # We want to gather along the hexagon (N) dimension of x.
         neighbors = self.neighbors.unsqueeze(0).expand(B, N, K)  # shape: (B, N, K)
-        
+
         # Create a mask for valid indices.
         # Will be True for all valid indices, else False.
         valid_mask = (neighbors != -1)  # shape: (B, N, K)
-        
+
         # Replace -1 with 0 (so that we can safely gather without indexing errors).
         # Uses the previously generated mask for that.
         neighbors_safe = neighbors.clone()
@@ -102,25 +105,39 @@ class HexCircleConv(nn.Module):
         # Gather neighbor features from x.
         # x is (B, Cin, N). We expand it to (B, Cin, N, K).
         x_exp = x.unsqueeze(-1).expand(B, Cin, N, K)
-        
+
         # Now, we need to gather along dimension 2.
         # Expand neighbors_safe to shape (B, Cin, N, K) so that each channel is gathered.
         neighbors_safe_exp = neighbors_safe.unsqueeze(1).expand(B, Cin, N, K)
         # Gather features: neighbor_features will have shape (B, Cin, N, K).
         neighbor_features = torch.gather(x_exp, dim=2, index=neighbors_safe_exp)
         
-        # Zero out features from missing neighbors using the valid_mask.
-        # .float() converts all Booleans into 1 or 0.
-        valid_mask_exp = valid_mask.unsqueeze(1).expand(B, Cin, N, K)
-        neighbor_features = neighbor_features * valid_mask_exp.float()
+        
+        if self.padding_mode == 'mean':
+            # Instead of zeroing out missing values, replace them with the mean of the valid neighbor features.
+            valid_mask_exp = valid_mask.unsqueeze(1).expand(B, Cin, N, K)  # shape: (B, Cin, N, K)
+            
+            # Sum the valid neighbor features along the kernel dimension.
+            valid_sum = (neighbor_features * valid_mask_exp.float()).sum(dim=-1, keepdim=True)
+            # Count the number of valid neighbors.
+            valid_count = valid_mask_exp.float().sum(dim=-1, keepdim=True)
+            # Compute the per-channel mean (avoid division by zero by clamping).
+            mean_valid = valid_sum / valid_count.clamp(min=1)
+            # For every missing neighbor (where valid_mask is False), replace its value with mean_valid.
+            neighbor_features = torch.where(valid_mask_exp, neighbor_features, mean_valid)
+        else:
+            # Zero out features from missing neighbors using the valid_mask.
+            # .float() converts all Booleans into 1 or 0.
+            valid_mask_exp = valid_mask.unsqueeze(1).expand(B, Cin, N, K)
+            neighbor_features = neighbor_features * valid_mask_exp.float()
         
         # Now apply the convolution: we have a weight tensor of shape (out_channels, in_channels, K).
         # We want to compute for each hexagon n and output channel o:
         #     out[b, o, n] = sum_{cin, k} self.weight[o, cin, k] * neighbor_features[b, cin, n, k]
         out = torch.einsum('oik, bink -> bon', self.weight, neighbor_features)
-        
+
         # Add bias if present.
         if self.bias is not None:
             out = out + self.bias.view(1, -1, 1)
-        
+
         return out
