@@ -29,7 +29,7 @@ import traceback
 # Import your modules
 try:
     from ParameterTuning.HexMagicNet import parameterize_HexMagicNet
-    from TrainingPipeline.MagicDataset import MagicDataset
+    from TrainingPipeline.Datasets.MagicDataset import MagicDataset
     from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
     from ParameterTuning import *
 except ImportError as e:
@@ -294,7 +294,7 @@ def main():
     model_name = "hexmagicnet"
     proton_file = "magic-protons.parquet"
     gamma_file = "magic-gammas-new.parquet"
-    study_name = f"Final_v3_Optimize_{model_name}"
+    study_name = f"Final_v4_Optimize_{model_name}"
 
     study = create_or_load_study(study_name)
     if study is None:
