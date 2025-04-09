@@ -16,55 +16,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from TrainingPipeline.Datasets.MagicDataset import MagicDataset
 
 
-def optimize_random_forest(X_train, y_train, cv=3, sample_size=10000):
-    print("Optimizing Random Forest hyperparameters on a subset of the data...")
-
-    if len(X_train) > sample_size:
-        X_sample, _, y_sample, _ = train_test_split(
-            X_train, y_train,
-            train_size=sample_size,
-            stratify=y_train,
-            random_state=42
-        )
-        print(f"Using {sample_size} samples for optimization ({sample_size / len(X_train):.1%} of training data)")
-    else:
-        X_sample = X_train
-        y_sample = y_train
-        print(f"Using all {len(X_train)} samples for optimization (dataset smaller than requested sample)")
-
-    param_grid = {
-        'n_estimators': [50, 100, 200],
-        'max_depth': [None, 10, 20, 30],
-        'min_samples_split': [2, 5, 10],
-        'min_samples_leaf': [1, 2, 4],
-        'max_features': ['sqrt', 'log2', None]
-    }
-
-    rf = RandomForestClassifier(random_state=42)
-
-    grid_search = GridSearchCV(
-        estimator=rf,
-        param_grid=param_grid,
-        cv=cv,
-        n_jobs=-1,
-        verbose=2,
-        scoring='accuracy'
-    )
-
-    grid_search.fit(X_sample, y_sample)
-
-    print(f"Best parameters: {grid_search.best_params_}")
-    print(f"Best cross-validation score: {grid_search.best_score_:.4f}")
-
-    best_params = grid_search.best_params_
-    print("Training final model with best parameters on full training set...")
-    best_model = RandomForestClassifier(random_state=42, **best_params)
-    best_model.fit(X_train, y_train)
-
-    return best_model
-
-
-def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3, optimize=False):
+def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3):
     print("Loading the MAGIC dataset...")
     dataset = MagicDataset(
         proton_filename=proton_file,
@@ -100,23 +52,18 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3,
 
     print(f"\nTraining set size: {X_train.shape[0]}")
     print(f"Testing set size: {X_test.shape[0]}")
-
-    if optimize:
-        print("\nPerforming hyperparameter optimization...")
-        rf = optimize_random_forest(X_train, y_train, cv=3)
-    else:
-        print("\nTraining Random Forest classifier...")
-        rf = RandomForestClassifier(
-            n_estimators=100,
-            max_depth=None,
-            min_samples_split=2,
-            min_samples_leaf=1,
-            max_features='sqrt',
-            bootstrap=True,
-            n_jobs=-1,
-            random_state=42,
-            verbose=0
-        )
+    print("\nTraining Random Forest classifier...")
+    rf = RandomForestClassifier(
+        n_estimators=200,
+        max_depth=30,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        max_features=None,
+        bootstrap=True,
+        n_jobs=-1,
+        random_state=42,
+        verbose=2
+    )
 
     rf.fit(X_train, y_train)
 
@@ -150,7 +97,6 @@ def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3,
 
 
 def plot_results(results):
-    """Plot the results from the random forest classifier"""
     plt.figure(figsize=(8, 8))
     plt.plot(results['fpr'], results['tpr'], color='darkorange', lw=2,
              label=f'ROC curve (area = {results["roc_auc"]:.3f})')
@@ -164,7 +110,6 @@ def plot_results(results):
     plt.tight_layout()
     plt.savefig('roc_curve.png')
 
-    # Plot confusion matrix
     plt.figure(figsize=(8, 6))
     cm = results['confusion_matrix']
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
@@ -177,3 +122,12 @@ def plot_results(results):
     plt.savefig('confusion_matrix.png')
 
     print("Plots saved to current directory")
+
+
+if __name__ == '__main__':
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    RF_MODEL_PATH = os.path.join(BASE_DIR, "rf_model.pkl")
+
+    gammas_file = '../magic-gammas-new.parquet'
+    proton_file = '../magic-protons.parquet'
+    train_random_forest_classifier(proton_file, gammas_file, path=RF_MODEL_PATH)

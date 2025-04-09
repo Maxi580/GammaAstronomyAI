@@ -1,11 +1,11 @@
-Random Forest Test Accuracy: 0.9623
+Random Forest Test Accuracy: 0.9628
 
 Classification Report:
               precision    recall  f1-score   support
 
-      Proton       0.90      0.77      0.83     31552
+      Proton       0.89      0.79      0.84     31552
        Gamma       0.97      0.99      0.98    231354
 
     accuracy                           0.96    262906
-   macro avg       0.93      0.88      0.91    262906
+   macro avg       0.93      0.89      0.91    262906
 weighted avg       0.96      0.96      0.96    262906

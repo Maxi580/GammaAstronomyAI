@@ -53,7 +53,6 @@ def train_rf_model():
         gamma_file=GAMMA_FILE,
         path=RF_MODEL_PATH,
         test_size=0.3,
-        optimize=True
     )
     print(f"Random Forest model saved to {RF_MODEL_PATH}")
     return RF_MODEL_PATH
@@ -73,11 +72,11 @@ class EnsembleModel(nn.Module):
             self.rf_model = pickle.load(f)
 
         self.ensemble_layer = nn.Sequential(
-            nn.Linear(4, 16),
-            nn.BatchNorm1d(16),
+            nn.Linear(4, 32),
+            nn.BatchNorm1d(32),
             nn.ReLU(),
             nn.Dropout(p=0.3),
-            nn.Linear(16, 2)
+            nn.Linear(32, 2)
         )
 
         self.cnn_weight = nn.Parameter(torch.tensor([0.5]), requires_grad=True)
@@ -115,7 +114,6 @@ def train_ensemble_model(cnn_path, rf_path, epochs=10):
 
     supervisor.model = ensemble.to(supervisor.device)
 
-    # Use higher learning rate and weight decay for this smaller model
     supervisor.LEARNING_RATE = 1e-3
     supervisor.WEIGHT_DECAY = 1e-3
     supervisor.GRAD_CLIP_NORM = 1.0
@@ -130,7 +128,6 @@ def train_ensemble_model(cnn_path, rf_path, epochs=10):
     return ENSEMBLE_MODEL_PATH
 
 
-# Main function to train the whole pipeline
 def main():
     if os.path.exists(CNN_MODEL_PATH):
         print(f"CNN model already exists at {CNN_MODEL_PATH}")
