@@ -5,10 +5,10 @@ def train_multiple(models: list[str], proton_file: str, gamma_file: str, epochs:
         train_model(model, proton_file, gamma_file, epochs, **kwargs)
         print(('#'*50 + '\n\n')*2)
 
-    print(f"Training Completed!")
-    print("Models:", models)
-    print("Epochs:", epochs)
-    print("Settings:", kwargs)
+    print(f'Training Completed!')
+    print('Models:', models)
+    print('Epochs:', epochs)
+    print('Settings:', kwargs)
 
 
 if __name__ == '__main__':
@@ -21,8 +21,8 @@ if __name__ == '__main__':
         # ...
     ]
 
-    PROTON_FILE = "magic-protons.parquet"
-    GAMMA_FILE = "magic-gammas.parquet"
+    PROTON_FILE = 'magic-protons.parquet'
+    GAMMA_FILE = 'magic-gammas-new.parquet'
     EPOCHS = 20
 
     train_multiple(MODELS, PROTON_FILE, GAMMA_FILE, EPOCHS,
