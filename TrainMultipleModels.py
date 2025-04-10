@@ -3,6 +3,12 @@ from TrainModel import train_model
 def train_multiple(models: list[str], proton_file: str, gamma_file: str, epochs: int, **kwargs):
     for model in models:
         train_model(model, proton_file, gamma_file, epochs, **kwargs)
+        print(('#'*50 + '\n\n')*2)
+
+    print(f"Training Completed!")
+    print("Models:", models)
+    print("Epochs:", epochs)
+    print("Settings:", kwargs)
 
 
 if __name__ == '__main__':
