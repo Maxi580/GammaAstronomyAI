@@ -7,10 +7,10 @@ class TelescopeCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.cnn = nn.Sequential(
-            MagicConv(1, 8, kernel_size=2),
-            nn.GroupNorm(2, 8),
+            MagicConv(1, 14, kernel_size=2),
+            nn.GroupNorm(1, 14),
             nn.ReLU(),
-            nn.Dropout1d(p=0.3),
+            nn.Dropout1d(p=0.2),
         )
 
     def forward(self, x):
@@ -25,11 +25,11 @@ class HexMagicNet(nn.Module):
         self.m2_cnn = TelescopeCNN()
 
         self.classifier = nn.Sequential(
-            nn.Linear(8 * 1039 * 2, 512),
-            nn.BatchNorm1d(512),
+            nn.Linear(14 * 1039 * 2, 1024),
+            nn.BatchNorm1d(1024),
             nn.ReLU(),
-            nn.Dropout(p=0.3),
-            nn.Linear(512, 2),
+            nn.Dropout(p=0.2),
+            nn.Linear(1024, 2),
         )
 
     def forward(self, m1_image, m2_image, measurement_features):
