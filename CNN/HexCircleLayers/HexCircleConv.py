@@ -79,8 +79,14 @@ class HexCircleConv(nn.Module):
 
         if not self.n_pixels:
             self.n_pixels = N
+
             # Generate neighbors list for given pixels and kernel size and save it in buffer
-            neighbor_list = get_neighbor_tensor(self.n_pixels, self.kernel_size).to(device=x.get_device())
+            neighbor_list = get_neighbor_tensor(self.n_pixels, self.kernel_size)
+
+            device = x.get_device()
+            if device >= 0:
+                neighbor_list = neighbor_list.to(device=device)
+
             self.register_buffer('neighbors', neighbor_list)
 
         expected_N, K = self.neighbors.shape

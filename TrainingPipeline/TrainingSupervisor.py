@@ -116,12 +116,6 @@ class EarlyStopping:
 class TrainingSupervisor:
     VAL_SPLIT: float = 0.3
 
-    # Params from Maxis Branch
-    # LEARNING_RATE = 5.269632147047427e-06
-    # WEIGHT_DECAY = 0.00034049323130326087
-    # BATCH_SIZE = 64
-    # GRAD_CLIP_NORM = 0.7168560391358462
-
     LEARNING_RATE = 1e-4
     WEIGHT_DECAY = 1e-4
     BATCH_SIZE = 64
@@ -133,13 +127,15 @@ class TrainingSupervisor:
     SCHEDULER_MAX_LR = 1e-3
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
-                 save_model: bool = False, save_debug_data: bool = True, early_stopping: bool = True) -> None:
+                 save_model: bool = False, save_debug_data: bool = True, early_stopping: bool = True,
+                 use_custom_params: bool = False) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
                                    else "cpu")
         self.debug_info = debug_info
         self.save_model = save_model
         self.save_debug_data = save_debug_data
         self.early_stopping = early_stopping
+        self.use_custom_params = use_custom_params
 
         if self.save_debug_data or self.save_model:
             os.makedirs(output_dir, exist_ok=True)
@@ -256,12 +252,49 @@ class TrainingSupervisor:
                 model = StatsMagicNet()
             case "hexcirclenet":
                 model = HexCircleNet()
+
+                if self.use_custom_params:
+                    self.LEARNING_RATE = 0.0006250708520118225
+                    self.WEIGHT_DECAY = 0.00012551308112717833
+                    self.GRAD_CLIP_NORM = 1.0
+                    self.SCHEDULER_CYCLE_MOMENTUM = True
+                    self.SCHEDULER_STEP_SIZE = 6
+                    self.SCHEDULER_BASE_LR = 1.9730551292086e-05
+                    self.SCHEDULER_MAX_LR = 0.0008631873109885323
+
             case "hexmagicnet":
                 model = HexMagicNet()
+
+                if self.use_custom_params:
+                    self.LEARNING_RATE = 5.269632147047427e-06
+                    self.WEIGHT_DECAY = 0.00034049323130326087
+                    self.BATCH_SIZE = 64
+                    self.GRAD_CLIP_NORM = 0.7168560391358462
+
             case "hexagdlynet":
                 model = HexagdlyNet()
+
+                if self.use_custom_params:
+                    self.LEARNING_RATE = 0.000817861258020137
+                    self.WEIGHT_DECAY = 0.000721390625278987
+                    self.GRAD_CLIP_NORM = 2.0
+                    self.SCHEDULER_CYCLE_MOMENTUM = False
+                    self.SCHEDULER_STEP_SIZE = 4
+                    self.SCHEDULER_BASE_LR = 0.0001108823441121981
+                    self.SCHEDULER_MAX_LR = 0.004212829321789141
+
             case "simple1dnet":
                 model = Simple1dNet()
+
+                if self.use_custom_params:
+                    self.LEARNING_RATE = 0.0024372693219380376
+                    self.WEIGHT_DECAY = 0.00046404836789216026
+                    self.GRAD_CLIP_NORM = 3.1
+                    self.SCHEDULER_CYCLE_MOMENTUM = False
+                    self.SCHEDULER_STEP_SIZE = 4
+                    self.SCHEDULER_BASE_LR = 0.0001089415103064346
+                    self.SCHEDULER_MAX_LR = 0.004629201448534882
+
             case "custom":
                 model = nn.Module()
             case _:
