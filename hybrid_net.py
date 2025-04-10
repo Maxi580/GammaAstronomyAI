@@ -59,23 +59,24 @@ def train_rf_model():
 
 
 class EnsembleModel(nn.Module):
-    def __init__(self, cnn_model_path, rf_model_path):
+    def __init__(self, cnn_model_path, rf_model_path, device='gpu'):
         super().__init__()
 
         self.cnn_model = HexMagicNet()
-        self.cnn_model.load_state_dict(torch.load(cnn_model_path))
+        self.cnn_model.load_state_dict(torch.load(cnn_model_path, map_location=device))
 
         for param in self.cnn_model.parameters():
             param.requires_grad = False
 
         with open(rf_model_path, 'rb') as f:
             self.rf_model = pickle.load(f)
+            self.rf_model.verbose = 0
 
         self.ensemble_layer = nn.Sequential(
             nn.Linear(4, 32),
             nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.Dropout(p=0.3),
+            nn.Dropout(p=0.4),
             nn.Linear(32, 2)
         )
 
@@ -100,7 +101,7 @@ class EnsembleModel(nn.Module):
         return self.ensemble_layer(combined_preds)
 
 
-def train_ensemble_model(cnn_path, rf_path, epochs=10):
+def train_ensemble_model(cnn_path, rf_path, epochs=5):
     print("Training ensemble combiner model...")
     ensemble_nametag = f"Ensemble_Combiner_{time.strftime('%d-%m-%Y_%H-%M-%S')}"
     ensemble_output_dir = os.path.join(HYBRID_DIR, ensemble_nametag)
