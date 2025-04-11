@@ -16,14 +16,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from TrainingPipeline.Datasets.MagicDataset import MagicDataset
 
 
-def train_random_forest_classifier(proton_file, gamma_file, path, test_size=0.3):
-    print("Loading the MAGIC dataset...")
-    dataset = MagicDataset(
-        proton_filename=proton_file,
-        gamma_filename=gamma_file,
-        debug_info=True,
-    )
-
+def train_random_forest_classifier(dataset, path, test_size=0.3):
     print("\nExtracting features and labels for training...")
     X = []
     y = []
