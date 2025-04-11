@@ -518,6 +518,19 @@ class TrainingSupervisor:
         training_data = {
             "dataset": {
                 "distribution": self.dataset.get_distribution(),
+                "settings": self.dataset.get_settings(),
+            },
+            "settings": {
+                "early_stopping": self.early_stopping,
+                "learning_rate": self.LEARNING_RATE,
+                "weight_decay": self.WEIGHT_DECAY,
+                "batch_size": self.BATCH_SIZE,
+                "grad_clip_norm": self.GRAD_CLIP_NORM,
+                "scheduler_mode": self.SCHEDULER_MODE,
+                "scheduler_cycle_momentum": self.SCHEDULER_CYCLE_MOMENTUM,
+                "scheduler_step_size": self.SCHEDULER_STEP_SIZE,
+                "scheduler_base_lr": self.SCHEDULER_BASE_LR,
+                "scheduler_max_lr": self.SCHEDULER_MAX_LR,
             },
             "epochs": epochs,
             "time": {

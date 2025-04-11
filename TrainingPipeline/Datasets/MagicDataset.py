@@ -245,6 +245,12 @@ class MagicDataset(Dataset):
         }
 
         return {'total_samples': total_samples, 'distribution': distribution}
+
+    def get_settings(self) -> Dict[str, Any]:
+        return {
+            'clean_image': self.clean_image,
+            'rescale_image': self.rescale_image,
+        }
     
     def get_all_labels(self) -> np.ndarray:
         # First n_protons items are proton labels (Logic is mirrored magicDataset)
