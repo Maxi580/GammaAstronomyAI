@@ -4,7 +4,6 @@ import os
 
 import pickle
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_curve, auc
 import matplotlib.pyplot as plt
@@ -16,7 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from TrainingPipeline.Datasets.MagicDataset import MagicDataset
 
 
-def train_random_forest_classifier(dataset, path, test_size=0.3):
+def train_random_forest_classifier(dataset: MagicDataset, path, test_size=0.3):
     print("\nExtracting features and labels for training...")
     X = []
     y = []
@@ -115,12 +114,3 @@ def plot_results(results):
     plt.savefig('confusion_matrix.png')
 
     print("Plots saved to current directory")
-
-
-if __name__ == '__main__':
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    RF_MODEL_PATH = os.path.join(BASE_DIR, "rf_model.pkl")
-
-    gammas_file = '../magic-gammas-new.parquet'
-    proton_file = '../magic-protons.parquet'
-    train_random_forest_classifier(proton_file, gammas_file, path=RF_MODEL_PATH)

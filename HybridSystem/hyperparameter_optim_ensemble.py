@@ -7,27 +7,36 @@ import json
 import traceback
 import torch
 import torch.nn as nn
+import pickle
 
 from CNN.Architectures import HexMagicNet
-import joblib
 from TrainingPipeline.Datasets import MagicDataset
 from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
+from dataset_splitter import split_parquet_files
+from random_forest.random_forest import train_random_forest_classifier
 
-OPTUNA_DB = "sqlite:///optuna_ensemble_study.db"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 HYBRID_DIR = os.path.join(BASE_DIR, "HybridSystem")
-CNN_MODEL_PATH = os.path.join(HYBRID_DIR, "cnn_model.pth")
-RF_MODEL_PATH = os.path.join(HYBRID_DIR, "rf_model.pkl")
-ENSEMBLE_MODEL_PATH = os.path.join(HYBRID_DIR, "ensemble_model_optimized.pth")
+OPTUNA_DB = "sqlite:///optuna_ensemble_study.db"
 
-PROTON_FILE = "../magic-protons.parquet"
-GAMMA_FILE = "../magic-gammas-new.parquet"
+PROTON_FILE = "magic-protons.parquet"
+GAMMA_FILE = "magic-gammas-new.parquet"
+RANDOM_SEED = 42
 
 
-def run_ensemble_trial_subprocess(trial_id, study_name, proton_file, gamma_file, cnn_path, rf_path, epochs):
+def run_ensemble_trial_subprocess(trial_id, study_name, ensemble_dataset, cnn_path, rf_path, epochs, run_dir):
     """
     Run a single trial as a completely separate Python process.
-    This ensures complete isolation and memory cleanup between trials.
+    Uses the ensemble dataset for training the ensemble model.
+
+    Args:
+        trial_id: Optuna trial ID
+        study_name: Name of the Optuna study
+        ensemble_dataset: datset ensemble
+        cnn_path: Path to the trained CNN model
+        rf_path: Path to the trained Random Forest model
+        epochs: Number of epochs to train the ensemble
+        run_dir: Base directory for this optimization run
     """
     print(f"\n==== Starting Ensemble Trial {trial_id} ====")
 
@@ -41,7 +50,7 @@ import gc
 import json
 import time
 import traceback
-import joblib
+import pickle
 
 # Import your modules
 try:
@@ -67,20 +76,22 @@ class EnsembleModel(nn.Module):
             param.requires_grad = False
 
         with open(rf_model_path, 'rb') as f:
-            self.rf_model = joblib.load(rf_model_path)
+            self.rf_model = pickle.load(f)
+            self.rf_model.verbose = 0
+
+        self.cnn_weight = nn.Parameter(
+            torch.tensor([trial.suggest_float('initial_cnn_weight', 0.1, 0.9)]), 
+            requires_grad=True
+        )
 
         num_layers = trial.suggest_int('num_layers', 1, 3)
         input_size = 4
 
-        hidden_sizes = []
-        for i in range(num_layers):
-            trial.suggest_int(f'hidden_size_{{i}}', 8, 256)
-            hidden_sizes.append(size)
-
         layers = []
         prev_size = input_size
 
-        for i, size in enumerate(hidden_sizes):
+        for i in range(num_layers):
+            size = trial.suggest_int(f'hidden_size_{{i}}', 8, 256)
             layers.append(nn.Linear(prev_size, size))
 
             # Optional batch normalization
@@ -96,6 +107,7 @@ class EnsembleModel(nn.Module):
             elif activation == 'elu':
                 layers.append(nn.ELU())
 
+            # Dropout
             dropout_rate = trial.suggest_float(f'dropout_{{i}}', 0.0, 0.7)
             if dropout_rate > 0:
                 layers.append(nn.Dropout(dropout_rate))
@@ -103,10 +115,7 @@ class EnsembleModel(nn.Module):
             prev_size = size
 
         layers.append(nn.Linear(prev_size, 2))
-
         self.ensemble_layer = nn.Sequential(*layers)
-
-        self.cnn_weight = nn.Parameter(torch.tensor([0.5]), requires_grad=True)
 
     def forward(self, m1_image, m2_image, features):
         self.cnn_model.eval()
@@ -143,19 +152,17 @@ except Exception as e:
 try:
     print(f"Starting trial {{trial_id}}...")
 
-    # Load dataset
-    print(f"Loading dataset from {proton_file} and {gamma_file}...")
-    dataset = MagicDataset("{proton_file}", "{gamma_file}", max_samples=100000, debug_info=False)
+    # Load ensemble dataset (validation data)
+    print(f"Loading ensemble dataset...")
+    ensemble_dataset = "{ensemble_dataset}"
 
     # Create output dir
-    nametag = f"{study_name}_{{time.strftime('%Y-%m-%d_%H-%M-%S')}}_trial_{{trial_id}}"
-    output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                            f"parameter_tuning/{study_name}", nametag)
-    os.makedirs(output_dir, exist_ok=True)
+    trial_dir = os.path.join("{run_dir}", f"trial_{{trial_id}}")
+    os.makedirs(trial_dir, exist_ok=True)
 
-    # Initialize supervisor
+    # Initialize supervisor with ensemble dataset
     print(f"Initializing training supervisor...")
-    supervisor = TrainingSupervisor("custom", dataset, output_dir, 
+    supervisor = TrainingSupervisor("custom", ensemble_dataset, trial_dir, 
                                    debug_info=False, save_model=False, save_debug_data=False)
 
     # Create ensemble model based on trial parameters
@@ -170,8 +177,8 @@ try:
     supervisor.GRAD_CLIP_NORM = frozen_trial.suggest_float('grad_clip_norm', 0.1, 5.0)
 
     # Train the model
-    print(f"Training model for {epochs} epochs...")
-    supervisor.train_model({epochs})
+    print(f"Training model for {{epochs}} epochs...")
+    supervisor.train_model(epochs)
 
     # Calculate accuracy
     last_n_accuracies = [metrics['accuracy'] for metrics in supervisor.validation_metrics[-3:]]
@@ -297,7 +304,7 @@ def create_or_load_study(study_name):
             load_if_exists=True,
             direction="maximize",
             pruner=optuna.pruners.MedianPruner(),
-            sampler=optuna.samplers.TPESampler(seed=42),
+            sampler=optuna.samplers.TPESampler(seed=RANDOM_SEED),
         )
         return study
     except Exception as e:
@@ -314,64 +321,6 @@ def has_completed_trials(study):
         return False
 
 
-def run_ensemble_optimization(proton_file, gamma_file, cnn_path, rf_path, study_name, n_trials, epochs):
-    """Run the optimization for ensemble model with sequential trial execution"""
-    study = create_or_load_study(study_name)
-    if study is None:
-        print("Failed to create or load study")
-        return
-
-    completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
-    n_completed = len(completed_trials)
-    print(f"Already completed trials: {n_completed}")
-
-    n_remaining = max(0, n_trials - n_completed)
-    print(f"Remaining trials to run: {n_remaining}")
-
-    if n_remaining <= 0:
-        print("All trials have been completed")
-        return study
-
-    for trial_id in range(n_completed, n_completed + n_remaining):
-        result = run_ensemble_trial_subprocess(
-            trial_id=trial_id,
-            study_name=study_name,
-            proton_file=proton_file,
-            gamma_file=gamma_file,
-            cnn_path=cnn_path,
-            rf_path=rf_path,
-            epochs=epochs
-        )
-
-        if result.get("status") == "completed":
-            print(f"Trial {result.get('trial_id')} completed with value: {result.get('value')}")
-            print(f"Parameters: {result.get('params')}")
-        else:
-            print(f"Trial {result.get('trial_id')} failed")
-            error = result.get("error", "Unknown error")
-            print(f"Error: {error}")
-
-            if "traceback" in result:
-                print("Traceback:")
-                print(result["traceback"])
-
-        if has_completed_trials(study):
-            try:
-                print("\nCurrent best trial:")
-                best_trial = study.best_trial
-                print(f"  Value (Accuracy): {best_trial.value}")
-                print(f"  Parameters: {best_trial.params}")
-            except Exception as e:
-                print(f"Error getting best trial: {e}")
-        else:
-            print("\nNo successful trials completed yet")
-
-        print(f"Pausing for 3 seconds before next trial...")
-        time.sleep(2)
-
-    return study
-
-
 def create_optimized_ensemble_model(best_params, cnn_path, rf_path):
     """Create the best ensemble model based on optimization results"""
 
@@ -385,7 +334,8 @@ def create_optimized_ensemble_model(best_params, cnn_path, rf_path):
             for param in self.cnn_model.parameters():
                 param.requires_grad = False
 
-            self.rf_model = joblib.load(rf_model_path)
+            with open(rf_model_path, 'rb') as f:
+                self.rf_model = pickle.load(f)
 
             num_layers = params['num_layers']
             input_size = 4
@@ -440,87 +390,138 @@ def create_optimized_ensemble_model(best_params, cnn_path, rf_path):
     return OptimizedEnsembleModel(cnn_path, rf_path, best_params)
 
 
-def train_and_save_best_model(best_params, proton_file, gamma_file, cnn_path, rf_path, output_path, epochs=10):
-    """Train and save the best model using optimal parameters"""
-    print("Training optimized ensemble model...")
-    dataset = MagicDataset(proton_file, gamma_file)
+def train_cnn(dataset):
+    cnn_path = os.path.join(HYBRID_DIR, "cnn_base_model.pth")
 
-    ensemble_nametag = f"Optimized_Ensemble_{time.strftime('%d-%m-%Y_%H-%M-%S')}"
-    ensemble_output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                       "HybridSystem", ensemble_nametag)
-    os.makedirs(ensemble_output_dir, exist_ok=True)
+    cnn_nametag = f"CNN_Base_{time.strftime('%d-%m-%Y_%H-%M-%S')}"
+    cnn_output_dir = os.path.join(HYBRID_DIR, cnn_nametag)
 
-    model = create_optimized_ensemble_model(best_params, cnn_path, rf_path)
+    cnn_supervisor = TrainingSupervisor("hexmagicnet", dataset, cnn_output_dir,
+                                        debug_info=True, save_model=True,
+                                        save_debug_data=True, early_stopping=False)
+    cnn_supervisor.VAL_SPLIT = 0.0  # Only Training on Val anyway
 
-    supervisor = TrainingSupervisor("custom", dataset, ensemble_output_dir,
-                                    debug_info=True, save_model=True,
-                                    save_debug_data=True, early_stopping=False)
+    cnn_supervisor.LEARNING_RATE = 5.269632147047427e-06
+    cnn_supervisor.WEIGHT_DECAY = 0.00034049323130326087
+    cnn_supervisor.BATCH_SIZE = 64
+    cnn_supervisor.GRAD_CLIP_NORM = 0.7168560391358462
 
-    supervisor.model = model.to(supervisor.device)
-
-    supervisor.LEARNING_RATE = best_params['learning_rate']
-    supervisor.WEIGHT_DECAY = best_params['weight_decay']
-    supervisor.BATCH_SIZE = best_params['batch_size']
-    supervisor.GRAD_CLIP_NORM = best_params['grad_clip_norm']
-
-    # Train model
-    print(f"Training optimized ensemble for {epochs} epochs...")
-    supervisor.train_model(epochs)
-
-    # Save the model
-    torch.save(model.state_dict(), output_path)
-    print(f"Optimized ensemble model saved to {output_path}")
-
-    return output_path
+    print(f"Training CNN model...")
+    cnn_supervisor.train_model(30)
+    torch.save(cnn_supervisor.model.state_dict(), cnn_path)
+    print(f"CNN model saved to {cnn_path}")
+    return cnn_path
 
 
-def main():
-    proton_file = "magic-protons.parquet"
-    gamma_file = "magic-gammas-new.parquet"
-    study_name = "Optimize_Ensemble"
+def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
+    """
+    Optimize the ensemble model using properly split datasets
 
-    if not os.path.exists(CNN_MODEL_PATH):
-        print(f"CNN model does not exist at {CNN_MODEL_PATH}. Please train it first.")
-        return
+    Args:
+        n_trials: Number of Optuna trials to run
+        epochs: Number of epochs to train each ensemble model
+        val_split: Validation split for dataset splitting
+    """
+    run_timestamp = time.strftime('%Y%m%d_%H%M%S')
+    run_dir = os.path.join(HYBRID_DIR, f"ensemble_optimization_{run_timestamp}")
+    os.makedirs(run_dir, exist_ok=True)
 
-    if not os.path.exists(RF_MODEL_PATH):
-        print(f"Random Forest model does not exist at {RF_MODEL_PATH}. Please train it first.")
-        return
+    study_name = f"Ensemble_Optimization_{run_timestamp}"
 
-    study = run_ensemble_optimization(
-        proton_file=proton_file,
-        gamma_file=gamma_file,
-        cnn_path=CNN_MODEL_PATH,
-        rf_path=RF_MODEL_PATH,
-        study_name=study_name,
-        n_trials=100,
-        epochs=10
+    print("\nSplitting datasets into train/validation sets...")
+    data_dir = os.path.join(run_dir, "data")
+    file_paths = split_parquet_files(
+        PROTON_FILE,
+        GAMMA_FILE,
+        data_dir,
+        val_split=val_split,
+        random_seed=RANDOM_SEED
     )
 
-    if study and has_completed_trials(study):
-        print("\nOptimization completed!")
-        print("\nBest trial:")
-        print(f"  Value (Accuracy): {study.best_trial.value}")
-        print("  Parameters:")
-        for key, value in study.best_trial.params.items():
-            print(f"    {key}: {value}")
+    train_dataset = MagicDataset(
+        file_paths['train']['proton'],
+        file_paths['train']['gamma'],
+        max_samples=50000
+    )
 
-        print("\nTraining the best model with full epochs...")
-        final_model_path = train_and_save_best_model(
-            best_params=study.best_trial.params,
-            proton_file=proton_file,
-            gamma_file=gamma_file,
-            cnn_path=CNN_MODEL_PATH,
-            rf_path=RF_MODEL_PATH,
-            output_path=ENSEMBLE_MODEL_PATH,
-            epochs=10
+    val_dataset = MagicDataset(
+        file_paths['val']['proton'],
+        file_paths['val']['gamma'],
+        max_samples=25000
+    )
+
+    print("\nTraining CNN base model for optimization...")
+    cnn_path = train_cnn(train_dataset)
+
+    # Train RF model on training dataset
+    print("\nTraining Random Forest base model for optimization...")
+    rf_path = os.path.join(run_dir, "rf_base_model.pkl")
+    train_random_forest_classifier(
+        dataset=train_dataset,
+        path=rf_path,
+        test_size=0.0
+    )
+    print(f"RF model saved to {rf_path}")
+
+    print("\nSetting up Optuna study for ensemble optimization...")
+    study = create_or_load_study(study_name)
+    if study is None:
+        print("Failed to create or load study")
+        return None
+
+    summary_path = os.path.join(run_dir, "optimization_summary.txt")
+    with open(summary_path, 'w') as f:
+        f.write(f"Ensemble Optimization Summary\n")
+        f.write(f"{'=' * 50}\n\n")
+        f.write(f"Started: {run_timestamp}\n")
+        f.write(f"Number of trials: {n_trials}\n")
+        f.write(f"Epochs per trial: {epochs}\n")
+        f.write(f"Validation split: {val_split}\n\n")
+        f.write(f"Train dataset size: {len(train_dataset)}\n")
+        f.write(f"Validation dataset size: {len(val_dataset)}\n\n")
+        f.write(f"CNN base model: {cnn_path}\n")
+        f.write(f"RF base model: {rf_path}\n\n")
+        f.write(f"Trial results:\n")
+        f.write(f"{'=' * 50}\n\n")
+
+    print(f"\nRunning {n_trials} optimization trials...")
+    for trial_id in range(n_trials):
+        result = run_ensemble_trial_subprocess(
+            trial_id=trial_id,
+            study_name=study_name,
+            ensemble_dataset=val_dataset,
+            cnn_path=cnn_path,
+            rf_path=rf_path,
+            epochs=epochs,
+            run_dir=run_dir
         )
 
-        print("\nOptimized ensemble model training complete!")
-        print(f"Model saved to: {final_model_path}")
-    else:
-        print("\nOptimization failed or no trials completed successfully")
+        with open(summary_path, 'a') as f:
+            if result.get("status") == "completed":
+                f.write(f"Trial {result.get('trial_id')} completed with value: {result.get('value')}\n")
+                f.write(f"Parameters: {result.get('params')}\n\n")
+                print(f"Trial {result.get('trial_id')} completed with value: {result.get('value')}")
+            else:
+                f.write(f"Trial {result.get('trial_id')} failed\n")
+                f.write(f"Error: {result.get('error', 'Unknown error')}\n\n")
+                print(f"Trial {result.get('trial_id')} failed")
 
+        if has_completed_trials(study):
+            try:
+                print("\nCurrent best trial:")
+                best_trial = study.best_trial
+                print(f"  Value (Accuracy): {best_trial.value}")
+                print(f"  Parameters: {best_trial.params}")
+
+                with open(summary_path, 'a') as f:
+                    f.write(f"Current best trial: {best_trial.number}\n")
+                    f.write(f"Value (Accuracy): {best_trial.value}\n")
+                    f.write(f"Parameters: {best_trial.params}\n\n")
+            except Exception as e:
+                print(f"Error getting best trial: {e}")
+
+        print(f"Pausing for 2 seconds before next trial...")
+        time.sleep(2)
 
 if __name__ == "__main__":
-    main()
+    optimize_ensemble(n_trials=100, epochs=10, val_split=0.3)
