@@ -2,7 +2,7 @@ import pyarrow.parquet as pq
 import pandas as pd
 import os
 import numpy as np
-import time
+
 
 def split_parquet_files(proton_path, gamma_path, output_dir, val_split=0.3, test_split=0.0, random_seed=42):
     """

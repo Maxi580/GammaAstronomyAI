@@ -421,40 +421,17 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
     run_timestamp = time.strftime('%Y%m%d_%H%M%S')
     run_dir = os.path.join(HYBRID_DIR, "ensemble_optimization")
     os.makedirs(run_dir, exist_ok=True)
-
     study_name = f"Ensemble_Optimization_{run_timestamp}"
 
     print("\nSplitting datasets into train/validation sets...")
-    data_dir = os.path.join(run_dir, "data")
-    expected_file_paths = {
-        'train': {
-            'proton': os.path.join(data_dir, "train_proton.parquet"),
-            'gamma': os.path.join(data_dir, "train_gamma.parquet")
-        },
-        'val': {
-            'proton': os.path.join(data_dir, "val_proton.parquet"),
-            'gamma': os.path.join(data_dir, "val_gamma.parquet")
-        }
-    }
-
-    files_exist = all(os.path.exists(file_path)
-                      for split in expected_file_paths.values()
-                      for file_path in split.values())
-
-    if not files_exist:
-        print("\nSplitting datasets into train/validation sets...")
-        os.makedirs(data_dir, exist_ok=True)
-        file_paths = split_parquet_files(
-            PROTON_FILE,
-            GAMMA_FILE,
-            data_dir,
-            val_split=val_split,
-            random_seed=RANDOM_SEED,
-            fixed_file_names=True
-        )
-    else:
-        print("\nUsing existing split datasets...")
-        file_paths = expected_file_paths
+    data_dir = os.path.join(HYBRID_DIR, "data")
+    file_paths = split_parquet_files(
+        PROTON_FILE,
+        GAMMA_FILE,
+        data_dir,
+        val_split=val_split,
+        random_seed=RANDOM_SEED
+    )
 
     train_dataset = MagicDataset(
         file_paths['train']['proton'],
@@ -463,35 +440,7 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
     )
 
     cnn_path = os.path.join(HYBRID_DIR, "cnn_base_model.pth")
-    rf_path = os.path.join(run_dir, "rf_base_model.pkl")
-    if os.path.exists(cnn_path):
-        print(f"\nUsing existing CNN base model from {cnn_path}")
-    else:
-        print("\nTraining CNN base model for optimization...")
-        train_dataset = MagicDataset(
-            file_paths['train']['proton'],
-            file_paths['train']['gamma'],
-            max_samples=25000
-        )
-        cnn_path = train_cnn(train_dataset)
-
-    if os.path.exists(rf_path):
-        print(f"\nUsing existing Random Forest base model from {rf_path}")
-    else:
-        print("\nTraining Random Forest base model for optimization...")
-        # Only create train_dataset if it wasn't created for CNN training
-        if not 'train_dataset' in locals():
-            train_dataset = MagicDataset(
-                file_paths['train']['proton'],
-                file_paths['train']['gamma'],
-                max_samples=25000
-            )
-        train_random_forest_classifier(
-            dataset=train_dataset,
-            path=rf_path,
-            test_size=0.1
-        )
-        print(f"RF model saved to {rf_path}")
+    rf_path = os.path.join(HYBRID_DIR, "rf_base_model.pkl")
 
     print("\nSetting up Optuna study for ensemble optimization...")
     study = create_or_load_study(study_name)
