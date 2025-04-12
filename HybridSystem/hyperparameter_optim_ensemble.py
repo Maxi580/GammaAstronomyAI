@@ -174,6 +174,7 @@ try:
     supervisor.GRAD_CLIP_NORM = frozen_trial.suggest_float('grad_clip_norm', 0.1, 5.0)
 
     # Train the model
+    epochs = {epochs} 
     print(f"Training model for {{epochs}} epochs...")
     supervisor.train_model(epochs)
 
