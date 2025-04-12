@@ -23,10 +23,7 @@ RANDOM_SEED = 42
 
 
 def train_cnn_model(dataset, epochs=30):
-    cnn_nametag = f"CNN_Component_{time.strftime('%d-%m-%Y_%H-%M-%S')}"
-    cnn_output_dir = os.path.join(HYBRID_DIR, cnn_nametag)
-
-    cnn_supervisor = TrainingSupervisor("hexmagicnet", dataset, cnn_output_dir,
+    cnn_supervisor = TrainingSupervisor("cnn_model", dataset, HYBRID_DIR,
                                         debug_info=True, save_model=True, val_split=0.1,
                                         save_debug_data=True, early_stopping=False)
 
@@ -38,7 +35,7 @@ def train_cnn_model(dataset, epochs=30):
     cnn_supervisor.train_model(epochs)
     torch.save(cnn_supervisor.model.state_dict(), CNN_MODEL_PATH)
 
-    return cnn_output_dir
+    return HYBRID_DIR
 
 
 def train_rf_model(dataset):
@@ -102,7 +99,7 @@ def train_ensemble_model(cnn_path, rf_path, dataset, epochs=10):
 
     ensemble = EnsembleModel(cnn_path, rf_path)
     supervisor = TrainingSupervisor("custom", dataset, ensemble_output_dir,
-                                    debug_info=True, save_model=True,
+                                    debug_info=True, save_model=True, val_split=0.1,
                                     save_debug_data=True, early_stopping=False)
 
     supervisor.model = ensemble.to(supervisor.device)
@@ -146,13 +143,19 @@ def train_hybrid_system(cnn_epochs=30, ensemble_epochs=5, val_split=0.3):
         file_paths['val']['gamma']
     )
 
-    print("Training CNN component...")
-    cnn_path = train_cnn_model(model_dataset, epochs=cnn_epochs)
+    if os.path.exists(CNN_MODEL_PATH):
+        print(f"CNN model already exists at {CNN_MODEL_PATH}. Skipping training.")
+        cnn_path = HYBRID_DIR
+    else:
+        print("Training CNN component...")
+        cnn_path = train_cnn_model(model_dataset, epochs=cnn_epochs)
 
-    print("Training Random Forest component...")
-    rf_path = train_rf_model(
-        dataset=model_dataset,
-    )
+    if os.path.exists(RF_MODEL_PATH):
+        print(f"Random Forest model already exists at {RF_MODEL_PATH}. Skipping training.")
+        rf_path = RF_MODEL_PATH
+    else:
+        print("Training Random Forest component...")
+        rf_path = train_rf_model(dataset=model_dataset)
 
     print("Training ensemble model...")
     train_ensemble_model(cnn_path, rf_path, ensemble_dataset, epochs=ensemble_epochs)
