@@ -44,6 +44,7 @@ import traceback
 import pickle
 
 # Import your modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
     from CNN.Architectures import HexMagicNet
     from TrainingPipeline.Datasets import MagicDataset
