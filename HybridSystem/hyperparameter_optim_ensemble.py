@@ -433,14 +433,8 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
         random_seed=RANDOM_SEED
     )
 
-    train_dataset = MagicDataset(
-        file_paths['train']['proton'],
-        file_paths['train']['gamma'],
-        max_samples=25000
-    )
-
-    cnn_path = os.path.join(HYBRID_DIR, "cnn_base_model.pth")
-    rf_path = os.path.join(HYBRID_DIR, "rf_base_model.pkl")
+    cnn_path = os.path.join(HYBRID_DIR, "cnn_model.pth")
+    rf_path = os.path.join(HYBRID_DIR, "rf_model.pkl")
 
     print("\nSetting up Optuna study for ensemble optimization...")
     study = create_or_load_study(study_name)
@@ -456,7 +450,6 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
         f.write(f"Number of trials: {n_trials}\n")
         f.write(f"Epochs per trial: {epochs}\n")
         f.write(f"Validation split: {val_split}\n\n")
-        f.write(f"Train dataset size: {len(train_dataset)}\n")
         f.write(f"CNN base model: {cnn_path}\n")
         f.write(f"RF base model: {rf_path}\n\n")
         f.write(f"Trial results:\n")
