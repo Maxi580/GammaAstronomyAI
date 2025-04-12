@@ -50,11 +50,11 @@ def train_rf_model(dataset):
 
 
 class EnsembleModel(nn.Module):
-    def __init__(self, cnn_model_path, rf_model_path, device='gpu'):
+    def __init__(self, cnn_model_path, rf_model_path):
         super().__init__()
 
         self.cnn_model = HexMagicNet()
-        self.cnn_model.load_state_dict(torch.load(cnn_model_path, map_location=device))
+        self.cnn_model.load_state_dict(torch.load(cnn_model_path, weights_only=True))
 
         for param in self.cnn_model.parameters():
             param.requires_grad = False
