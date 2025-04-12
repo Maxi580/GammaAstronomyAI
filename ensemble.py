@@ -64,14 +64,25 @@ class EnsembleModel(nn.Module):
             self.rf_model.verbose = 0
 
         self.ensemble_layer = nn.Sequential(
-            nn.Linear(4, 32),
-            nn.BatchNorm1d(32),
+            nn.Linear(4, 211),
             nn.ReLU(),
-            nn.Dropout(p=0.4),
-            nn.Linear(32, 2)
+            nn.Dropout(p=0.043191866396247024),
+
+            nn.Linear(211, 234),
+            nn.BatchNorm1d(234),
+            nn.LeakyReLU(negative_slope=0.08605475199145621),
+            nn.Dropout(p=0.22001088958156756),
+
+            nn.Linear(234, 180),
+            nn.ReLU(),
+            nn.Dropout(p=0.12375715238499085),
+
+            nn.Linear(180, 2)
         )
 
-        self.cnn_weight = nn.Parameter(torch.tensor([0.5]), requires_grad=True)
+        self.cnn_weight = nn.Parameter(
+            torch.tensor([0.605344980674225]), requires_grad=True
+        )
 
     def forward(self, m1_image, m2_image, features):
         self.cnn_model.eval()
@@ -104,9 +115,9 @@ def train_ensemble_model(cnn_path, rf_path, dataset, epochs=10):
 
     supervisor.model = ensemble.to(supervisor.device)
 
-    supervisor.LEARNING_RATE = 1e-3
-    supervisor.WEIGHT_DECAY = 1e-3
-    supervisor.GRAD_CLIP_NORM = 1.0
+    supervisor.LEARNING_RATE = 2.156799027646505e-05
+    supervisor.WEIGHT_DECAY = 3.5287444954790375e-05
+    supervisor.GRAD_CLIP_NORM = 0.6637686241010907
 
     print(f"Ensemble model has {sum(p.numel() for p in ensemble.ensemble_layer.parameters() if p.requires_grad)} "
           f"trainable weights.")
