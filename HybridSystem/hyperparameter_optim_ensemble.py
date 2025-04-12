@@ -400,8 +400,6 @@ def train_cnn(dataset):
     cnn_supervisor = TrainingSupervisor("hexmagicnet", dataset, cnn_output_dir,
                                         debug_info=True, save_model=True,
                                         save_debug_data=True, early_stopping=False)
-    cnn_supervisor.VAL_SPLIT = 0.0  # Only Training on Val anyway
-
     cnn_supervisor.LEARNING_RATE = 5.269632147047427e-06
     cnn_supervisor.WEIGHT_DECAY = 0.00034049323130326087
     cnn_supervisor.BATCH_SIZE = 64
@@ -459,7 +457,7 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
     train_random_forest_classifier(
         dataset=train_dataset,
         path=rf_path,
-        test_size=0
+        test_size=0.2
     )
     print(f"RF model saved to {rf_path}")
 
