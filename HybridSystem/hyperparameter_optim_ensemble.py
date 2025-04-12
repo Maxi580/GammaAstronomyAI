@@ -408,7 +408,7 @@ def train_cnn(dataset):
     cnn_supervisor.GRAD_CLIP_NORM = 0.7168560391358462
 
     print(f"Training CNN model...")
-    cnn_supervisor.train_model(30)
+    cnn_supervisor.train_model(20)
     torch.save(cnn_supervisor.model.state_dict(), cnn_path)
     print(f"CNN model saved to {cnn_path}")
     return cnn_path
