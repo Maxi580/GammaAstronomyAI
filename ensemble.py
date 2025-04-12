@@ -23,7 +23,7 @@ RANDOM_SEED = 42
 
 
 def train_cnn_model(dataset, epochs=30):
-    cnn_supervisor = TrainingSupervisor("cnn_model.pth", dataset, HYBRID_DIR,
+    cnn_supervisor = TrainingSupervisor("hexmagicnet", dataset, HYBRID_DIR,
                                         debug_info=True, save_model=True, val_split=0.1,
                                         save_debug_data=True, early_stopping=False)
 
@@ -119,12 +119,9 @@ def train_ensemble_model(cnn_path, rf_path, dataset, epochs=10):
 
 
 def train_hybrid_system(cnn_epochs=30, ensemble_epochs=5, val_split=0.3):
-    run_timestamp = time.strftime('%Y%m%d_%H%M%S')
-    run_dir = os.path.join(HYBRID_DIR, f"hybrid_run_{run_timestamp}")
-    os.makedirs(run_dir, exist_ok=True)
 
     print("Splitting datasets into train/validation sets...")
-    data_dir = os.path.join(run_dir, "data")
+    data_dir = os.path.join(HYBRID_DIR, "data")
     file_paths = split_parquet_files(
         PROTON_FILE,
         GAMMA_FILE,
