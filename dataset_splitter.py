@@ -4,8 +4,7 @@ import os
 import numpy as np
 import time
 
-def split_parquet_files(proton_path, gamma_path, output_dir, val_split=0.3, test_split=0.0, random_seed=42,
-                        fixed_file_names=False):
+def split_parquet_files(proton_path, gamma_path, output_dir, val_split=0.3, test_split=0.0, random_seed=42):
     """
     Split proton and gamma parquet files into train/validation/test sets.
 
@@ -20,17 +19,28 @@ def split_parquet_files(proton_path, gamma_path, output_dir, val_split=0.3, test
     Returns:
         Dictionary with paths to generated files
     """
-    if fixed_file_names:
-        train_proton_path = os.path.join(output_dir, "train_proton.parquet")
-        train_gamma_path = os.path.join(output_dir, "train_gamma.parquet")
-        val_proton_path = os.path.join(output_dir, "val_proton.parquet")
-        val_gamma_path = os.path.join(output_dir, "val_gamma.parquet")
-    else:
-        timestamp = time.strftime('%Y%m%d_%H%M%S')
-        train_proton_path = os.path.join(output_dir, f"train_proton_{timestamp}.parquet")
-        train_gamma_path = os.path.join(output_dir, f"train_gamma_{timestamp}.parquet")
-        val_proton_path = os.path.join(output_dir, f"val_proton_{timestamp}.parquet")
-        val_gamma_path = os.path.join(output_dir, f"val_gamma_{timestamp}.parquet")
+    train_proton_path = os.path.join(output_dir, "train_proton.parquet")
+    train_gamma_path = os.path.join(output_dir, "train_gamma.parquet")
+    val_proton_path = os.path.join(output_dir, "val_proton.parquet")
+    val_gamma_path = os.path.join(output_dir, "val_gamma.parquet")
+    required_files = [train_proton_path, train_gamma_path, val_proton_path, val_gamma_path]
+
+    files_exist = all(os.path.exists(f) for f in required_files)
+
+    if files_exist:
+        print("Dataset split files already exist, skipping split operation.")
+        result = {
+            'train': {
+                'proton': train_proton_path,
+                'gamma': train_gamma_path
+            },
+            'val': {
+                'proton': val_proton_path,
+                'gamma': val_gamma_path
+            }
+        }
+
+        return result
 
     os.makedirs(output_dir, exist_ok=True)
 
