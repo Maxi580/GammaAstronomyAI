@@ -461,17 +461,36 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
         max_samples=25000
     )
 
-    print("\nTraining CNN base model for optimization...")
-    cnn_path = train_cnn(train_dataset)
-
-    print("\nTraining Random Forest base model for optimization...")
+    cnn_path = os.path.join(HYBRID_DIR, "cnn_base_model.pth")
     rf_path = os.path.join(run_dir, "rf_base_model.pkl")
-    train_random_forest_classifier(
-        dataset=train_dataset,
-        path=rf_path,
-        test_size=0.1
-    )
-    print(f"RF model saved to {rf_path}")
+    if os.path.exists(cnn_path):
+        print(f"\nUsing existing CNN base model from {cnn_path}")
+    else:
+        print("\nTraining CNN base model for optimization...")
+        train_dataset = MagicDataset(
+            file_paths['train']['proton'],
+            file_paths['train']['gamma'],
+            max_samples=25000
+        )
+        cnn_path = train_cnn(train_dataset)
+
+    if os.path.exists(rf_path):
+        print(f"\nUsing existing Random Forest base model from {rf_path}")
+    else:
+        print("\nTraining Random Forest base model for optimization...")
+        # Only create train_dataset if it wasn't created for CNN training
+        if not 'train_dataset' in locals():
+            train_dataset = MagicDataset(
+                file_paths['train']['proton'],
+                file_paths['train']['gamma'],
+                max_samples=25000
+            )
+        train_random_forest_classifier(
+            dataset=train_dataset,
+            path=rf_path,
+            test_size=0.1
+        )
+        print(f"RF model saved to {rf_path}")
 
     print("\nSetting up Optuna study for ensemble optimization...")
     study = create_or_load_study(study_name)
