@@ -173,7 +173,7 @@ try:
     # Set hyperparameters
     supervisor.LEARNING_RATE = frozen_trial.suggest_float('learning_rate', 1e-5, 1e-2, log=True)
     supervisor.WEIGHT_DECAY = frozen_trial.suggest_float('weight_decay', 1e-6, 1e-2, log=True)
-    supervisor.BATCH_SIZE = frozen_trial.suggest_categorical('batch_size', [32, 64, 128, 256])
+    supervisor.BATCH_SIZE = 256
     supervisor.GRAD_CLIP_NORM = frozen_trial.suggest_float('grad_clip_norm', 0.1, 5.0)
 
     # Train the model
@@ -441,7 +441,7 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
     train_dataset = MagicDataset(
         file_paths['train']['proton'],
         file_paths['train']['gamma'],
-        max_samples=50000
+        max_samples=25000
     )
 
     val_dataset = MagicDataset(
@@ -453,7 +453,6 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
     print("\nTraining CNN base model for optimization...")
     cnn_path = train_cnn(train_dataset)
 
-    # Train RF model on training dataset
     print("\nTraining Random Forest base model for optimization...")
     rf_path = os.path.join(run_dir, "rf_base_model.pkl")
     train_random_forest_classifier(
@@ -522,6 +521,7 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
 
         print(f"Pausing for 2 seconds before next trial...")
         time.sleep(2)
+
 
 if __name__ == "__main__":
     optimize_ensemble(n_trials=100, epochs=10, val_split=0.3)
