@@ -27,9 +27,8 @@ def train_cnn_model(dataset, epochs=30):
     cnn_output_dir = os.path.join(HYBRID_DIR, cnn_nametag)
 
     cnn_supervisor = TrainingSupervisor("hexmagicnet", dataset, cnn_output_dir,
-                                        debug_info=True, save_model=True,
+                                        debug_info=True, save_model=True, val_split=False,
                                         save_debug_data=True, early_stopping=False)
-    cnn_supervisor.VAL_SPLIT = 0.0  # Only Training on Val anyway
 
     cnn_supervisor.LEARNING_RATE = 5.269632147047427e-06
     cnn_supervisor.WEIGHT_DECAY = 0.00034049323130326087
@@ -47,7 +46,7 @@ def train_rf_model(dataset):
     train_random_forest_classifier(
         dataset=dataset,
         path=RF_MODEL_PATH,
-        test_size=0.0,
+        test_size=False,
     )
     print(f"Random Forest model saved to {RF_MODEL_PATH}")
     return RF_MODEL_PATH

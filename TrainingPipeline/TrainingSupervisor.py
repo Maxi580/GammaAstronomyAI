@@ -114,8 +114,6 @@ class EarlyStopping:
 
 
 class TrainingSupervisor:
-    VAL_SPLIT: float = 0.3
-
     LEARNING_RATE = 1e-4
     WEIGHT_DECAY = 1e-4
     BATCH_SIZE = 64
@@ -127,10 +125,11 @@ class TrainingSupervisor:
     SCHEDULER_MAX_LR = 1e-3
 
     def __init__(self, model_name: str, dataset: MagicDataset, output_dir: str, debug_info: bool = True,
-                 save_model: bool = False, save_debug_data: bool = True, early_stopping: bool = True,
+                 save_model: bool = False, save_debug_data: bool = True, early_stopping: bool = True, val_split=0.3,
                  use_custom_params: bool = False) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available()
                                    else "cpu")
+        self.val_split = val_split
         self.debug_info = debug_info
         self.save_model = save_model
         self.save_debug_data = save_debug_data
@@ -178,13 +177,17 @@ class TrainingSupervisor:
         labels = self.dataset.get_all_labels()
 
         # Stratified splitting using sklearn (shuffles indices)
-        train_indices, val_indices = train_test_split(
-            np.arange(len(self.dataset)),
-            test_size=self.VAL_SPLIT,
-            stratify=labels,
-            shuffle=True,
-            random_state=42,
-        )
+        if not self.val_split:
+            train_indices = np.arange(len(self.dataset))
+            val_indices = np.array([], dtype=int)
+        else:
+            train_indices, val_indices = train_test_split(
+                np.arange(len(self.dataset)),
+                test_size=self.val_split,
+                stratify=labels,
+                shuffle=True,
+                random_state=42,
+            )
 
         """val_indices, test_indices = train_test_split(
             temp_indices,
@@ -192,6 +195,7 @@ class TrainingSupervisor:
             stratify=labels[temp_indices],
             shuffle=True,
             random_state=42
+            
         )"""
 
         if self.debug_info:
