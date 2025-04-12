@@ -20,8 +20,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 HYBRID_DIR = os.path.join(BASE_DIR, "HybridSystem")
 OPTUNA_DB = "sqlite:///optuna_ensemble_study.db"
 
-PROTON_FILE = "magic-protons.parquet"
-GAMMA_FILE = "magic-gammas-new.parquet"
+PROTON_FILE = "../magic-protons.parquet"
+GAMMA_FILE = "../magic-gammas-new.parquet"
 RANDOM_SEED = 42
 
 
