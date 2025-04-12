@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import pickle
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from CNN.Architectures import HexMagicNet
 from TrainingPipeline.Datasets import MagicDataset
 from TrainingPipeline.TrainingSupervisor import TrainingSupervisor
