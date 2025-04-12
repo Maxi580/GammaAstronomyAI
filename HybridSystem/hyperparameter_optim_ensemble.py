@@ -425,6 +425,7 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
 
     print("\nSplitting datasets into train/validation sets...")
     data_dir = os.path.join(HYBRID_DIR, "data")
+    print(f"In: {data_dir}")
     file_paths = split_parquet_files(
         PROTON_FILE,
         GAMMA_FILE,
