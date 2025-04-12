@@ -17,7 +17,6 @@ from dataset_splitter import split_parquet_files
 from random_forest.random_forest import train_random_forest_classifier
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-HYBRID_DIR = os.path.join(BASE_DIR, "HybridSystem")
 OPTUNA_DB = "sqlite:///optuna_ensemble_study.db"
 
 PROTON_FILE = "../magic-protons.parquet"
@@ -389,10 +388,10 @@ def create_optimized_ensemble_model(best_params, cnn_path, rf_path):
 
 
 def train_cnn(dataset):
-    cnn_path = os.path.join(HYBRID_DIR, "cnn_base_model.pth")
+    cnn_path = os.path.join(BASE_DIR, "cnn_base_model.pth")
 
     cnn_nametag = f"CNN_Base_{time.strftime('%d-%m-%Y_%H-%M-%S')}"
-    cnn_output_dir = os.path.join(HYBRID_DIR, cnn_nametag)
+    cnn_output_dir = os.path.join(BASE_DIR, cnn_nametag)
 
     cnn_supervisor = TrainingSupervisor("hexmagicnet", dataset, cnn_output_dir,
                                         debug_info=True, save_model=True, val_split=0.1,
@@ -419,12 +418,12 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
         val_split: Validation split for dataset splitting
     """
     run_timestamp = time.strftime('%Y%m%d_%H%M%S')
-    run_dir = os.path.join(HYBRID_DIR, "ensemble_optimization")
+    run_dir = os.path.join(BASE_DIR, "ensemble_optimization")
     os.makedirs(run_dir, exist_ok=True)
     study_name = f"Ensemble_Optimization_{run_timestamp}"
 
     print("\nSplitting datasets into train/validation sets...")
-    data_dir = os.path.join(HYBRID_DIR, "data")
+    data_dir = os.path.join(BASE_DIR, "data")
     print(f"In: {data_dir}")
     file_paths = split_parquet_files(
         PROTON_FILE,
@@ -434,8 +433,8 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
         random_seed=RANDOM_SEED
     )
 
-    cnn_path = os.path.join(HYBRID_DIR, "cnn_model.pth")
-    rf_path = os.path.join(HYBRID_DIR, "rf_model.pkl")
+    cnn_path = os.path.join(BASE_DIR, "cnn_model.pth")
+    rf_path = os.path.join(BASE_DIR, "rf_model.pkl")
 
     print("\nSetting up Optuna study for ensemble optimization...")
     study = create_or_load_study(study_name)
