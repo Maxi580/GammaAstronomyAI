@@ -2,9 +2,10 @@ import pyarrow.parquet as pq
 import pandas as pd
 import os
 import numpy as np
+import time
 
-
-def split_parquet_files(proton_path, gamma_path, output_dir, val_split=0.3, test_split=0.0, random_seed=42):
+def split_parquet_files(proton_path, gamma_path, output_dir, val_split=0.3, test_split=0.0, random_seed=42,
+                        fixed_file_names=False):
     """
     Split proton and gamma parquet files into train/validation/test sets.
 
@@ -19,6 +20,18 @@ def split_parquet_files(proton_path, gamma_path, output_dir, val_split=0.3, test
     Returns:
         Dictionary with paths to generated files
     """
+    if fixed_file_names:
+        train_proton_path = os.path.join(output_dir, "train_proton.parquet")
+        train_gamma_path = os.path.join(output_dir, "train_gamma.parquet")
+        val_proton_path = os.path.join(output_dir, "val_proton.parquet")
+        val_gamma_path = os.path.join(output_dir, "val_gamma.parquet")
+    else:
+        timestamp = time.strftime('%Y%m%d_%H%M%S')
+        train_proton_path = os.path.join(output_dir, f"train_proton_{timestamp}.parquet")
+        train_gamma_path = os.path.join(output_dir, f"train_gamma_{timestamp}.parquet")
+        val_proton_path = os.path.join(output_dir, f"val_proton_{timestamp}.parquet")
+        val_gamma_path = os.path.join(output_dir, f"val_gamma_{timestamp}.parquet")
+
     os.makedirs(output_dir, exist_ok=True)
 
     np.random.seed(random_seed)
@@ -44,11 +57,6 @@ def split_parquet_files(proton_path, gamma_path, output_dir, val_split=0.3, test
     gamma_train = gamma_df.iloc[gamma_indices[:gamma_val_idx]]
     gamma_val = gamma_df.iloc[gamma_indices[gamma_val_idx:gamma_test_idx]]
     gamma_test = gamma_df.iloc[gamma_indices[gamma_test_idx:]] if test_split > 0 else None
-
-    train_proton_path = os.path.join(output_dir, "train_proton.parquet")
-    train_gamma_path = os.path.join(output_dir, "train_gamma.parquet")
-    val_proton_path = os.path.join(output_dir, "val_proton.parquet")
-    val_gamma_path = os.path.join(output_dir, "val_gamma.parquet")
 
     print(f"Saving train files (proton: {len(proton_train)}, gamma: {len(gamma_train)})")
     proton_train.to_parquet(train_proton_path)

@@ -177,17 +177,13 @@ class TrainingSupervisor:
         labels = self.dataset.get_all_labels()
 
         # Stratified splitting using sklearn (shuffles indices)
-        if not self.val_split:
-            train_indices = np.arange(len(self.dataset))
-            val_indices = np.array([], dtype=int)
-        else:
-            train_indices, val_indices = train_test_split(
-                np.arange(len(self.dataset)),
-                test_size=self.val_split,
-                stratify=labels,
-                shuffle=True,
-                random_state=42,
-            )
+        train_indices, val_indices = train_test_split(
+            np.arange(len(self.dataset)),
+            test_size=self.val_split,
+            stratify=labels,
+            shuffle=True,
+            random_state=42,
+        )
 
         """val_indices, test_indices = train_test_split(
             temp_indices,

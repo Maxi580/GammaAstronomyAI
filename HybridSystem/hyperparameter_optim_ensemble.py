@@ -398,7 +398,7 @@ def train_cnn(dataset):
     cnn_output_dir = os.path.join(HYBRID_DIR, cnn_nametag)
 
     cnn_supervisor = TrainingSupervisor("hexmagicnet", dataset, cnn_output_dir,
-                                        debug_info=True, save_model=True, val_split=False,
+                                        debug_info=True, save_model=True, val_split=0.1,
                                         save_debug_data=True, early_stopping=False)
     cnn_supervisor.LEARNING_RATE = 5.269632147047427e-06
     cnn_supervisor.WEIGHT_DECAY = 0.00034049323130326087
@@ -422,20 +422,43 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
         val_split: Validation split for dataset splitting
     """
     run_timestamp = time.strftime('%Y%m%d_%H%M%S')
-    run_dir = os.path.join(HYBRID_DIR, f"ensemble_optimization_{run_timestamp}")
+    run_dir = os.path.join(HYBRID_DIR, "ensemble_optimization")
     os.makedirs(run_dir, exist_ok=True)
 
     study_name = f"Ensemble_Optimization_{run_timestamp}"
 
     print("\nSplitting datasets into train/validation sets...")
     data_dir = os.path.join(run_dir, "data")
-    file_paths = split_parquet_files(
-        PROTON_FILE,
-        GAMMA_FILE,
-        data_dir,
-        val_split=val_split,
-        random_seed=RANDOM_SEED
-    )
+    expected_file_paths = {
+        'train': {
+            'proton': os.path.join(data_dir, "train_proton.parquet"),
+            'gamma': os.path.join(data_dir, "train_gamma.parquet")
+        },
+        'val': {
+            'proton': os.path.join(data_dir, "val_proton.parquet"),
+            'gamma': os.path.join(data_dir, "val_gamma.parquet")
+        }
+    }
+
+    # Check if the split files already exist
+    files_exist = all(os.path.exists(file_path)
+                      for split in expected_file_paths.values()
+                      for file_path in split.values())
+
+    if not files_exist:
+        print("\nSplitting datasets into train/validation sets...")
+        os.makedirs(data_dir, exist_ok=True)
+        file_paths = split_parquet_files(
+            PROTON_FILE,
+            GAMMA_FILE,
+            data_dir,
+            val_split=val_split,
+            random_seed=RANDOM_SEED,
+            fixed_file_names=True
+        )
+    else:
+        print("\nUsing existing split datasets...")
+        file_paths = expected_file_paths
 
     train_dataset = MagicDataset(
         file_paths['train']['proton'],
@@ -457,7 +480,7 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
     train_random_forest_classifier(
         dataset=train_dataset,
         path=rf_path,
-        test_size=False
+        test_size=0.1
     )
     print(f"RF model saved to {rf_path}")
 

@@ -37,15 +37,9 @@ def train_random_forest_classifier(dataset: MagicDataset, path, test_size=0.3):
     print(f"Labels shape: {y.shape}")
     print(f"Class distribution: {np.bincount(y)}")
 
-    if not test_size:
-        X_train, y_train = X, y
-
-        X_test = X.iloc[0:0] if hasattr(X, 'iloc') else X[0:0]
-        y_test = y.iloc[0:0] if hasattr(y, 'iloc') else y[0:0]
-    else:
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=42, stratify=y
-        )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=42, stratify=y
+    )
 
     print(f"\nTraining set size: {X_train.shape[0]}")
     print(f"Testing set size: {X_test.shape[0]}")
