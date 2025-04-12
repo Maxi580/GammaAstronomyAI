@@ -459,7 +459,7 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
     train_random_forest_classifier(
         dataset=train_dataset,
         path=rf_path,
-        test_size=0.0
+        test_size=0
     )
     print(f"RF model saved to {rf_path}")
 
