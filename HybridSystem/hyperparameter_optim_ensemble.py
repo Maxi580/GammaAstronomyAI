@@ -25,19 +25,10 @@ GAMMA_FILE = "magic-gammas-new.parquet"
 RANDOM_SEED = 42
 
 
-def run_ensemble_trial_subprocess(trial_id, study_name, ensemble_dataset, cnn_path, rf_path, epochs, run_dir):
+def run_ensemble_trial_subprocess(trial_id, study_name, proton_file, gamma_file, cnn_path, rf_path, epochs, run_dir):
     """
     Run a single trial as a completely separate Python process.
     Uses the ensemble dataset for training the ensemble model.
-
-    Args:
-        trial_id: Optuna trial ID
-        study_name: Name of the Optuna study
-        ensemble_dataset: datset ensemble
-        cnn_path: Path to the trained CNN model
-        rf_path: Path to the trained Random Forest model
-        epochs: Number of epochs to train the ensemble
-        run_dir: Base directory for this optimization run
     """
     print(f"\n==== Starting Ensemble Trial {trial_id} ====")
 
@@ -155,7 +146,12 @@ try:
 
     # Load ensemble dataset (validation data)
     print(f"Loading ensemble dataset...")
-    ensemble_dataset = "{ensemble_dataset}"
+    ensemble_dataset = MagicDataset(
+        proton_filename="{proton_file}",
+        gamma_filename="{gamma_file}",
+        max_samples=25000,
+        debug_info=False
+    )
 
     # Create output dir
     trial_dir = os.path.join("{run_dir}", f"trial_{{trial_id}}")
@@ -440,7 +436,6 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
         }
     }
 
-    # Check if the split files already exist
     files_exist = all(os.path.exists(file_path)
                       for split in expected_file_paths.values()
                       for file_path in split.values())
@@ -463,12 +458,6 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
     train_dataset = MagicDataset(
         file_paths['train']['proton'],
         file_paths['train']['gamma'],
-        max_samples=25000
-    )
-
-    val_dataset = MagicDataset(
-        file_paths['val']['proton'],
-        file_paths['val']['gamma'],
         max_samples=25000
     )
 
@@ -499,7 +488,6 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
         f.write(f"Epochs per trial: {epochs}\n")
         f.write(f"Validation split: {val_split}\n\n")
         f.write(f"Train dataset size: {len(train_dataset)}\n")
-        f.write(f"Validation dataset size: {len(val_dataset)}\n\n")
         f.write(f"CNN base model: {cnn_path}\n")
         f.write(f"RF base model: {rf_path}\n\n")
         f.write(f"Trial results:\n")
@@ -510,7 +498,8 @@ def optimize_ensemble(n_trials=100, epochs=10, val_split=0.3):
         result = run_ensemble_trial_subprocess(
             trial_id=trial_id,
             study_name=study_name,
-            ensemble_dataset=val_dataset,
+            proton_file=file_paths['val']['proton'],
+            gamma_file=file_paths['val']['gamma'],
             cnn_path=cnn_path,
             rf_path=rf_path,
             epochs=epochs,
