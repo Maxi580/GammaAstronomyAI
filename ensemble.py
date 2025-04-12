@@ -129,7 +129,7 @@ def train_ensemble_model(cnn_path, rf_path, dataset, epochs=10):
     return ENSEMBLE_MODEL_PATH
 
 
-def train_hybrid_system(cnn_epochs=30, ensemble_epochs=5, val_split=0.3):
+def train_hybrid_system(ensemble_epochs=5, val_split=0.3):
 
     print("Splitting datasets into train/validation sets...")
     data_dir = os.path.join(HYBRID_DIR, "data")
@@ -141,11 +141,6 @@ def train_hybrid_system(cnn_epochs=30, ensemble_epochs=5, val_split=0.3):
         random_seed=RANDOM_SEED
     )
 
-    model_dataset = MagicDataset(
-        file_paths['train']['proton'],
-        file_paths['train']['gamma']
-    )
-
     ensemble_dataset = MagicDataset(
         file_paths['val']['proton'],
         file_paths['val']['gamma']
@@ -155,23 +150,21 @@ def train_hybrid_system(cnn_epochs=30, ensemble_epochs=5, val_split=0.3):
         print(f"CNN model already exists at {CNN_MODEL_PATH}. Skipping training.")
         cnn_path = CNN_MODEL_PATH
     else:
-        print("Training CNN component...")
-        cnn_path = train_cnn_model(model_dataset, epochs=cnn_epochs)
+        print(f"Didnt find cnn")
+        return
 
     if os.path.exists(RF_MODEL_PATH):
         print(f"Random Forest model already exists at {RF_MODEL_PATH}. Skipping training.")
         rf_path = RF_MODEL_PATH
     else:
-        print("Training Random Forest component...")
-        rf_path = train_rf_model(dataset=model_dataset)
-
+        print(f"Didnt find rf ")
+        return
     print("Training ensemble model...")
     train_ensemble_model(cnn_path, rf_path, ensemble_dataset, epochs=ensemble_epochs)
 
 
 def main():
     train_hybrid_system(
-        cnn_epochs=30,
         ensemble_epochs=10,
     )
 
