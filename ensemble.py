@@ -153,7 +153,7 @@ def train_hybrid_system(cnn_epochs=30, ensemble_epochs=5, val_split=0.3):
 
     if os.path.exists(CNN_MODEL_PATH):
         print(f"CNN model already exists at {CNN_MODEL_PATH}. Skipping training.")
-        cnn_path = HYBRID_DIR
+        cnn_path = CNN_MODEL_PATH
     else:
         print("Training CNN component...")
         cnn_path = train_cnn_model(model_dataset, epochs=cnn_epochs)
