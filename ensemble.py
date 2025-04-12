@@ -23,7 +23,7 @@ RANDOM_SEED = 42
 
 
 def train_cnn_model(dataset, epochs=30):
-    cnn_supervisor = TrainingSupervisor("cnn_model", dataset, HYBRID_DIR,
+    cnn_supervisor = TrainingSupervisor("cnn_model.pth", dataset, HYBRID_DIR,
                                         debug_info=True, save_model=True, val_split=0.1,
                                         save_debug_data=True, early_stopping=False)
 
