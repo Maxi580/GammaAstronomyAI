@@ -62,7 +62,7 @@ class EnsembleModel(nn.Module):
         super().__init__()
 
         self.cnn_model = HexMagicNet()
-        self.cnn_model.load_state_dict(torch.load(cnn_model_path))
+        self.cnn_model.load_state_dict(torch.load(cnn_model_path, weights_only=True))
 
         for param in self.cnn_model.parameters():
             param.requires_grad = False
@@ -76,7 +76,7 @@ class EnsembleModel(nn.Module):
             requires_grad=True
         )
 
-        num_layers = trial.suggest_int('num_layers', 1, 3)
+        num_layers = trial.suggest_int('num_layers', 1, 2)
         input_size = 4
 
         layers = []
@@ -91,14 +91,9 @@ class EnsembleModel(nn.Module):
                 layers.append(nn.BatchNorm1d(size))
 
             # Activation function
-            activation = trial.suggest_categorical(f'activation_{{i}}', ['relu', 'leaky_relu', 'elu'])
-            if activation == 'relu':
+            if trial.suggest_categorical(f"use_relu_{{i}}", [True, False]):
                 layers.append(nn.ReLU())
-            elif activation == 'leaky_relu':
-                layers.append(nn.LeakyReLU(trial.suggest_float(f'leaky_relu_slope_{{i}}', 0.01, 0.3)))
-            elif activation == 'elu':
-                layers.append(nn.ELU())
-
+ 
             # Dropout
             dropout_rate = trial.suggest_float(f'dropout_{{i}}', 0.0, 0.7)
             if dropout_rate > 0:
@@ -118,10 +113,9 @@ class EnsembleModel(nn.Module):
         rf_probs = self.rf_model.predict_proba(features_np)
         rf_pred = torch.tensor(rf_probs, dtype=torch.float32, device=features.device)
 
-        rf_weight = 1.0 - self.cnn_weight
         combined_preds = torch.cat([
-            cnn_pred * self.cnn_weight,
-            rf_pred * rf_weight
+            cnn_pred,
+            rf_pred
         ], dim=1)
 
         return self.ensemble_layer(combined_preds)
@@ -149,7 +143,6 @@ try:
     ensemble_dataset = MagicDataset(
         proton_filename="{proton_file}",
         gamma_filename="{gamma_file}",
-        max_samples=25000,
         debug_info=False
     )
 
@@ -180,6 +173,7 @@ try:
 
     # Calculate accuracy
     last_n_accuracies = [metrics['accuracy'] for metrics in supervisor.validation_metrics[-3:]]
+    print(f"Final Accuracy: {{last_n_accuracies[-1]}}")
     avg_accuracy = sum(last_n_accuracies) / len(last_n_accuracies)
 
     # Tell the study about the result
@@ -317,75 +311,6 @@ def has_completed_trials(study):
         return any(t.state == optuna.trial.TrialState.COMPLETE for t in study.trials)
     except:
         return False
-
-
-def create_optimized_ensemble_model(best_params, cnn_path, rf_path):
-    """Create the best ensemble model based on optimization results"""
-
-    class OptimizedEnsembleModel(nn.Module):
-        def __init__(self, cnn_model_path, rf_model_path, params):
-            super().__init__()
-
-            self.cnn_model = HexMagicNet()
-            self.cnn_model.load_state_dict(torch.load(cnn_model_path))
-
-            for param in self.cnn_model.parameters():
-                param.requires_grad = False
-
-            with open(rf_model_path, 'rb') as f:
-                self.rf_model = pickle.load(f)
-
-            num_layers = params['num_layers']
-            input_size = 4
-
-            layers = []
-            prev_size = input_size
-
-            for i in range(num_layers):
-                size = params[f'hidden_size_{i}']
-                layers.append(nn.Linear(prev_size, size))
-
-                if params.get(f'use_batchnorm_{i}', False):
-                    layers.append(nn.BatchNorm1d(size))
-
-                activation = params.get(f'activation_{i}', 'relu')
-                if activation == 'relu':
-                    layers.append(nn.ReLU())
-                elif activation == 'leaky_relu':
-                    layers.append(nn.LeakyReLU(params.get(f'leaky_relu_slope_{i}', 0.01)))
-                elif activation == 'elu':
-                    layers.append(nn.ELU())
-
-                dropout_rate = params.get(f'dropout_{i}', 0.0)
-                if dropout_rate > 0:
-                    layers.append(nn.Dropout(dropout_rate))
-
-                prev_size = size
-
-            layers.append(nn.Linear(prev_size, 2))
-
-            self.ensemble_layer = nn.Sequential(*layers)
-
-            self.cnn_weight = nn.Parameter(torch.tensor([params['initial_cnn_weight']]), requires_grad=True)
-
-        def forward(self, m1_image, m2_image, features):
-            self.cnn_model.eval()
-            with torch.no_grad():
-                cnn_pred = self.cnn_model(m1_image, m2_image, features)
-
-            features_np = features.cpu().detach().numpy()
-            rf_probs = self.rf_model.predict_proba(features_np)
-            rf_pred = torch.tensor(rf_probs, dtype=torch.float32, device=features.device)
-
-            rf_weight = 1.0 - self.cnn_weight
-            combined_preds = torch.cat([
-                cnn_pred * self.cnn_weight,
-                rf_pred * rf_weight
-            ], dim=1)
-
-            return self.ensemble_layer(combined_preds)
-
-    return OptimizedEnsembleModel(cnn_path, rf_path, best_params)
 
 
 def train_cnn(dataset):

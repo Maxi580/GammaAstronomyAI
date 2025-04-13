@@ -80,10 +80,6 @@ class EnsembleModel(nn.Module):
             nn.Linear(180, 2)
         )
 
-        self.cnn_weight = nn.Parameter(
-            torch.tensor([0.605344980674225]), requires_grad=True
-        )
-
     def forward(self, m1_image, m2_image, features):
         self.cnn_model.eval()
         with torch.no_grad():
@@ -93,11 +89,9 @@ class EnsembleModel(nn.Module):
         rf_probs = self.rf_model.predict_proba(features_np)
         rf_pred = torch.tensor(rf_probs, dtype=torch.float32, device=features.device)
 
-        rf_weight = 1.0 - self.cnn_weight
-
         combined_preds = torch.cat([
-            cnn_pred * self.cnn_weight,
-            rf_pred * rf_weight
+            cnn_pred,
+            rf_pred
         ], dim=1)
 
         return self.ensemble_layer(combined_preds)
