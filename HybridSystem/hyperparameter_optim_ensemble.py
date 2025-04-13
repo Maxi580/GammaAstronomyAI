@@ -173,7 +173,7 @@ try:
 
     # Calculate accuracy
     last_n_accuracies = [metrics['accuracy'] for metrics in supervisor.validation_metrics[-3:]]
-    print(f"Final Accuracy: {{last_n_accuracies[-1]}}")
+    print(f"Final Metrics: {{supervisor.validation_metrics[-1]}}")
     avg_accuracy = sum(last_n_accuracies) / len(last_n_accuracies)
 
     # Tell the study about the result
