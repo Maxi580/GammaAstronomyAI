@@ -254,13 +254,13 @@ class TrainingSupervisor:
                 model = HexCircleNet()
 
                 if self.use_custom_params:
-                    self.LEARNING_RATE = 0.0006250708520118225
-                    self.WEIGHT_DECAY = 0.00012551308112717833
-                    self.GRAD_CLIP_NORM = 1.0
-                    self.SCHEDULER_CYCLE_MOMENTUM = True
-                    self.SCHEDULER_STEP_SIZE = 6
-                    self.SCHEDULER_BASE_LR = 1.9730551292086e-05
-                    self.SCHEDULER_MAX_LR = 0.0008631873109885323
+                    self.LEARNING_RATE = 0.0006022009731102787
+                    self.WEIGHT_DECAY = 0.0015803568093146951
+                    self.GRAD_CLIP_NORM = 2.3
+                    self.SCHEDULER_CYCLE_MOMENTUM = False
+                    self.SCHEDULER_STEP_SIZE = 4
+                    self.SCHEDULER_BASE_LR = 0.0004852324937278784
+                    self.SCHEDULER_MAX_LR = 0.0016258995418522461
 
             case "hexmagicnet":
                 model = HexMagicNet()
